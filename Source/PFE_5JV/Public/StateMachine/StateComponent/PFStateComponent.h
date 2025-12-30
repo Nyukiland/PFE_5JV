@@ -2,12 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "StateComponent.generated.h"
+#include "PFStateComponent.generated.h"
 
-class APlayerCharacter;
+class APFPlayerCharacter;
 
 UCLASS(Blueprintable)
-class PFE_5JV_API UStateComponent : public UActorComponent
+class PFE_5JV_API UPFStateComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -16,18 +16,18 @@ public:
 
 protected:
 	UPROPERTY()
-	TObjectPtr<APlayerCharacter> Owner_;
+	TObjectPtr<APFPlayerCharacter> Owner_;
 	
 public:	
-	UStateComponent();
+	UPFStateComponent();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void ComponentEarlyInit();
 	virtual void ComponentEarlyInit_Implementation();
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void ComponentInit(APlayerCharacter* owner);
-	virtual void ComponentInit_Implementation(APlayerCharacter* owner);
+	void ComponentInit(APFPlayerCharacter* owner);
+	virtual void ComponentInit_Implementation(APFPlayerCharacter* owner);
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void ComponentEnable();
