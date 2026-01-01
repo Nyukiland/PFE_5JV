@@ -14,9 +14,8 @@ class PFE_5JV_API UPFStateComponent : public UActorComponent
 public:
 	bool bIsActive = false;
 
-protected:
 	UPROPERTY()
-	TObjectPtr<APFPlayerCharacter> Owner_;
+	TObjectPtr<APFPlayerCharacter> Owner;
 	
 public:	
 	UPFStateComponent();
@@ -26,8 +25,8 @@ public:
 	virtual void ComponentEarlyInit_Implementation();
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void ComponentInit(APFPlayerCharacter* owner);
-	virtual void ComponentInit_Implementation(APFPlayerCharacter* owner);
+	void ComponentInit(APFPlayerCharacter* ownerObj);
+	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj);
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void ComponentEnable();
@@ -38,6 +37,6 @@ public:
 	virtual void ComponentDisable_Implementation();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void ComponentUpdate(float deltaTime);
-	virtual void ComponentUpdate_Implementation(float deltaTime);
+	void ComponentTick(float deltaTime);
+	virtual void ComponentTick_Implementation(float deltaTime);
 };

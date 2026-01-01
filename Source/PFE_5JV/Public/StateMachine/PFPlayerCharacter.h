@@ -27,9 +27,12 @@ private:
 	TArray<TObjectPtr<UPFStateComponent>> StateComponentsPtr_;
 
 	UPROPERTY()
+	TMap<TSubclassOf<UPFStateComponent>, int> ComponentIndexMap_;
+	
+	UPROPERTY()
 	TObjectPtr<UPFState> CurrentStatePtr_;
 	
-	int ResourcesCount_;
+	int ResourcesCount_ = 0;
 	int ActiveAbilities_ = 0;
 	
 public:	
@@ -57,11 +60,13 @@ public:
 
 	private:
 	//State Component
-	UPFStateComponent* GetStateComponent(TSubclassOf<UPFStateComponent> componentClass, int& index);
+	UPFStateComponent* GetStateComponent(TSubclassOf<UPFStateComponent> componentClass, int& outIndex);
 
 	void ActivateAbilityComponent(UPFStateComponent* componentClass, int index);
 
 	void DeactivateAbilityComponent(UPFStateComponent* componentClass, int index);
 
 	void DeactivateAllAbilityComponents();
+
+	void SwapComponents(int a, int b);
 };

@@ -11,9 +11,9 @@ void UPFStateComponent::ComponentEarlyInit_Implementation()
 	
 }
 
-void UPFStateComponent::ComponentInit_Implementation(APFPlayerCharacter* owner)
+void UPFStateComponent::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 {
-	Owner_ = owner;
+	Owner = ownerObj;
 }
 
 void UPFStateComponent::ComponentEnable_Implementation()
@@ -26,7 +26,7 @@ void UPFStateComponent::ComponentDisable_Implementation()
 	
 }
 
-void UPFStateComponent::ComponentUpdate_Implementation(float deltaTime)
+void UPFStateComponent::ComponentTick_Implementation(float deltaTime)
 {
 	
 }

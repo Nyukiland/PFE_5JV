@@ -1,6 +1,8 @@
 #include "StateMachine/PFPlayerCharacter.h"
 
 #include "StateMachine/State/PFState.h"
+#include "StateMachine/StateComponent/PFAbility.h"
+#include "StateMachine/StateComponent/PFResource.h"
 #include "StateMachine/StateComponent/PFStateComponent.h"
 
 APFPlayerCharacter::APFPlayerCharacter()
@@ -12,13 +14,58 @@ APFPlayerCharacter::APFPlayerCharacter()
 void APFPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	StateComponentsPtr_.Empty();
+	ComponentIndexMap_.Empty();
+	ResourcesCount_ = 0;
+	ActiveAbilities_ = 0;
 	
+	TArray<UPFStateComponent*> stateComponents;
+	GetComponents(stateComponents);
+	TArray<UPFAbility*> abilities;
+
+	for (UPFStateComponent* Comp : stateComponents)
+	{
+		if (UPFResource* resource = Cast<UPFResource>(Comp))
+		{
+			StateComponentsPtr_.Add(resource);
+			ResourcesCount_++;
+		}
+		else if (UPFAbility* ability = Cast<UPFAbility>(Comp))
+		{
+			abilities.Add(ability);
+		}
+	}
+
+	StateComponentsPtr_.Append(abilities);
+
+	for (int i = 0; i < StateComponentsPtr_.Num(); i++)
+	{
+		UPFStateComponent* comp = StateComponentsPtr_[i];
+		
+		if (ComponentIndexMap_.Contains(comp->GetClass()))
+			UE_LOG(LogTemp, Error, TEXT("[Player] Duplicate component detected"));
+		
+		ComponentIndexMap_.Add(comp->GetClass(), i);
+		comp->ComponentEarlyInit();
+	}
+
+	for (UPFStateComponent* comp : StateComponentsPtr_)
+		comp->ComponentInit(this);
+
+	for (TSubclassOf<UPFStateComponent> componentClass : DefaultStateComponents)
+		ActivateAbilityComponent(componentClass);
 }
 
 void APFPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (CurrentStatePtr_)
+		CurrentStatePtr_->OnTick(DeltaTime);
+
+	for (int i = 0; i < ResourcesCount_ + ActiveAbilities_; i++)
+		StateComponentsPtr_[i]->ComponentTick(DeltaTime);
 }
 
 void APFPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -56,44 +103,85 @@ void APFPlayerCharacter::ChangeState(TSubclassOf<UPFState> newState)
 	}
 	
 	if (CurrentStatePtr_)
+	{
 		CurrentStatePtr_->OnExit();
+		DeactivateAllAbilityComponents();
+	}
 
-	DeactivateAllAbilityComponents();
 	CurrentStatePtr_ = NewObject<UPFState>(this, newState);
 	CurrentStatePtr_->OnEnter();
 }
 
-UPFStateComponent* APFPlayerCharacter::GetStateComponent(TSubclassOf<UPFStateComponent> componentClass, int& index)
+UPFStateComponent* APFPlayerCharacter::GetStateComponent(TSubclassOf<UPFStateComponent> componentClass, int& outIndex)
 {
-	index = -1;
+	outIndex = -1;
 
-	for (int i = 0; i < StateComponentsPtr_.Num(); i++)
+	if (int* foundIndex = ComponentIndexMap_.Find(componentClass))
 	{
-		UPFStateComponent* comp = StateComponentsPtr_[i];
-
-		if (comp && comp->IsA(componentClass))
-		{
-			index = i;
-			return comp;
-		}
+		outIndex = *foundIndex;
+		return StateComponentsPtr_[outIndex];
 	}
 
-	UE_LOG(LogTemp, Error, TEXT("Failed to get component of class: %s"), *componentClass->GetName());
-
+	outIndex = -1;
+	UE_LOG(LogTemp, Error, TEXT("[PlayerCharacter] Failed to get component of class: %s"), *componentClass->GetName());
 	return nullptr;
 }
 
-void APFPlayerCharacter::ActivateAbilityComponent(UPFStateComponent* componentClass, int index)
+void APFPlayerCharacter::ActivateAbilityComponent(UPFStateComponent* comp, int index)
 {
+	int componentCount = StateComponentsPtr_.Num();
+	if (!comp ||
+		index < 0 || index >= componentCount ||
+		index < ResourcesCount_ + ActiveAbilities_)
+		return;
 
+	int targetIndex = ResourcesCount_ + ActiveAbilities_;
+	
+	if (index != targetIndex)
+	{
+		SwapComponents(index, targetIndex);
+		index = targetIndex;
+	}
+
+	ActiveAbilities_++;
+	comp->ComponentEnable();
 }
 
-void APFPlayerCharacter::DeactivateAbilityComponent(UPFStateComponent* componentClass, int index)
+void APFPlayerCharacter::DeactivateAbilityComponent(UPFStateComponent* comp, int index)
 {
+	int componentCount = StateComponentsPtr_.Num();
+	if (!comp ||
+		index < 0 || index >= componentCount ||
+		ActiveAbilities_ <= 0 || index >= ResourcesCount_ + ActiveAbilities_)
+		return;
+
+	int lastIndex = ResourcesCount_ + ActiveAbilities_ - 1;
+
+	if (index != lastIndex)
+	{
+		SwapComponents(index, lastIndex);
+		index = lastIndex;
+	}
+	
+	comp->ComponentDisable();
+	ActiveAbilities_--;
 }
 
 void APFPlayerCharacter::DeactivateAllAbilityComponents()
 {
-	
+	for (int i = ActiveAbilities_ - 1; i >= 0; i--)
+		StateComponentsPtr_[ResourcesCount_ + i]->ComponentDisable();
+
+	ActiveAbilities_ = 0;
+}
+
+void APFPlayerCharacter::SwapComponents(int a, int b)
+{
+	if (a == b) return;
+
+	StateComponentsPtr_.Swap(a, b);
+
+	ComponentIndexMap_[StateComponentsPtr_[a]->GetClass()] = a;
+	ComponentIndexMap_[StateComponentsPtr_[b]->GetClass()] = b;
 }
 
