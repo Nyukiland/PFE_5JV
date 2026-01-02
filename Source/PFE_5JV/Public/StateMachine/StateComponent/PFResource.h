@@ -4,7 +4,7 @@
 #include "StateMachine/StateComponent/PFStateComponent.h"
 #include "PFResource.generated.h"
 
-UCLASS(Blueprintable)
+UCLASS(Abstract, Blueprintable)
 class PFE_5JV_API UPFResource : public UPFStateComponent
 {
 	GENERATED_BODY()

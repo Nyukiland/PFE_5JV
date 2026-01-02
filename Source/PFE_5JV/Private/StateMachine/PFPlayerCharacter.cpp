@@ -15,6 +15,16 @@ void APFPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (APlayerController* pc = Cast<APlayerController>(GetController()))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* subsystem =
+			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(
+				pc->GetLocalPlayer()))
+		{
+			subsystem->AddMappingContext(InputMappingContextPtr_, 0);
+		}
+	}
+	
 	StateComponentsPtr_.Empty();
 	ComponentIndexMap_.Empty();
 	ResourcesCount_ = 0;
@@ -29,6 +39,7 @@ void APFPlayerCharacter::BeginPlay()
 		if (UPFResource* resource = Cast<UPFResource>(Comp))
 		{
 			StateComponentsPtr_.Add(resource);
+			resource->bIsActive = true;
 			ResourcesCount_++;
 		}
 		else if (UPFAbility* ability = Cast<UPFAbility>(Comp))
@@ -53,7 +64,7 @@ void APFPlayerCharacter::BeginPlay()
 	for (UPFStateComponent* comp : StateComponentsPtr_)
 		comp->ComponentInit(this);
 
-	for (TSubclassOf<UPFStateComponent> componentClass : DefaultStateComponents)
+	for (TSubclassOf<UPFStateComponent> componentClass : DefaultStateComponents_)
 		ActivateAbilityComponent(componentClass);
 }
 
@@ -72,6 +83,23 @@ void APFPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	UEnhancedInputComponent* inputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent);
+
+	const ETriggerEvent events[] =
+	{
+		ETriggerEvent::Started,
+		ETriggerEvent::Triggered,
+		ETriggerEvent::Completed,
+		ETriggerEvent::Canceled
+	};
+	
+	for (UInputAction* action : InputActionsPtr_)
+	{
+		if (!action) continue;
+
+		for (ETriggerEvent trigger : events)
+			inputComponent->BindAction(action, trigger, this, &APFPlayerCharacter::OnInputAction);
+	}
 }
 
 UPFStateComponent* APFPlayerCharacter::GetStateComponent(TSubclassOf<UPFStateComponent> componentClass)
@@ -143,6 +171,7 @@ void APFPlayerCharacter::ActivateAbilityComponent(UPFStateComponent* comp, int i
 		index = targetIndex;
 	}
 
+	comp->bIsActive = true;
 	ActiveAbilities_++;
 	comp->ComponentEnable();
 }
@@ -162,7 +191,8 @@ void APFPlayerCharacter::DeactivateAbilityComponent(UPFStateComponent* comp, int
 		SwapComponents(index, lastIndex);
 		index = lastIndex;
 	}
-	
+
+	comp->bIsActive = false;
 	comp->ComponentDisable();
 	ActiveAbilities_--;
 }
@@ -185,3 +215,13 @@ void APFPlayerCharacter::SwapComponents(int a, int b)
 	ComponentIndexMap_[StateComponentsPtr_[b]->GetClass()] = b;
 }
 
+void APFPlayerCharacter::OnInputAction(const FInputActionInstance& instance)
+{
+	const UInputAction* action = instance.GetSourceAction();
+	const FInputActionValue& value = instance.GetValue();
+	const ETriggerEvent triggerEvent = instance.GetTriggerEvent();
+
+	if (!action || !CurrentStatePtr_) return;
+
+	CurrentStatePtr_->OnInputTriggered(action->GetFName(), triggerEvent, value);
+}

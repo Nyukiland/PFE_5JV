@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "EnhancedInputSubsystems.h"
 #include "PFPlayerCharacter.generated.h"
 
 class UPFStateComponent;
@@ -12,16 +13,22 @@ class PFE_5JV_API APFPlayerCharacter : public APawn
 {
 	GENERATED_BODY()
 
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<TSubclassOf<UPFStateComponent>> DefaultStateComponents;
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	TArray<TSubclassOf<UPFStateComponent>> DefaultStateComponents_;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UPFState> DefaultState;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	TSubclassOf<UPFState> DefaultState_;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UPFState> FirstState;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	TSubclassOf<UPFState> FirstState_;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	TObjectPtr<UInputMappingContext> InputMappingContextPtr_;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	TArray<TObjectPtr<UInputAction>> InputActionsPtr_;
+	
 private:
 	UPROPERTY()
 	TArray<TObjectPtr<UPFStateComponent>> StateComponentsPtr_;
@@ -69,4 +76,7 @@ public:
 	void DeactivateAllAbilityComponents();
 
 	void SwapComponents(int a, int b);
+
+	//Input
+	void OnInputAction(const FInputActionInstance& instance);
 };
