@@ -6,7 +6,7 @@
 
 class APFPlayerCharacter;
 
-UCLASS(Abstract, Blueprintable)
+UCLASS(Abstract)
 class PFE_5JV_API UPFStateComponent : public UActorComponent
 {
 	GENERATED_BODY()

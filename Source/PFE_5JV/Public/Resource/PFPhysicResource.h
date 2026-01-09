@@ -10,9 +10,9 @@ class PFE_5JV_API UPFPhysicResource : public UPFResource
 {
 	GENERATED_BODY()
 
-public:
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PhysicResource")
-	TObjectPtr<UPFPhysicResourceData> DataPtr;
+	TObjectPtr<UPFPhysicResourceData> DataPtr_;
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")

@@ -2,5 +2,5 @@
 
 float UPFPhysicResource::GetMaxSpeed() const
 {
-	return DataPtr ? DataPtr->MaxSpeed : 0;
+	return DataPtr_ ? DataPtr_->MaxSpeed : 0;
 }
