@@ -15,9 +15,6 @@ class PFE_5JV_API APFPlayerCharacter : public APawn
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
-	TArray<TSubclassOf<UPFStateComponent>> DefaultStateComponents_;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 	TSubclassOf<UPFState> DefaultState_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")

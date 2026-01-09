@@ -63,9 +63,6 @@ void APFPlayerCharacter::BeginPlay()
 
 	for (UPFStateComponent* comp : StateComponentsPtr_)
 		comp->ComponentInit(this);
-
-	for (TSubclassOf<UPFStateComponent> componentClass : DefaultStateComponents_)
-		ActivateAbilityComponent(componentClass);
 }
 
 void APFPlayerCharacter::Tick(float DeltaTime)
