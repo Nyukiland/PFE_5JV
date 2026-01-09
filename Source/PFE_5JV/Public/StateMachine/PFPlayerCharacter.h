@@ -58,6 +58,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	void DeactivateAbilityComponent(TSubclassOf<UPFStateComponent> componentClass);
 
+	UFUNCTION(BlueprintCallable, Category = "Player")
+	UPFStateComponent* GetAndActivateComponent(TSubclassOf<UPFStateComponent> componentClass);
+
 	//State
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	void ChangeState(TSubclassOf<UPFState> newState);

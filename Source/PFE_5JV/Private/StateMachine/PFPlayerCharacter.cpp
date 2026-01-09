@@ -34,15 +34,15 @@ void APFPlayerCharacter::BeginPlay()
 	GetComponents(stateComponents);
 	TArray<UPFAbility*> abilities;
 
-	for (UPFStateComponent* Comp : stateComponents)
+	for (UPFStateComponent* comp : stateComponents)
 	{
-		if (UPFResource* resource = Cast<UPFResource>(Comp))
+		if (UPFResource* resource = Cast<UPFResource>(comp))
 		{
 			StateComponentsPtr_.Add(resource);
 			resource->bIsActive = true;
 			ResourcesCount_++;
 		}
-		else if (UPFAbility* ability = Cast<UPFAbility>(Comp))
+		else if (UPFAbility* ability = Cast<UPFAbility>(comp))
 		{
 			abilities.Add(ability);
 		}
@@ -119,6 +119,15 @@ void APFPlayerCharacter::DeactivateAbilityComponent(TSubclassOf<UPFStateComponen
 	DeactivateAbilityComponent(comp, i);
 }
 
+UPFStateComponent* APFPlayerCharacter::GetAndActivateComponent(TSubclassOf<UPFStateComponent> componentClass)
+{
+	int i = 0;
+	UPFStateComponent* comp = GetStateComponent(componentClass, i);
+	ActivateAbilityComponent(comp, i);
+
+	return comp;
+}
+
 void APFPlayerCharacter::ChangeState(TSubclassOf<UPFState> newState)
 {
 	if (!newState)
@@ -154,6 +163,11 @@ UPFStateComponent* APFPlayerCharacter::GetStateComponent(TSubclassOf<UPFStateCom
 
 void APFPlayerCharacter::ActivateAbilityComponent(UPFStateComponent* comp, int index)
 {
+	if (Cast<UPFResource>(comp))
+	{
+		return;
+	}
+	
 	int componentCount = StateComponentsPtr_.Num();
 	if (!comp ||
 		index < 0 || index >= componentCount ||
