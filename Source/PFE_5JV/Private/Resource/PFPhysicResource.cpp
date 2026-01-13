@@ -7,15 +7,10 @@ float UPFPhysicResource::GetMaxSpeed() const
 	return DataPtr_ ? DataPtr_->MaxSpeed : 0;
 }
 
-void UPFPhysicResource::AddForce(float ouais) const
+void UPFPhysicResource::AddForce(FVector force, bool bShouldResetForce, float duration, UCurveFloat* curve)
 {
-	
-}
-
-void UPFPhysicResource::AddForce(FVector force, float duration, UCurveFloat* curve) const
-{
-	// FForceToAdd pouet(force, duration, curve);
-	// AllForces_.Add(pouet);
+	FForceToAdd forceToAdd(force, bShouldResetForce, duration, curve);
+	AllForces_.Add(forceToAdd);
 }
 
 void UPFPhysicResource::SetVelocity(FVector velocity)

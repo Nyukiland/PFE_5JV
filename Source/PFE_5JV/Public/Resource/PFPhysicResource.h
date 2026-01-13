@@ -11,16 +11,27 @@ struct FForceToAdd
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(editanywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector Force;
-	UPROPERTY(editanywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bShouldReset;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Duration;
-	UPROPERTY(editanywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UCurveFloat> CurvePtr;
 
-	FForceToAdd(const FVector& force, const float& duration, UCurveFloat* curvePtr)
+	FForceToAdd()
+	{
+		Force = FVector::ZeroVector;
+		bShouldReset = false;
+		Duration = 0;
+		CurvePtr = nullptr;
+	}
+	
+	FForceToAdd(const FVector& force, const bool bShouldResetForce, const float& duration, UCurveFloat* curvePtr)
 	{
 		Force = force;
+		bShouldReset = bShouldResetForce;
 		Duration = duration;
 		CurvePtr = curvePtr;
 	}
@@ -43,11 +54,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	float GetMaxSpeed() const;
 
-	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	void AddForce(float ouais) const;
-
-	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	void AddForce(FVector force, float duration = 0, UCurveFloat* curve = nullptr) const;
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bisAdded, duration, curve"))
+	void AddForce(FVector force, bool bShouldResetForce, float duration = 0, UCurveFloat* curve = nullptr);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void SetVelocity(FVector velocity);
