@@ -16,6 +16,8 @@ public:
 
 	UPROPERTY()
 	TObjectPtr<APFPlayerCharacter> Owner;
+	UPROPERTY()
+	TObjectPtr<UPrimitiveComponent> Root;
 	
 public:	
 	UPFStateComponent();

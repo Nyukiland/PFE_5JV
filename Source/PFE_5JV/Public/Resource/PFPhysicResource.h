@@ -16,6 +16,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bShouldReset;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bShoudEndAdded;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Duration;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UCurveFloat> CurvePtr;
@@ -28,10 +30,11 @@ public:
 		CurvePtr = nullptr;
 	}
 	
-	FForceToAdd(const FVector& force, const bool bShouldResetForce, const float& duration, UCurveFloat* curvePtr)
+	FForceToAdd(const FVector& force, const bool bShouldResetForce, const bool bShouldAddAtTheEnd, const float& duration, UCurveFloat* curvePtr)
 	{
 		Force = force;
 		bShouldReset = bShouldResetForce;
+		bShoudEndAdded = bShouldAddAtTheEnd;
 		Duration = duration;
 		CurvePtr = curvePtr;
 	}
@@ -42,6 +45,9 @@ class PFE_5JV_API UPFPhysicResource : public UPFResource
 {
 	GENERATED_BODY()
 
+public:
+	float AirFriction;
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PhysicResource")
 	TObjectPtr<UPFPhysicResourceData> DataPtr_;
@@ -51,15 +57,24 @@ protected:
 	TArray<FForceToAdd> AllForces_;
 	
 public:
-	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	float GetMaxSpeed() const;
-
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bisAdded, duration, curve"))
-	void AddForce(FVector force, bool bShouldResetForce, float duration = 0, UCurveFloat* curve = nullptr);
+	void AddForce(FVector force, bool bShouldResetForce = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	void SetVelocity(FVector velocity);
+	FVector GetCurrentVelocity() const;
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	FVector GetVelocity() const;
+	float GetAlignmentWithUp() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	float GetCurrentAirFriction() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	void ProcessAirFriction(const float deltaTime);
+	
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	void ProcessVelocity(const float deltaTime);
+
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	void ProcessMaxSpeed(const float deltaTime);
 };

@@ -7,10 +7,27 @@
 UCLASS(Blueprintable, BlueprintType)
 class PFE_5JV_API UPFPhysicResourceData : public UDataAsset
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
+
 public:
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
-	float MaxSpeed = 10;
-	
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Speed")
+    float MaxSpeed = 10;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Speed")
+    float MaxAboveSpeed = 10;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction")
+    float BaseAirFriction;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Friction Up")
+    float AirFrictionGoingUp;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Friction Up")
+    TObjectPtr<UCurveFloat> AirFrictionCurveUp;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Friction Down")
+    float AirFrictionGoingDown;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Friction Down")
+    TObjectPtr<UCurveFloat> AirFrictionCurveDown;
 };
