@@ -10,14 +10,14 @@ void UPFPhysicResource::AddForce(FVector force, bool bShouldResetForce, bool bSh
 
 FVector UPFPhysicResource::GetCurrentVelocity() const
 {
-    return Owner->GetVelocity();
+    return Root->GetPhysicsLinearVelocity();
 }
 
 float UPFPhysicResource::GetAlignmentWithUp() const
 {
     FVector forward = Root->GetForwardVector();
 
-    return FVector::DotProduct(forward, Owner->GetVelocity());
+    return FVector::DotProduct(forward, GetCurrentVelocity());
 }
 
 float UPFPhysicResource::GetCurrentAirFriction() const

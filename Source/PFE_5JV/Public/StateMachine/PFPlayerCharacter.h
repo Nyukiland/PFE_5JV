@@ -12,7 +12,7 @@ UCLASS(Blueprintable)
 class PFE_5JV_API APFPlayerCharacter : public APawn
 {
 	GENERATED_BODY()
-
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 	TSubclassOf<UPFState> DefaultState_;

@@ -14,9 +14,9 @@ class PFE_5JV_API UPFStateComponent : public UActorComponent
 public:
 	bool bIsActive = false;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TObjectPtr<APFPlayerCharacter> Owner;
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TObjectPtr<UPrimitiveComponent> Root;
 	
 public:	
