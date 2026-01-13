@@ -50,9 +50,7 @@ Plugins/*/Intermediate/
 *.idea
 
 #FMOD
-Plugins/FMODStudio/Binaries/
 Plugins/FMODStudio/Intermediate/
-Plugins/FMODStudioNiagara/Binaries/
 Plugins/FMODStudioNiagara/Intermediate/
 *.user
 .fmod/
