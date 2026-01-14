@@ -120,3 +120,23 @@ void UPFPhysicResource::ProcessMaxSpeed(const float deltaTime)
 
     Root->SetPhysicsLinearVelocity(velocity);
 }
+
+void UPFPhysicResource::SetYawRotationForce(float rotation)
+{
+    AngularVelocity.Z = rotation;
+}
+
+void UPFPhysicResource::SetPitchRotationForce(float rotation)
+{
+    AngularVelocity.X = rotation;
+}
+
+void UPFPhysicResource::ProcessAngularVelocity()
+{
+    Root->SetPhysicsAngularVelocityInDegrees(AngularVelocity);
+}
+
+void UPFPhysicResource::DoGravity(const float deltaTime)
+{
+    AllForces_.Add(FForceToAdd(DataPtr_->Gravity * deltaTime * FVector::UpVector));
+}

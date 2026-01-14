@@ -26,6 +26,16 @@ public:
 	{
 		Force = FVector::ZeroVector;
 		bShouldReset = false;
+		bShoudEndAdded = false;
+		Duration = 0;
+		CurvePtr = nullptr;
+	}
+
+	FForceToAdd(const FVector& force)
+	{
+		Force = force;
+		bShouldReset = false;
+		bShoudEndAdded = false;
 		Duration = 0;
 		CurvePtr = nullptr;
 	}
@@ -44,9 +54,6 @@ UCLASS(Abstract, Blueprintable)
 class PFE_5JV_API UPFPhysicResource : public UPFResource
 {
 	GENERATED_BODY()
-
-public:
-	float AirFriction;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PhysicResource")
@@ -55,6 +62,8 @@ protected:
 	FVector Velocity_;
 	UPROPERTY()
 	TArray<FForceToAdd> AllForces_;
+
+	FVector AngularVelocity;
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bisAdded, duration, curve"))
@@ -77,4 +86,16 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void ProcessMaxSpeed(const float deltaTime);
+	
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	void SetYawRotationForce(float rotation);
+	
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	void SetPitchRotationForce(float rotation);
+	
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	void ProcessAngularVelocity();
+	
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	void DoGravity(const float deltaTime);
 };

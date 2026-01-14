@@ -6,11 +6,17 @@
 #include "InputActionValue.h"
 #include "PFState.generated.h"
 
+class APFPlayerCharacter;
+
 UCLASS(Abstract, Blueprintable)
 class PFE_5JV_API UPFState : public UObject
 {
 	GENERATED_BODY()
 
+public:
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TObjectPtr<APFPlayerCharacter> Owner;
+	
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnEnter();

@@ -28,7 +28,10 @@ void UPFCombinedState::OnExit_Implementation()
 void UPFCombinedState::AddSubState(TSubclassOf<UPFState> stateClass)
 {
 	UPFState* state = NewObject<UPFState>(this, stateClass);
+	
+	state->Owner = Owner;
 	state->OnEnter();
 
+	
 	SubStatePtr_.Add(state);
 }

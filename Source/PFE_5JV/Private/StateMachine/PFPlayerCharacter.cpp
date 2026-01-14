@@ -63,6 +63,17 @@ void APFPlayerCharacter::BeginPlay()
 
 	for (UPFStateComponent* comp : StateComponentsPtr_)
 		comp->ComponentInit(this);
+
+	if (FirstState_)
+		ChangeState(FirstState_);
+
+	if (!DefaultState_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[Player] No default state"));
+		return;
+	}
+
+	ChangeState(DefaultState_);
 }
 
 void APFPlayerCharacter::Tick(float DeltaTime)
@@ -143,6 +154,7 @@ void APFPlayerCharacter::ChangeState(TSubclassOf<UPFState> newState)
 	}
 
 	CurrentStatePtr_ = NewObject<UPFState>(this, newState);
+	CurrentStatePtr_->Owner = this;
 	CurrentStatePtr_->OnEnter();
 }
 
@@ -163,6 +175,9 @@ UPFStateComponent* APFPlayerCharacter::GetStateComponent(TSubclassOf<UPFStateCom
 
 void APFPlayerCharacter::ActivateAbilityComponent(UPFStateComponent* comp, int index)
 {
+	if (comp)
+		return;;
+	
 	if (Cast<UPFResource>(comp))
 	{
 		return;

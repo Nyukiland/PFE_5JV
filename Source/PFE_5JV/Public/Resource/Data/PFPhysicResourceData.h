@@ -16,6 +16,9 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Speed")
     float MaxAboveSpeed = 10;
 
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Speed")
+    float Gravity = 2;
+
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction")
     float BaseAirFriction;
 
