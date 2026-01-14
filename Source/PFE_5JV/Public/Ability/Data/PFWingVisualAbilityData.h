@@ -2,10 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "PFWingBeatAbilityData.generated.h"
+#include "PFWingVisualAbilityData.generated.h"
 
 UCLASS(Blueprintable, BlueprintType)
-class PFE_5JV_API UPFWingBeatAbilityData : public UDataAsset
+class PFE_5JV_API UPFWingVisualAbilityData : public UDataAsset
 {
 	GENERATED_BODY()
 	
