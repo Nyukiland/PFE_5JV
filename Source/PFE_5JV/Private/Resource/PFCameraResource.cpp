@@ -12,25 +12,10 @@ void UPFCameraResource::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ensureMsgf(CameraRoot, TEXT("[CameraResource] CameraRoot is null"));
-	ensureMsgf(SpringArm, TEXT("[CameraResource] SpringArm is null"));
-	ensureMsgf(Camera, TEXT("[CameraResource] Camera is null"));
-}
-
-void UPFCameraResource::TickComponent(
-	float DeltaTime,
-	ELevelTick TickType,
-	FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	if (!CameraRoot || !Camera || !GetOwner())
+	if (!CameraRoot || !SpringArm || !Camera)
 	{
-		return;
+		UE_LOG(LogTemp, Warning, TEXT("A reference of the camera script is null"));
 	}
-
-	UpdateRotation(DeltaTime);
-	UpdatePosition(DeltaTime);
 }
 
 void UPFCameraResource::UpdateRotation(float DeltaTime)

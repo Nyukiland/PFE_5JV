@@ -14,23 +14,17 @@ class PFE_5JV_API UPFCameraResource : public UPFResource
 
 public:
 	UPFCameraResource();
-
-	virtual void TickComponent(
-		float DeltaTime,
-		ELevelTick TickType,
-		FActorComponentTickFunction* ThisTickFunction
-	) override;
 	
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere, Category="Camera|References")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
 	USceneComponent* CameraRoot;
 
-	UPROPERTY(EditAnywhere, Category="Camera|References")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
 	USpringArmComponent* SpringArm;
 
-	UPROPERTY(EditAnywhere, Category="Camera|References")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
 	UCameraComponent* Camera;
 
 	UPROPERTY(EditAnywhere, Category="Camera|Settings")
@@ -57,8 +51,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Camera|Settings")
 	float FOVInterpSpeed = 2.5f;
 
-private:
+	UFUNCTION(BlueprintCallable)
 	void UpdateRotation(float DeltaTime);
+	UFUNCTION(BlueprintCallable)
 	void UpdatePosition(float DeltaTime);
 
 	FVector ComputeTargetLocation() const;
