@@ -17,7 +17,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TObjectPtr<APFPlayerCharacter> Owner;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	TObjectPtr<UPrimitiveComponent> Root;
+	TObjectPtr<UPrimitiveComponent> PhysicRoot;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TObjectPtr<USceneComponent> ForwardRoot;
 	
 public:	
 	UPFStateComponent();

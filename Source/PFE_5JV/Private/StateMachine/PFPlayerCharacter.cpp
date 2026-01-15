@@ -8,7 +8,6 @@
 APFPlayerCharacter::APFPlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
 void APFPlayerCharacter::BeginPlay()
@@ -24,12 +23,12 @@ void APFPlayerCharacter::BeginPlay()
 			subsystem->AddMappingContext(InputMappingContextPtr_, 0);
 		}
 	}
-	
+
 	StateComponentsPtr_.Empty();
 	ComponentIndexMap_.Empty();
 	ResourcesCount_ = 0;
 	ActiveAbilities_ = 0;
-	
+
 	TArray<UPFStateComponent*> stateComponents;
 	GetComponents(stateComponents);
 	TArray<UPFAbility*> abilities;
@@ -53,11 +52,18 @@ void APFPlayerCharacter::BeginPlay()
 	for (int i = 0; i < StateComponentsPtr_.Num(); i++)
 	{
 		UPFStateComponent* comp = StateComponentsPtr_[i];
+
+		UClass* classNative = comp->GetClass();
+
+		while (classNative && Cast<UBlueprintGeneratedClass>(classNative))
+		{
+			classNative = classNative->GetSuperClass();
+		}
 		
-		if (ComponentIndexMap_.Contains(comp->GetClass()))
+		if (ComponentIndexMap_.Contains(classNative))
 			UE_LOG(LogTemp, Error, TEXT("[Player] Duplicate component detected"));
-		
-		ComponentIndexMap_.Add(comp->GetClass(), i);
+
+		ComponentIndexMap_.Add(classNative, i);
 		comp->ComponentEarlyInit();
 	}
 
@@ -100,7 +106,7 @@ void APFPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		ETriggerEvent::Completed,
 		ETriggerEvent::Canceled
 	};
-	
+
 	for (UInputAction* action : InputActionsPtr_)
 	{
 		if (!action) continue;
@@ -146,7 +152,7 @@ void APFPlayerCharacter::ChangeState(TSubclassOf<UPFState> newState)
 		UE_LOG(LogTemp, Error, TEXT("[PlayerCharacter] invalid new state when trying to change state"));
 		return;
 	}
-	
+
 	if (CurrentStatePtr_)
 	{
 		CurrentStatePtr_->OnExit();
@@ -175,14 +181,14 @@ UPFStateComponent* APFPlayerCharacter::GetStateComponent(TSubclassOf<UPFStateCom
 
 void APFPlayerCharacter::ActivateAbilityComponent(UPFStateComponent* comp, int index)
 {
-	if (comp)
-		return;;
-	
+	if (!comp)
+		return;
+
 	if (Cast<UPFResource>(comp))
 	{
 		return;
 	}
-	
+
 	int componentCount = StateComponentsPtr_.Num();
 	if (!comp ||
 		index < 0 || index >= componentCount ||
@@ -190,7 +196,7 @@ void APFPlayerCharacter::ActivateAbilityComponent(UPFStateComponent* comp, int i
 		return;
 
 	int targetIndex = ResourcesCount_ + ActiveAbilities_;
-	
+
 	if (index != targetIndex)
 	{
 		SwapComponents(index, targetIndex);
@@ -235,10 +241,17 @@ void APFPlayerCharacter::SwapComponents(int a, int b)
 {
 	if (a == b) return;
 
-	StateComponentsPtr_.Swap(a, b);
+	auto GetNativeClass = [](UClass* nativeclass)
+	{
+		while (nativeclass && Cast<UBlueprintGeneratedClass>(nativeclass))
+			nativeclass = nativeclass->GetSuperClass();
+		return nativeclass;
+	};
 
-	ComponentIndexMap_[StateComponentsPtr_[a]->GetClass()] = a;
-	ComponentIndexMap_[StateComponentsPtr_[b]->GetClass()] = b;
+	ComponentIndexMap_[GetNativeClass(StateComponentsPtr_[a]->GetClass())] = a;
+	ComponentIndexMap_[GetNativeClass(StateComponentsPtr_[b]->GetClass())] = b;
+	
+	StateComponentsPtr_.Swap(a, b);
 }
 
 void APFPlayerCharacter::OnInputAction(const FInputActionInstance& instance)

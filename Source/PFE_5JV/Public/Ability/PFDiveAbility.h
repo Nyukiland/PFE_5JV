@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Data/PFDiveAbilityData.h"
+#include "Resource/PFPhysicResource.h"
 #include "StateMachine/StateComponent/PFAbility.h"
 #include "PFDiveAbility.generated.h"
 
@@ -13,4 +14,26 @@ class PFE_5JV_API UPFDiveAbility : public UPFAbility
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive")
 	TObjectPtr<UPFDiveAbilityData> DataPtr_;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
+	TObjectPtr<UPFPhysicResource> PhysicResource_;
+	
+	float HighestInput_;
+	float InputRight_;
+	float InputLeft_;
+	
+public:
+	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
+
+	UFUNCTION(BlueprintCallable, Category="Dive")
+	void ReceiveInputLeft(float left);
+
+	UFUNCTION(BlueprintCallable, Category="Dive")
+	void ReceiveInputRight(float right);
+
+	UFUNCTION(BlueprintCallable, Category="Dive")
+	void Dive(float deltaTime);
+	
+private:
+	void GetHighestValue();
 };

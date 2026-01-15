@@ -21,4 +21,22 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="WingVisual",
 		meta=(UseComponentPicker, AllowedClasses="SceneComponent"))
 	TObjectPtr<USceneComponent> RightWingRoot_;
+
+	float InputLeft_;
+	float InputRight_;
+
+	float CurrentMedianValue_;
+	
+public:
+	UFUNCTION(BlueprintCallable, Category = "WingVisual")
+	void ReceiveInputRight(float right);
+	
+	UFUNCTION(BlueprintCallable, Category = "WingVisual")
+	void ReceiveInputLeft(float left);
+
+	UFUNCTION(BlueprintCallable, Category = "WingVisual")
+	void ChangeRotation(float deltaTime);
+
+	UFUNCTION(BlueprintCallable, Category = "WingVisual")
+	void ChangeWingRotation(float deltaTime);
 };

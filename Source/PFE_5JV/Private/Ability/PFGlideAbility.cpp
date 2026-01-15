@@ -1,6 +1,15 @@
 #include "Ability/PFGlideAbility.h"
 
 #include "Resource/PFPhysicResource.h"
+#include "StateMachine/PFPlayerCharacter.h"
+
+void UPFGlideAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
+{
+	Super::ComponentInit_Implementation(ownerObj);
+
+	PhysicResource_ = CastChecked<UPFPhysicResource>
+		(Owner->GetStateComponent(UPFPhysicResource::StaticClass()));
+}
 
 void UPFGlideAbility::ConstantMovement(float deltaTime)
 {
@@ -10,6 +19,5 @@ void UPFGlideAbility::ConstantMovement(float deltaTime)
 		return;
 	}
 	
-	FVector forward = Root->GetForwardVector();
-	PhysicResource_->AddForce(deltaTime * DataPtr_->BaseForwardMovement * forward);
+	PhysicResource_->AddForwardForce(deltaTime * DataPtr_->BaseForwardMovement);
 }

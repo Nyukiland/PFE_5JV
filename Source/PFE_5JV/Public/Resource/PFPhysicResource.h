@@ -34,7 +34,7 @@ public:
 	FForceToAdd(const FVector& force)
 	{
 		Force = force;
-		bShouldReset = false;
+		bShouldReset = true;
 		bShoudEndAdded = false;
 		Duration = 0;
 		CurvePtr = nullptr;
@@ -60,14 +60,22 @@ protected:
 	TObjectPtr<UPFPhysicResourceData> DataPtr_;
 
 	FVector Velocity_;
+	FVector ForwardVelo_;
 	UPROPERTY()
 	TArray<FForceToAdd> AllForces_;
+	TArray<FForceToAdd> ForwardForces_;
 
 	FVector AngularVelocity;
 	
 public:
+	UFUNCTION(Blueprintable, Category = "PhysicResource")
+	float GetCurrentSpeed0to1();
+	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bisAdded, duration, curve"))
 	void AddForce(FVector force, bool bShouldResetForce = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);
+
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bisAdded, duration, curve"))
+	void AddForwardForce(float force, bool bShouldResetForce = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	FVector GetCurrentVelocity() const;
@@ -91,11 +99,11 @@ public:
 	void SetYawRotationForce(float rotation);
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	void SetPitchRotationForce(float rotation);
-	
-	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void ProcessAngularVelocity();
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void DoGravity(const float deltaTime);
+
+private:
+	FVector CalculateForce(FForceToAdd* force, float deltaTime, FVector& VelocityGlobal);
 };

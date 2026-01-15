@@ -12,6 +12,10 @@ UCLASS(Blueprintable)
 class PFE_5JV_API APFPlayerCharacter : public APawn
 {
 	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	TObjectPtr<USceneComponent> ForwardRoot;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
@@ -49,6 +53,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	//State Component
+	//Need to cast due to Blueprint compatibility
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	UPFStateComponent* GetStateComponent(TSubclassOf<UPFStateComponent> componentClass);
 
@@ -58,6 +63,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	void DeactivateAbilityComponent(TSubclassOf<UPFStateComponent> componentClass);
 
+	//Need to cast due to Blueprint compatibility
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	UPFStateComponent* GetAndActivateComponent(TSubclassOf<UPFStateComponent> componentClass);
 

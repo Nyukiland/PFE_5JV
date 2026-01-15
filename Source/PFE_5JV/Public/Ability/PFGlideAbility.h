@@ -16,13 +16,16 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Glide")
 	FVector2D MoveInput_;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Glide")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Glide")
 	TObjectPtr<UPFPhysicResource> PhysicResource_;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Glide")
 	TObjectPtr<UPFGlideAbilityData> DataPtr_;
 
-protected:
+public:
+	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
+
+protected:	
 	UFUNCTION(BlueprintCallable, Category = "Glide")
 	void ConstantMovement(float deltaTime);
 };
