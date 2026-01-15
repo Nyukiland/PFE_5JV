@@ -10,18 +10,18 @@ class PFE_5JV_API UPFWingVisualAbilityData : public UDataAsset
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WingVisual")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WingVisual/PitchRotation")
 	float MaxRotationPitch;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WingVisual")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WingVisual/PitchRotation")
 	float LerpPitchSpeedGoingUp;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WingVisual")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WingVisual/PitchRotation")
 	float LerpPitchSpeedGoingDown;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WingVisual")
-	float BaseWingRotation;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WingVisual")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WingVisual/WingRotation")
 	float MaxWingRotation;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WingVisual/WingRotation")
+	float LerpWingRotation;
 };

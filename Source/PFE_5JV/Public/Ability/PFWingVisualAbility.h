@@ -14,12 +14,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WingVisual")
 	TObjectPtr<UPFWingVisualAbilityData> DataPtr_;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="WingVisual",
-		meta=(UseComponentPicker, AllowedClasses="SceneComponent"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingVisual")
 	TObjectPtr<USceneComponent> LeftWingRoot_;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="WingVisual",
-		meta=(UseComponentPicker, AllowedClasses="SceneComponent"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingVisual")
 	TObjectPtr<USceneComponent> RightWingRoot_;
 
 	float InputLeft_;
