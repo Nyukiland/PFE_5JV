@@ -16,7 +16,7 @@ public:
 	UPFCameraResource();
 	
 protected:
-	virtual void BeginPlay() override;
+	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
 	USceneComponent* CameraRoot;

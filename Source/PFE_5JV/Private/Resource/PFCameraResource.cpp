@@ -8,14 +8,26 @@ UPFCameraResource::UPFCameraResource()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UPFCameraResource::BeginPlay()
+void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 {
-	Super::BeginPlay();
+	Super::ComponentInit_Implementation(ownerObj);
 
-	if (!CameraRoot || !SpringArm || !Camera)
+	if (!CameraRoot)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("A reference of the camera script is null"));
+		UE_LOG(LogTemp, Warning, TEXT("[CameraResource] The reference to the CameraRoot is null"));
 	}
+	if (!SpringArm)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[CameraResource] The reference to the SpringArm is null"));
+	}
+	if (!Camera)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[CameraResource] The reference to the Camera is null"));
+	}
+
+	CameraRoot->DetachFromComponent(
+		FDetachmentTransformRules::KeepWorldTransform
+	);
 }
 
 void UPFCameraResource::UpdateRotation(float DeltaTime)
