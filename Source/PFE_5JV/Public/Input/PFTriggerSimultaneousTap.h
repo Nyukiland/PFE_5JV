@@ -10,7 +10,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(meta = (DisplayName = "Simultaneous Tap (Custom trigger)"))
 class PFE_5JV_API UPFTriggerSimultaneousTap : public UInputTrigger
 {
 	GENERATED_BODY()
@@ -29,11 +29,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simultaneous Tap", meta = (ClampMin = "0.0"))
 	float TapTolerance = 0.15f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simultaneous Tap")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Simultaneous Tap")
 	bool bisActivatedOnce = false;
+	bool bisSecondInputTooLate = false;
 
 protected:
-
+	void ResetSimultaneousTap();
 	virtual ETriggerState UpdateState_Implementation(
 		const UEnhancedPlayerInput* PlayerInput,
 		FInputActionValue ModifiedValue,
