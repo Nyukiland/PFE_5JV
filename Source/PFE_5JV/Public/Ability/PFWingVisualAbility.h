@@ -15,12 +15,12 @@ protected:
 	TObjectPtr<UPFWingVisualAbilityData> DataPtr_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingVisual")
-	TObjectPtr<USceneComponent> LeftWingRoot_;
+	TObjectPtr<UPrimitiveComponent> BirdVisual;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingVisual")
-	TObjectPtr<USceneComponent> RightWingRoot_;
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "WingVisual")
 	float InputLeft_;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "WingVisual")
 	float InputRight_;
 
 	float CurrentMedianValue_;
@@ -34,7 +34,4 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "WingVisual")
 	void ChangeRotation(float deltaTime);
-
-	UFUNCTION(BlueprintCallable, Category = "WingVisual")
-	void ChangeWingRotation(float deltaTime);
 };
