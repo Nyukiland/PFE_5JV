@@ -32,12 +32,15 @@ void UPFTurnAbility::Turn(float deltaTime)
 	}
 
 	if (RotationValue_ == 0)
+	{
+		PhysicResource_->SetYawRotationForce(0);
 		return;
+	}
 	
 	float value = DataPtr_->RotationForce;
 	value *= FMath::Sign(RotationValue_);
 	value *= DataPtr_->RotationForceBasedOnInput->GetFloatValue(FMath::Abs(RotationValue_));
-	
+
 	PhysicResource_->SetYawRotationForce(value);
 }
 

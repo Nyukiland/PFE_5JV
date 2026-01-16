@@ -29,27 +29,3 @@ void UPFWingVisualAbility::ChangeRotation(float deltaTime)
 	rotation.Pitch = FMath::Lerp(0, DataPtr_->MaxRotationPitch, CurrentMedianValue_);
 	ForwardRoot->SetRelativeRotation(rotation);
 }
-//
-// void UPFWingVisualAbility::ChangeWingRotation(float deltaTime)
-// {
-// 	if (!DataPtr_)
-// 	{
-// 		UE_LOG(LogTemp, Error, TEXT("[WingVisual] Bad set up on Data"))
-// 		return;
-// 	}
-// 	
-// 	FRotator rightRotation = RightWingRoot_->GetRelativeRotation();
-// 	FRotator leftRotation = LeftWingRoot_->GetRelativeRotation();
-//
-// 	float rotValue = FMath::Max(InputLeft_, InputRight_) - FMath::Min(InputLeft_, InputRight_);
-// 	rotValue *= InputLeft_ > InputRight_ ? 1 : -1;
-//
-// 	rightRotation.Roll = FMath::Lerp(rightRotation.Roll, rotValue * DataPtr_->MaxWingRotation,
-// 		DataPtr_->LerpWingRotation);
-//
-// 	leftRotation.Roll = FMath::Lerp(leftRotation.Roll, -rotValue * DataPtr_->MaxWingRotation,
-// 		DataPtr_->LerpWingRotation);
-//
-// 	RightWingRoot_->SetRelativeRotation(rightRotation);
-// 	LeftWingRoot_->SetRelativeRotation(leftRotation)
-// }

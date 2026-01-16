@@ -37,7 +37,7 @@ void UPFDiveAbility::Dive(float deltaTime)
 	float velocity0to1 = PhysicResource_->GetCurrentSpeed0to1();
 	speedToGive *= DataPtr_->DiveAccelerationBasedOnSpeedCurve->GetFloatValue(velocity0to1);
 
-	PhysicResource_->AddForwardForce(speedToGive * deltaTime, false);
+	PhysicResource_->AddForwardForce(speedToGive, false);
 }
 
 void UPFDiveAbility::GetHighestValue()

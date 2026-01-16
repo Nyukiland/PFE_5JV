@@ -19,5 +19,5 @@ void UPFGlideAbility::ConstantMovement(float deltaTime)
 		return;
 	}
 	
-	PhysicResource_->AddForwardForce(deltaTime * DataPtr_->BaseForwardMovement);
+	PhysicResource_->AddForwardForce(DataPtr_->BaseForwardMovement);
 }
