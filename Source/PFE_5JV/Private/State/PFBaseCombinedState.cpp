@@ -17,4 +17,9 @@ void UPFBaseCombinedState::OnEnter_Implementation()
 	
 	WingVisual_ = CastChecked<UPFWingVisualAbility>(
 		Owner->GetAndActivateComponent(UPFWingVisualAbility::StaticClass()));
+
+	WingBeat_ = CastChecked<UPFWingBeatAbility>(
+	Owner->GetAndActivateComponent(UPFWingBeatAbility::StaticClass()));
+
+	
 }

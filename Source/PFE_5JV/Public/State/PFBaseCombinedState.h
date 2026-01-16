@@ -5,6 +5,7 @@
 #include "Ability/PFGlideAbility.h"
 #include "Ability/PFTurnAbility.h"
 #include "Ability/PFWingVisualAbility.h"
+#include "Ability/PFWingBeatAbility.h"
 #include "StateMachine/State/PFCombinedState.h"
 #include "PFBaseCombinedState.generated.h"
 
@@ -25,6 +26,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base")
 	TObjectPtr<UPFWingVisualAbility> WingVisual_;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base")
+	TObjectPtr<UPFWingBeatAbility> WingBeat_;
 	
 public:
 	virtual void OnEnter_Implementation() override;
