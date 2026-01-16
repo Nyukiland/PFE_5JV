@@ -54,6 +54,12 @@ UCLASS(Abstract, Blueprintable)
 class PFE_5JV_API UPFPhysicResource : public UPFResource
 {
 	GENERATED_BODY()
+
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
+	FVector CurrentForwardVelo_;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
+	FVector CurrentGlobalVelo_;	
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PhysicResource")
@@ -66,7 +72,7 @@ protected:
 	TArray<FForceToAdd> AllForces_;
 	UPROPERTY()
 	TArray<FForceToAdd> ForwardForces_;
-
+	
 	FVector AngularVelocity;
 	
 public:

@@ -69,12 +69,22 @@ float UPFPhysicResource::GetCurrentAirFriction() const
 
 void UPFPhysicResource::ProcessAirFriction(const float deltaTime)
 {
-	FVector dir = Velocity_.GetSafeNormal();
-	dir *= -1;
-
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[PhysicResource] DataPtr_ is null"));
+		return;
+	}
+	
 	float friction = GetCurrentAirFriction();
+
+	FVector dir = Velocity_.GetSafeNormal();
 	Velocity_ -= friction * dir;
+	
+	dir = ForwardVelo_.GetSafeNormal();
 	ForwardVelo_ -= friction * dir;
+
+	ForwardVelo_ = ForwardVelo_.GetClampedToSize(0, DataPtr_->MaxAboveSpeed);
+	Velocity_ = Velocity_.GetClampedToSize(0, DataPtr_->MaxAboveSpeed);
 }
 
 void UPFPhysicResource::ProcessVelocity(const float deltaTime)
@@ -101,6 +111,8 @@ void UPFPhysicResource::ProcessVelocity(const float deltaTime)
 		velocity += toAdd;
 	}
 
+	CurrentGlobalVelo_ = velocity;
+
 	FVector velocityForward = ForwardVelo_;
 
 	for (int i = ForwardForces_.Num() - 1; i >= 0; i--)
@@ -123,6 +135,8 @@ void UPFPhysicResource::ProcessVelocity(const float deltaTime)
 		velocityForward += toAdd;
 	}
 
+	CurrentForwardVelo_ = velocityForward;
+	
 	velocity += ForwardRoot->GetForwardVector() * velocityForward.Length();
 
 	PhysicRoot->SetPhysicsLinearVelocity(velocity);
