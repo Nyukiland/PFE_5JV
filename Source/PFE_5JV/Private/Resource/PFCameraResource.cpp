@@ -12,68 +12,103 @@ void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 {
 	Super::ComponentInit_Implementation(ownerObj);
 
-	if (!CameraRoot)
+	if (!CameraRootPtr_)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[CameraResource] The reference to the CameraRoot is null"));
 	}
-	if (!SpringArm)
+	if (!SpringArmPtr_)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[CameraResource] The reference to the SpringArm is null"));
 	}
-	if (!Camera)
+	if (!CameraPtr_)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[CameraResource] The reference to the Camera is null"));
 	}
 
-	CameraRoot->DetachFromComponent(
+	CameraRootPtr_->DetachFromComponent(
 		FDetachmentTransformRules::KeepWorldTransform
 	);
 }
 
-void UPFCameraResource::UpdateRotation(float DeltaTime)
+void UPFCameraResource::UpdateRotation(float deltaTime)
 {
-	FRotator TargetRotation = Owner->GetActorRotation();
+	FRotator OwnerRot = Owner->GetActorRotation();
+	FRotator CameraRot = CameraRootPtr_->GetComponentRotation();
+
+	FRotator DeltaRot = (OwnerRot - CameraRot).GetNormalized();
+
+	DeltaRot.Yaw   = FMath::Clamp(DeltaRot.Yaw,   -CameraResourceData_->MaxYawWhenRotating, CameraResourceData_->MaxYawWhenRotating);
+	DeltaRot.Pitch = FMath::Clamp(DeltaRot.Pitch, -CameraResourceData_->MaxPitchWhenRotating, CameraResourceData_->MaxPitchWhenRotating);
+	DeltaRot.Roll  = 0.f;
+
+	FRotator TargetRotation = CameraRot + DeltaRot;
 
 	// Décommenter la ligne d'apres si le roll rends malade pour limiter les mouvements de camera
-	TargetRotation.Roll *= RollFactor;
+	TargetRotation.Roll *= CameraResourceData_->RollFactor;
 	/*TargetRotation.Roll = FMath::Clamp(
 	TargetRotation.Roll * RollFactor,
 	-25.f,
 	25.f
 	);*/
 
-	FRotator CurrentRotation = CameraRoot->GetComponentRotation();
+	FRotator CurrentRotation = CameraRootPtr_->GetComponentRotation();
 
 	FRotator NewRotation = FMath::RInterpTo(
 		CurrentRotation,
 		TargetRotation,
-		DeltaTime,
-		RotationInterpSpeed
+		deltaTime,
+		CameraResourceData_->RotationInterpSpeed
 	);
 
-	CameraRoot->SetWorldRotation(NewRotation);
+	CameraRootPtr_->SetWorldRotation(NewRotation);
 }
 
 FVector UPFCameraResource::ComputeTargetLocation() const
 {
-	FVector Back = -Owner->GetActorForwardVector() * Distance;
-	FVector Up = FVector(0.f, 0.f, Height);
-	FVector Forward = Owner->GetActorForwardVector() * LookAhead;
+	FVector Back = -Owner->GetActorForwardVector() * CameraResourceData_->Distance;
+	FVector Up = FVector(0.f, 0.f, CameraResourceData_->Height);
+	FVector Forward = Owner->GetActorForwardVector() * CameraResourceData_->LookAhead;
 
 	return Owner->GetActorLocation() + Back + Up + Forward;
 }
 
-void UPFCameraResource::UpdatePosition(float DeltaTime)
+void UPFCameraResource::UpdatePosition(float deltaTime)
 {
-	FVector CurrentLocation = CameraRoot->GetComponentLocation();
+	FVector CurrentLocation = CameraRootPtr_->GetComponentLocation();
 	FVector TargetLocation = ComputeTargetLocation();
 
 	FVector NewLocation = FMath::VInterpTo(
 		CurrentLocation,
 		TargetLocation,
-		DeltaTime,
-		PositionInterpSpeed
+		deltaTime,
+		CameraResourceData_->PositionInterpSpeed
 	);
 
-	CameraRoot->SetWorldLocation(NewLocation);
-} 
+	CameraRootPtr_->SetWorldLocation(NewLocation);
+}
+
+void UPFCameraResource::UpdateZoom(float deltaTime)
+{
+	if (CameraResourceData_->IsDiving)
+	{
+		DiveTheTimer += deltaTime;
+	}
+	else
+	{
+		DiveTheTimer = 0.f;
+	}
+
+	float TargetDistance = CameraResourceData_->Distance;
+
+	if (DiveTheTimer > 1.f)
+	{
+		TargetDistance = 480.f;
+	}
+
+	SpringArmPtr_->TargetArmLength = FMath::FInterpTo(
+		SpringArmPtr_->TargetArmLength,
+		TargetDistance,
+		deltaTime,
+		2.f
+	);
+}

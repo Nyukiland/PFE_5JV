@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Data/PFCameraResourceData.h"
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFCameraResource.generated.h"
 
@@ -17,46 +18,30 @@ public:
 	
 protected:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
+	TObjectPtr<USceneComponent> CameraRootPtr_;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
-	USceneComponent* CameraRoot;
+	TObjectPtr<USpringArmComponent> SpringArmPtr_;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
-	USpringArmComponent* SpringArm;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
-	UCameraComponent* Camera;
-
-	UPROPERTY(EditAnywhere, Category="Camera|Settings")
-	float Distance = 420.f;
-
-	UPROPERTY(EditAnywhere, Category="Camera|Settings")
-	float Height = 120.f;
-
-	UPROPERTY(EditAnywhere, Category="Camera|Settings")
-	float LookAhead = 80.f;
-
-	UPROPERTY(EditAnywhere, Category="Camera|Settings")
-	float PositionInterpSpeed = 3.5f;
-
-	UPROPERTY(EditAnywhere, Category="Camera|Settings")
-	float RotationInterpSpeed = 6.f;
-
-	UPROPERTY(EditAnywhere, Category="Camera|Settings")
-	float RollFactor = 0.25f;
-
-	UPROPERTY(EditAnywhere, Category="Camera|Settings")
-	float NormalFOV = 90.f;
-
-	UPROPERTY(EditAnywhere, Category="Camera|Settings")
-	float FOVInterpSpeed = 2.5f;
-
+	TObjectPtr<UCameraComponent> CameraPtr_;
+	
 	UFUNCTION(BlueprintCallable)
-	void UpdateRotation(float DeltaTime);
+	void UpdateRotation(float deltaTime);
 	UFUNCTION(BlueprintCallable)
-	void UpdatePosition(float DeltaTime);
+	void UpdatePosition(float deltaTime);
+	UFUNCTION(blueprintCallable)
+	void UpdateZoom(float deltaTime);
 
 	FVector ComputeTargetLocation() const;
+
+	UPROPERTY(EditAnywhere, blueprintReadWrite)
+	TObjectPtr<UPFCameraResourceData> CameraResourceData_;
+
+private:
+	float DiveTheTimer = 0.f;
 };
 
 /*
