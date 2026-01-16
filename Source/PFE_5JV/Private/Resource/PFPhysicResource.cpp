@@ -13,6 +13,22 @@ float UPFPhysicResource::GetCurrentSpeed0to1()
 	return FMath::Clamp(GetCurrentVelocity().Length() / DataPtr_->MaxAboveSpeed, 0, 1);
 }
 
+float UPFPhysicResource::GetCurrentSpeed0to1InZ()
+{
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[PhysicResource] No Data available"))
+		return 0.0f;
+	}
+
+	if(GetCurrentVelocity().Z > 0)
+	{
+		return 0.0f;
+	}
+
+	return FMath::Clamp(GetCurrentVelocity().Z / DataPtr_->MaxAboveSpeed, 0, 1);
+}
+
 void UPFPhysicResource::AddForce(FVector force, bool bShouldResetForce, bool bShouldAddAtTheEnd, float duration,
                                  UCurveFloat* curve)
 {
