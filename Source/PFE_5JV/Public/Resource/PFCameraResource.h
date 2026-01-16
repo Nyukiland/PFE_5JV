@@ -46,4 +46,6 @@ protected:
 
 private:
 	float DiveTheTimer = 0.f;
+	float DiveTransitionTimer = 0.f;
+	bool WasDiving = false;
 };
