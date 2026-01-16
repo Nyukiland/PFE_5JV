@@ -40,6 +40,11 @@ void UPFDiveAbility::Dive(float deltaTime)
 	PhysicResource_->AddForwardForce(speedToGive, false);
 }
 
+bool UPFDiveAbility::IsDiving() const
+{
+	return HighestInput_ != 0;
+}
+
 void UPFDiveAbility::GetHighestValue()
 {
 	HighestInput_ = FMath::Min(InputLeft_, InputRight_);

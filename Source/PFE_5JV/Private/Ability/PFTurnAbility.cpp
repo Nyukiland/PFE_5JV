@@ -25,7 +25,8 @@ void UPFTurnAbility::ReceiveInputRight(float right)
 
 void UPFTurnAbility::Turn(float deltaTime)
 {
-	if (!DataPtr_ || !DataPtr_->RotationForceBasedOnInput)
+	if (!DataPtr_ || !DataPtr_->RotationForceBasedOnInput
+		|| !DataPtr_->RotationForceBasedOnVelocity)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[TurnAbility] Bad set up on data"));
 		return;
@@ -40,7 +41,9 @@ void UPFTurnAbility::Turn(float deltaTime)
 	float value = DataPtr_->RotationForce;
 	value *= FMath::Sign(RotationValue_);
 	value *= DataPtr_->RotationForceBasedOnInput->GetFloatValue(FMath::Abs(RotationValue_));
-
+	float velocity0to1 = PhysicResource_->GetCurrentSpeed0to1();
+	value *= DataPtr_->RotationForceBasedOnVelocity->GetFloatValue(velocity0to1);
+	
 	PhysicResource_->SetYawRotationForce(value);
 }
 

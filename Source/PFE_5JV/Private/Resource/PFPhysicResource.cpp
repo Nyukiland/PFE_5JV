@@ -72,8 +72,9 @@ void UPFPhysicResource::ProcessAirFriction(const float deltaTime)
 	FVector dir = Velocity_.GetSafeNormal();
 	dir *= -1;
 
-	Velocity_ -= deltaTime * GetCurrentAirFriction() * dir;
-	ForwardVelo_ -= deltaTime * GetCurrentAirFriction() * dir;
+	float friction = GetCurrentAirFriction();
+	Velocity_ -= friction * dir;
+	ForwardVelo_ -= friction * dir;
 }
 
 void UPFPhysicResource::ProcessVelocity(const float deltaTime)
@@ -144,7 +145,11 @@ void UPFPhysicResource::ProcessMaxSpeed(const float deltaTime)
 	FVector dir = velocity.GetSafeNormal();
 	dir *= -1;
 
-	velocity -= deltaTime * GetCurrentAirFriction() * dir;
+	float speedScaled = velocity.Length() - DataPtr_->MaxSpeed;
+	float maxSpeedScaled = velocity.Length() - DataPtr_->MaxSpeed;
+	float value01 = FMath::Clamp(speedScaled / maxSpeedScaled, 0.f, 1.f);
+	
+	velocity -= DataPtr_->AboveSpeedFrictionCurve->GetFloatValue(value01) * dir;
 
 	PhysicRoot->SetPhysicsLinearVelocity(velocity);
 }
@@ -161,7 +166,18 @@ void UPFPhysicResource::ProcessAngularVelocity()
 
 void UPFPhysicResource::DoGravity(const float deltaTime)
 {
-	AllForces_.Add(FForceToAdd(DataPtr_->Gravity * deltaTime * FVector::UpVector));
+	if (GravityTimer_ < DataPtr_->TimerMaxGravity)
+	{
+		GravityTimer_ += deltaTime;
+		return;
+	}
+	
+	AllForces_.Add(FForceToAdd(DataPtr_->Gravity * FVector::UpVector));
+}
+
+void UPFPhysicResource::ResetGravityTimer()
+{
+	GravityTimer_ = 0;
 }
 
 FVector UPFPhysicResource::CalculateForce(FForceToAdd* force, float deltaTime, FVector& VelocityGlobal)

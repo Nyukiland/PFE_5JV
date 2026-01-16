@@ -16,6 +16,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn")
 	TObjectPtr<UCurveFloat> RotationForceBasedOnInput;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn")
+	TObjectPtr<UCurveFloat> RotationForceBasedOnVelocity;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn", meta = (ClampMin = 0, ClampMax = 1))
 	float ToleranceRotBetweenInput;
 };

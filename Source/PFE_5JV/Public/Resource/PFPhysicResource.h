@@ -59,10 +59,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PhysicResource")
 	TObjectPtr<UPFPhysicResourceData> DataPtr_;
 
+	float GravityTimer_;
 	FVector Velocity_;
 	FVector ForwardVelo_;
 	UPROPERTY()
 	TArray<FForceToAdd> AllForces_;
+	UPROPERTY()
 	TArray<FForceToAdd> ForwardForces_;
 
 	FVector AngularVelocity;
@@ -103,6 +105,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void DoGravity(const float deltaTime);
+
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	void ResetGravityTimer();
 
 private:
 	FVector CalculateForce(FForceToAdd* force, float deltaTime, FVector& VelocityGlobal);

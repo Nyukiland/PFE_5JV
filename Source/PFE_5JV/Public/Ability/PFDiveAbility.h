@@ -33,6 +33,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Dive")
 	void Dive(float deltaTime);
+
+	UFUNCTION(BlueprintCallable, Category="Dive")
+	bool IsDiving()const;
 	
 private:
 	void GetHighestValue();
