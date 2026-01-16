@@ -51,5 +51,5 @@ void UPFWingVisualAbility::ChangeRotation(float deltaTime)
 // 		DataPtr_->LerpWingRotation);
 //
 // 	RightWingRoot_->SetRelativeRotation(rightRotation);
-// 	LeftWingRoot_->SetRelativeRotation(leftRotation);
+// 	LeftWingRoot_->SetRelativeRotation(leftRotation)
 // }
