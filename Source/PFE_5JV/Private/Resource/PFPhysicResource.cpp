@@ -2,7 +2,7 @@
 
 #include "StateMachine/PFPlayerCharacter.h"
 
-float UPFPhysicResource::GetCurrentSpeed0to1()
+float UPFPhysicResource::GetCurrentSpeedPercentage()
 {
 	if (!DataPtr_)
 	{
@@ -10,10 +10,10 @@ float UPFPhysicResource::GetCurrentSpeed0to1()
 		return 0.0f;
 	}
 
-	return FMath::Clamp(GetCurrentVelocity().Length() / DataPtr_->MaxAboveSpeed, 0, 1);
+	return FMath::Clamp(GetCurrentVelocity().Length() / DataPtr_->MaxSpeed, 0, 1);
 }
 
-float UPFPhysicResource::GetCurrentSpeed0to1InZ()
+float UPFPhysicResource::GetForwardSpeedPercentage()
 {
 	if (!DataPtr_)
 	{
@@ -21,12 +21,7 @@ float UPFPhysicResource::GetCurrentSpeed0to1InZ()
 		return 0.0f;
 	}
 
-	if(GetCurrentVelocity().Z > 0)
-	{
-		return 0.0f;
-	}
-
-	return FMath::Clamp(GetCurrentVelocity().Z / DataPtr_->MaxAboveSpeed, 0, 1);
+	return FMath::Clamp(CurrentForwardVelo_.Length() / DataPtr_->MaxSpeed, 0, 1);
 }
 
 void UPFPhysicResource::AddForce(FVector force, bool bShouldResetForce, bool bShouldAddAtTheEnd, float duration,
@@ -94,10 +89,10 @@ void UPFPhysicResource::ProcessAirFriction(const float deltaTime)
 	float friction = GetCurrentAirFriction();
 
 	FVector dir = Velocity_.GetSafeNormal();
-	Velocity_ -= friction * dir;
+	Velocity_ -= friction * deltaTime * dir;
 	
 	dir = ForwardVelo_.GetSafeNormal();
-	ForwardVelo_ -= friction * dir;
+	ForwardVelo_ -= friction * deltaTime * dir;
 
 	ForwardVelo_ = ForwardVelo_.GetClampedToSize(0, DataPtr_->MaxAboveSpeed);
 	Velocity_ = Velocity_.GetClampedToSize(0, DataPtr_->MaxAboveSpeed);
@@ -173,13 +168,12 @@ void UPFPhysicResource::ProcessMaxSpeed(const float deltaTime)
 		return;;
 
 	FVector dir = velocity.GetSafeNormal();
-	dir *= -1;
 
 	float speedScaled = velocity.Length() - DataPtr_->MaxSpeed;
 	float maxSpeedScaled = velocity.Length() - DataPtr_->MaxSpeed;
 	float value01 = FMath::Clamp(speedScaled / maxSpeedScaled, 0.f, 1.f);
 	
-	velocity -= DataPtr_->AboveSpeedFrictionCurve->GetFloatValue(value01) * dir;
+	velocity -= DataPtr_->AboveSpeedFrictionCurve->GetFloatValue(value01) * deltaTime * dir;
 
 	PhysicRoot->SetPhysicsLinearVelocity(velocity);
 }

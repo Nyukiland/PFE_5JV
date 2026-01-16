@@ -41,7 +41,7 @@ void UPFTurnAbility::Turn(float deltaTime)
 	float value = DataPtr_->RotationForce;
 	value *= FMath::Sign(RotationValue_);
 	value *= DataPtr_->RotationForceBasedOnInput->GetFloatValue(FMath::Abs(RotationValue_));
-	float velocity0to1 = PhysicResource_->GetCurrentSpeed0to1();
+	float velocity0to1 = PhysicResource_->GetForwardSpeedPercentage();
 	value *= DataPtr_->RotationForceBasedOnVelocity->GetFloatValue(velocity0to1);
 	
 	PhysicResource_->SetYawRotationForce(value);

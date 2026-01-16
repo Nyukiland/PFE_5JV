@@ -51,7 +51,6 @@ void UPFWingBeatAbility::ReceiveInputRight(float right)
 
 void UPFWingBeatAbility::WingBeat(float deltaTime)
 {
-
 	if (!DataPtr_ || !DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[BeatWingAbility] Bad Set up on data WingBeatAccelerationBasedOnAverageInputValueCurve"));
@@ -63,11 +62,13 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 	
 	float heightToGive = DataPtr_->ForceToGiveInHeight *
 		DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve->GetFloatValue(AverageInputValue_);
-	PhysicResource_->AddForce(heightToGive * FVector::UpVector, false);
+	PhysicResource_->AddForce(heightToGive * FVector::UpVector, true, false, DataPtr_->ForceToGiveInHeightDuration);
 	
 	float speedToGive = DataPtr_->ForceToGiveInVelocity *
 		DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve->GetFloatValue(AverageInputValue_);
-	PhysicResource_->AddForwardForce(speedToGive, false);
+	PhysicResource_->AddForwardForce(speedToGive, true, false, DataPtr_->ForceToGiveInHeightDuration);
+
+	PhysicResource_->ResetGravityTimer();
 }
 
 void UPFWingBeatAbility::GetAverageInputValue()

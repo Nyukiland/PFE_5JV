@@ -77,10 +77,10 @@ protected:
 	
 public:
 	UFUNCTION(Blueprintable, Category = "PhysicResource")
-	float GetCurrentSpeed0to1();
+	float GetCurrentSpeedPercentage();
 
 	UFUNCTION(Blueprintable, Category = "PhysicResource")
-	float GetCurrentSpeed0to1InZ();
+	float GetForwardSpeedPercentage();
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bisAdded, duration, curve"))
 	void AddForce(FVector force, bool bShouldResetForce = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);
