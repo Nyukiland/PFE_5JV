@@ -41,7 +41,4 @@ public:
 
 	UPROPERTY(EditAnywhere, Category="Camera|Settings")
 	float MaxYawWhenRotating = 20.0f;
-
-	UPROPERTY(EditAnywhere, Category="Camera|Settings")
-	bool IsDiving = false;
 };

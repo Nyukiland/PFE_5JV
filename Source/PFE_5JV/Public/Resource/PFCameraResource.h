@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Ability/PFDiveAbility.h"
 #include "Data/PFCameraResourceData.h"
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFCameraResource.generated.h"
@@ -27,7 +28,10 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
 	TObjectPtr<UCameraComponent> CameraPtr_;
-	
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Camera|References")
+	TObjectPtr<UPFDiveAbility> DiveAbility_;
+
 	UFUNCTION(BlueprintCallable)
 	void UpdateRotation(float deltaTime);
 	UFUNCTION(BlueprintCallable)
@@ -43,14 +47,3 @@ protected:
 private:
 	float DiveTheTimer = 0.f;
 };
-
-/*
- * Structure recommandee
- *
- * BirdPawn
- * └── Root
- *  ├── Mesh
- * 	└── CameraRoot (SceneComponent)
- * 		└── SpringArm
- * 			└── Camera
- */

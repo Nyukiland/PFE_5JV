@@ -12,6 +12,8 @@ void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 {
 	Super::ComponentInit_Implementation(ownerObj);
 
+	DiveAbility_ = CastChecked<UPFDiveAbility>(Owner->GetStateComponent(UPFDiveAbility::StaticClass()));
+
 	if (!CameraRootPtr_)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[CameraResource] The reference to the CameraRoot is null"));
@@ -32,18 +34,22 @@ void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 
 void UPFCameraResource::UpdateRotation(float deltaTime)
 {
+	if (!CameraResourceData_)
+		return;
+	
 	FRotator OwnerRot = Owner->GetActorRotation();
 	FRotator CameraRot = CameraRootPtr_->GetComponentRotation();
 
 	FRotator DeltaRot = (OwnerRot - CameraRot).GetNormalized();
 
+	// Limit Yaw and Pitch max span
 	DeltaRot.Yaw   = FMath::Clamp(DeltaRot.Yaw,   -CameraResourceData_->MaxYawWhenRotating, CameraResourceData_->MaxYawWhenRotating);
 	DeltaRot.Pitch = FMath::Clamp(DeltaRot.Pitch, -CameraResourceData_->MaxPitchWhenRotating, CameraResourceData_->MaxPitchWhenRotating);
 	DeltaRot.Roll  = 0.f;
 
 	FRotator TargetRotation = CameraRot + DeltaRot;
 
-	// Décommenter la ligne d'apres si le roll rends malade pour limiter les mouvements de camera
+	// Decomment next line if the roll makes you sick to imit camera movements
 	TargetRotation.Roll *= CameraResourceData_->RollFactor;
 	/*TargetRotation.Roll = FMath::Clamp(
 	TargetRotation.Roll * RollFactor,
@@ -65,6 +71,9 @@ void UPFCameraResource::UpdateRotation(float deltaTime)
 
 FVector UPFCameraResource::ComputeTargetLocation() const
 {
+	if (!CameraResourceData_)
+		return Owner->GetActorLocation();
+	
 	FVector Back = -Owner->GetActorForwardVector() * CameraResourceData_->Distance;
 	FVector Up = FVector(0.f, 0.f, CameraResourceData_->Height);
 	FVector Forward = Owner->GetActorForwardVector() * CameraResourceData_->LookAhead;
@@ -74,6 +83,9 @@ FVector UPFCameraResource::ComputeTargetLocation() const
 
 void UPFCameraResource::UpdatePosition(float deltaTime)
 {
+	if (!CameraResourceData_)
+		return;
+	
 	FVector CurrentLocation = CameraRootPtr_->GetComponentLocation();
 	FVector TargetLocation = ComputeTargetLocation();
 
@@ -89,7 +101,10 @@ void UPFCameraResource::UpdatePosition(float deltaTime)
 
 void UPFCameraResource::UpdateZoom(float deltaTime)
 {
-	if (CameraResourceData_->IsDiving)
+	if (!CameraResourceData_)
+		return;
+	
+	if (DiveAbility_ && DiveAbility_->IsDiving())
 	{
 		DiveTheTimer += deltaTime;
 	}
