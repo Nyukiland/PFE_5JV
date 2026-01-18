@@ -40,7 +40,8 @@ protected:
 	float InputLeftRegistered_;
 	
 	float AverageInputValue_;
-	float TimeSinceActivation = 0.f;
+	float TimeUntilNextInputRegistration;
+	float TimeLeftToObtainSuperBeatWing;
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
