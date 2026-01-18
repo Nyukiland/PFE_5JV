@@ -248,8 +248,8 @@ void APFPlayerCharacter::SwapComponents(int a, int b)
 		return nativeclass;
 	};
 
-	ComponentIndexMap_[GetNativeClass(StateComponentsPtr_[a]->GetClass())] = a;
-	ComponentIndexMap_[GetNativeClass(StateComponentsPtr_[b]->GetClass())] = b;
+	ComponentIndexMap_[GetNativeClass(StateComponentsPtr_[a]->GetClass())] = b;
+	ComponentIndexMap_[GetNativeClass(StateComponentsPtr_[b]->GetClass())] = a;
 	
 	StateComponentsPtr_.Swap(a, b);
 }

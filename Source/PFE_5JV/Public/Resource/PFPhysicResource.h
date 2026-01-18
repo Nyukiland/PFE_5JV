@@ -84,7 +84,7 @@ public:
 	float GetCurrentSpeedPercentage();
 
 	UFUNCTION(Blueprintable, Category = "PhysicResource")
-	float GetForwardSpeedPercentage();
+	float GetForwardSpeedPercentage(bool bUseMaxAboveSpeed = false);
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bShouldResetForce, bShouldAddAtTheEnd, duration, curve"))
 	void AddForce(FVector force, bool bShouldResetForce = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);

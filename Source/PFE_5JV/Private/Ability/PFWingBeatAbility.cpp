@@ -92,7 +92,8 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 	float speedToGive = DataPtr_->ForceToGiveInVelocity *
 		DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve->GetFloatValue(AverageInputValue_);
 	if(IsSuperBeatWingActivated == true) speedToGive *= DataPtr_->SuperWingBeatMultiplier;
-	PhysicResource_->AddForwardForce(speedToGive);
+
+	PhysicResource_->AddForwardForce(speedToGive, false);
 
 	PhysicResource_->ResetGravityTimer();
 	TimeLeftToObtainSuperBeatWing = DataPtr_->SuperWingBeatTiming;

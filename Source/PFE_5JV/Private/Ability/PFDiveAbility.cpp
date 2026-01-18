@@ -34,7 +34,7 @@ void UPFDiveAbility::Dive(float deltaTime)
 	float speedToGive = DataPtr_->ForceToGive *
 		DataPtr_->DiveAccelerationBasedOnRotationCurve->GetFloatValue(HighestInput_);
 
-	float velocity0to1 = PhysicResource_->GetForwardSpeedPercentage();
+	float velocity0to1 = PhysicResource_->GetForwardSpeedPercentage(true);
 	speedToGive *= DataPtr_->DiveAccelerationBasedOnSpeedCurve->GetFloatValue(velocity0to1);
 
 	PhysicResource_->AddForwardForce(speedToGive * deltaTime, false);

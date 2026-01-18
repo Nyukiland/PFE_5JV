@@ -13,7 +13,7 @@ float UPFPhysicResource::GetCurrentSpeedPercentage()
 	return FMath::Clamp(GetCurrentVelocity().Length() / DataPtr_->MaxSpeed, 0, 1);
 }
 
-float UPFPhysicResource::GetForwardSpeedPercentage()
+float UPFPhysicResource::GetForwardSpeedPercentage(bool bUseMaxAboveSpeed)
 {
 	if (!DataPtr_)
 	{
@@ -21,6 +21,7 @@ float UPFPhysicResource::GetForwardSpeedPercentage()
 		return 0.0f;
 	}
 
+	float max = bUseMaxAboveSpeed? DataPtr_->MaxAboveSpeed : DataPtr_->MaxSpeed;
 	return FMath::Clamp(CurrentForwardVelo_.Length() / DataPtr_->MaxSpeed, 0, 1);
 }
 
@@ -165,7 +166,7 @@ void UPFPhysicResource::ProcessMaxSpeed(const float deltaTime)
 	velocity = velocity.GetClampedToMaxSize(DataPtr_->MaxAboveSpeed);
 
 	if (velocity.Length() < DataPtr_->MaxSpeed)
-		return;;
+		return;
 
 	FVector dir = velocity.GetSafeNormal();
 
@@ -216,7 +217,7 @@ void UPFPhysicResource::ProcessAngularVelocity(const float deltaTime)
 
 void UPFPhysicResource::SetPitchRotationVisual(float rotation, int priority)
 {
-	if (PitchPriority_ <= priority && PitchRotation_ != 0)
+	if (priority > PitchPriority_ || FMath::Abs(rotation) < 1)
 		return;
 
 	PitchPriority_ = priority;
