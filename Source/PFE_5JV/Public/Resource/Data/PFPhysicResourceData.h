@@ -21,6 +21,9 @@ public:
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Gravity")
     float TimerMaxGravity = 1;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Gravity")
+    float GravityLerpTime = 1;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction")
     float BaseAirFriction;

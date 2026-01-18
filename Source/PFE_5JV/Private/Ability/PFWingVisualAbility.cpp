@@ -1,5 +1,15 @@
 #include "Ability/PFWingVisualAbility.h"
 
+#include "StateMachine/PFPlayerCharacter.h"
+
+void UPFWingVisualAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
+{
+	Super::ComponentInit_Implementation(ownerObj);
+
+	PhysicResource_ = CastChecked<UPFPhysicResource>
+		(Owner->GetStateComponent(UPFPhysicResource::StaticClass()));
+}
+
 void UPFWingVisualAbility::ReceiveInputRight(float right)
 {
 	InputRight_ = right;
@@ -25,7 +35,6 @@ void UPFWingVisualAbility::ChangeRotation(float deltaTime)
 		
 	CurrentMedianValue_ = FMath::Lerp(CurrentMedianValue_, highestValue, lerpSpeedToUse * deltaTime);
 
-	FRotator rotation = ForwardRoot->GetRelativeRotation();
-	rotation.Pitch = FMath::Lerp(0, DataPtr_->MaxRotationPitch, CurrentMedianValue_);
-	ForwardRoot->SetRelativeRotation(rotation);
+	float value = FMath::Lerp(0, DataPtr_->MaxRotationPitch, CurrentMedianValue_);
+	PhysicResource_->SetPitchRotationVisual(value, -1);
 }

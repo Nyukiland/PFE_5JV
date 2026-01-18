@@ -12,4 +12,16 @@ class PFE_5JV_API UPFGlideAbilityData : public UDataAsset
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Glide/Movement")
 	float BaseForwardMovement;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Glide/JoystickMovement")
+	bool bUseJoystickMovement;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Glide/JoystickMovement")
+	float PitchForce;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Glide/JoystickMovement")
+	bool bUseInvertedPitch;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Glide/JoystickMovement")
+	float RightForce;
 };

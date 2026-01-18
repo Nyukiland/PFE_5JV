@@ -66,14 +66,18 @@ protected:
 	TObjectPtr<UPFPhysicResourceData> DataPtr_;
 
 	float GravityTimer_;
-	FVector Velocity_;
+	FVector GlobalVelocity_;
 	FVector ForwardVelo_;
+	FVector AngularVelocity_;
 	UPROPERTY()
 	TArray<FForceToAdd> AllForces_;
 	UPROPERTY()
 	TArray<FForceToAdd> ForwardForces_;
-	
-	FVector AngularVelocity;
+	UPROPERTY()
+	TArray<FForceToAdd> AngularForces_;
+
+	float PitchRotation_;
+	int PitchPriority_;
 	
 public:
 	UFUNCTION(Blueprintable, Category = "PhysicResource")
@@ -82,10 +86,10 @@ public:
 	UFUNCTION(Blueprintable, Category = "PhysicResource")
 	float GetForwardSpeedPercentage();
 	
-	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bisAdded, duration, curve"))
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bShouldResetForce, bShouldAddAtTheEnd, duration, curve"))
 	void AddForce(FVector force, bool bShouldResetForce = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);
 
-	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bisAdded, duration, curve"))
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bShouldResetForce, bShouldAddAtTheEnd, duration, curve"))
 	void AddForwardForce(float force, bool bShouldResetForce = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
@@ -106,11 +110,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void ProcessMaxSpeed(const float deltaTime);
 	
-	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	void SetYawRotationForce(float rotation);
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bShouldResetForce, bShouldAddAtTheEnd, duration, curve"))
+	void SetYawRotationForce(float rotation, bool bShouldResetForce = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	void ProcessAngularVelocity();
+	void ProcessAngularVelocity(const float deltaTime);
+
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	void SetPitchRotationVisual(float rotation, int priority);
+
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	void ProcessPitchVisual();
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void DoGravity(const float deltaTime);

@@ -22,10 +22,19 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Glide")
 	TObjectPtr<UPFGlideAbilityData> DataPtr_;
 
+	UPROPERTY(visibleAnywhere, BlueprintReadOnly, Category = "Glide")
+	FVector2D Input_;
+	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 
+	UFUNCTION(BlueprintCallable, Category = "Glide")
+	void ReceiveInputMovement(FVector2D inputValue);
+	
 protected:	
+	UFUNCTION(BlueprintCallable, Category = "Glide")
+	void MovementBasedJoystick();
+	
 	UFUNCTION(BlueprintCallable, Category = "Glide")
 	void ConstantMovement(float deltaTime);
 };
