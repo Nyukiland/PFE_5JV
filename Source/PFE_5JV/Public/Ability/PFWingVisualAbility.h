@@ -11,6 +11,13 @@ class PFE_5JV_API UPFWingVisualAbility : public UPFAbility
 {
 	GENERATED_BODY()
 
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "WingVisual")
+	float InputLeft_;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "WingVisual")
+	float InputRight_;
+	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "WingVisual")
 	TObjectPtr<UPFPhysicResource> PhysicResource_;
@@ -20,12 +27,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingVisual")
 	TObjectPtr<UPrimitiveComponent> BirdVisual;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "WingVisual")
-	float InputLeft_;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "WingVisual")
-	float InputRight_;
 
 	float CurrentMedianValue_;
 	

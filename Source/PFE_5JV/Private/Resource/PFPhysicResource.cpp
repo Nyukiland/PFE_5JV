@@ -25,14 +25,14 @@ float UPFPhysicResource::GetForwardSpeedPercentage()
 }
 
 void UPFPhysicResource::AddForce(FVector force, bool bShouldResetForce, bool bShouldAddAtTheEnd, float duration,
-                                 UCurveFloat* curve)
+								UCurveFloat* curve)
 {
 	FForceToAdd forceToAdd(force, bShouldResetForce, bShouldAddAtTheEnd, duration, curve);
 	AllForces_.Add(forceToAdd);
 }
 
 void UPFPhysicResource::AddForwardForce(float force, bool bShouldResetForce, bool bShouldAddAtTheEnd, float duration,
-                                        UCurveFloat* curve)
+										UCurveFloat* curve)
 {
 	FForceToAdd forceToAdd(FVector::ForwardVector * force, bShouldResetForce, bShouldAddAtTheEnd, duration, curve);
 	ForwardForces_.Add(forceToAdd);
@@ -47,7 +47,7 @@ float UPFPhysicResource::GetAlignmentWithUp() const
 {
 	FVector forward = PhysicRoot->GetForwardVector();
 
-	return FVector::DotProduct(forward, GetCurrentVelocity());
+	return FVector::DotProduct(forward, FVector::UpVector);
 }
 
 float UPFPhysicResource::GetCurrentAirFriction() const
@@ -63,16 +63,16 @@ float UPFPhysicResource::GetCurrentAirFriction() const
 	if (alignment > 0 && DataPtr_->AirFrictionCurveUp)
 	{
 		return FMath::Lerp(DataPtr_->BaseAirFriction,
-		                   DataPtr_->AirFrictionGoingUp,
-		                   DataPtr_->AirFrictionCurveUp->GetFloatValue(alignment));
+							DataPtr_->AirFrictionGoingUp,
+							DataPtr_->AirFrictionCurveUp->GetFloatValue(alignment));
 	}
 	if (alignment < 0 && DataPtr_->AirFrictionCurveDown)
 	{
 		alignment = FMath::Abs(alignment);
 
 		return FMath::Lerp(DataPtr_->BaseAirFriction,
-		                   DataPtr_->AirFrictionGoingDown,
-		                   DataPtr_->AirFrictionCurveDown->GetFloatValue(alignment));
+							DataPtr_->AirFrictionGoingDown,
+							DataPtr_->AirFrictionCurveDown->GetFloatValue(alignment));
 	}
 
 	return DataPtr_->BaseAirFriction;
@@ -85,12 +85,12 @@ void UPFPhysicResource::ProcessAirFriction(const float deltaTime)
 		UE_LOG(LogTemp, Error, TEXT("[PhysicResource] DataPtr_ is null"));
 		return;
 	}
-	
+
 	float friction = GetCurrentAirFriction();
 
 	FVector dir = GlobalVelocity_.GetSafeNormal();
 	GlobalVelocity_ -= friction * deltaTime * dir;
-	
+
 	dir = ForwardVelo_.GetSafeNormal();
 	ForwardVelo_ -= friction * deltaTime * dir;
 
@@ -147,7 +147,7 @@ void UPFPhysicResource::ProcessVelocity(const float deltaTime)
 	}
 
 	CurrentForwardVelo_ = velocityForward;
-	
+
 	velocity += ForwardRoot->GetForwardVector() * velocityForward.Length();
 
 	PhysicRoot->SetPhysicsLinearVelocity(velocity);
@@ -172,14 +172,15 @@ void UPFPhysicResource::ProcessMaxSpeed(const float deltaTime)
 	float speedScaled = velocity.Length() - DataPtr_->MaxSpeed;
 	float maxSpeedScaled = velocity.Length() - DataPtr_->MaxSpeed;
 	float value01 = FMath::Clamp(speedScaled / maxSpeedScaled, 0.f, 1.f);
-	
+
 	velocity -= DataPtr_->AboveSpeedFrictionCurve->GetFloatValue(value01) * deltaTime * dir;
 
 	PhysicRoot->SetPhysicsLinearVelocity(velocity);
 }
 
-void UPFPhysicResource::SetYawRotationForce(float rotation, bool bShouldResetForce, bool bShouldAddAtTheEnd, float duration,
-										UCurveFloat* curve)
+void UPFPhysicResource::SetYawRotationForce(float rotation, bool bShouldResetForce, bool bShouldAddAtTheEnd,
+											float duration,
+											UCurveFloat* curve)
 {
 	FForceToAdd forceToAdd(FVector(0, 0, rotation), bShouldResetForce, bShouldAddAtTheEnd, duration, curve);
 	AngularForces_.Add(forceToAdd);
@@ -209,7 +210,7 @@ void UPFPhysicResource::ProcessAngularVelocity(const float deltaTime)
 
 		velocity += toAdd;
 	}
-	
+
 	PhysicRoot->SetPhysicsAngularVelocityInDegrees(velocity);
 }
 
@@ -234,15 +235,16 @@ void UPFPhysicResource::ProcessPitchVisual()
 
 void UPFPhysicResource::DoGravity(const float deltaTime)
 {
+	GravityTimer_ += deltaTime;
+
 	if (GravityTimer_ < DataPtr_->TimerMaxGravity)
 	{
-		GravityTimer_ += deltaTime;
 		return;
 	}
 
 	float timeValue = FMath::Clamp((GravityTimer_ - DataPtr_->TimerMaxGravity) / DataPtr_->GravityLerpTime, 0, 1);
 	float gravity = FMath::Lerp(0, DataPtr_->Gravity, timeValue);
-	
+
 	AllForces_.Add(FForceToAdd(gravity * FVector::UpVector));
 }
 
