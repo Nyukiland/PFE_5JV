@@ -37,27 +37,31 @@ void UPFCameraResource::UpdateRotation(float deltaTime)
 	if (!CameraResourceData_)
 		return;
 	
-	FRotator OwnerRot = Owner->GetActorRotation();
-	FRotator CameraRot = CameraRootPtr_->GetComponentRotation();
+	FRotator OwnerRot_ = Owner->GetActorRotation();
+	FRotator CameraRot_ = CameraRootPtr_->GetComponentRotation();
+	FRotator DeltaRot_ = (OwnerRot_ - CameraRot_).GetNormalized();
+	
+	const bool IsDiving_ = IsDiveActive_ ||
+							DiveTransitionTimer_ < CameraResourceData_->DivingEndInterpDuration;
+	if (!IsDiving_)
+	{
+		// Limit Yaw and Pitch max span
+		DeltaRot_.Yaw   = FMath::Clamp(DeltaRot_.Yaw,   -CameraResourceData_->MaxYawWhenRotating, CameraResourceData_->MaxYawWhenRotating);
+		DeltaRot_.Pitch = FMath::Clamp(DeltaRot_.Pitch, -CameraResourceData_->MaxPitchWhenRotating, CameraResourceData_->MaxPitchWhenRotating);
+	}
+	DeltaRot_.Roll  = 0.f;
 
-	FRotator DeltaRot = (OwnerRot - CameraRot).GetNormalized();
+	FRotator TargetRotation_ = CameraRot_ + DeltaRot_;
+	FRotator CurrentRotation_ = CameraRootPtr_->GetComponentRotation();
 
-	// Limit Yaw and Pitch max span
-	DeltaRot.Yaw   = FMath::Clamp(DeltaRot.Yaw,   -CameraResourceData_->MaxYawWhenRotating, CameraResourceData_->MaxYawWhenRotating);
-	DeltaRot.Pitch = FMath::Clamp(DeltaRot.Pitch, -CameraResourceData_->MaxPitchWhenRotating, CameraResourceData_->MaxPitchWhenRotating);
-	DeltaRot.Roll  = 0.f;
-
-	FRotator TargetRotation = CameraRot + DeltaRot;
-	FRotator CurrentRotation = CameraRootPtr_->GetComponentRotation();
-
-	FRotator NewRotation = FMath::RInterpTo(
-		CurrentRotation,
-		TargetRotation,
+	FRotator NewRotation_ = FMath::RInterpTo(
+		CurrentRotation_,
+		TargetRotation_,
 		deltaTime,
 		CameraResourceData_->RotationInterpSpeed
 	);
 
-	CameraRootPtr_->SetWorldRotation(NewRotation);
+	CameraRootPtr_->SetWorldRotation(NewRotation_);
 }
 
 FVector UPFCameraResource::ComputeTargetLocation() const
@@ -65,10 +69,10 @@ FVector UPFCameraResource::ComputeTargetLocation() const
 	if (!CameraResourceData_)
 		return Owner->GetActorLocation();
 	
-	FVector Back = -Owner->GetActorForwardVector() * CameraResourceData_->BackDistance;
-	FVector Up = FVector(0.f, 0.f, CameraResourceData_->UpDistance);
+	FVector Back_ = -Owner->GetActorForwardVector() * CameraResourceData_->BackDistance;
+	FVector Up_ = FVector(0.f, 0.f, CameraResourceData_->UpDistance);
 
-	return Owner->GetActorLocation() + Back + Up;
+	return Owner->GetActorLocation() + Back_ + Up_;
 }
 
 void UPFCameraResource::UpdatePosition(float deltaTime)
@@ -76,12 +80,12 @@ void UPFCameraResource::UpdatePosition(float deltaTime)
 	if (!CameraResourceData_)
 		return;
 	
-	FVector CurrentLocation = CameraRootPtr_->GetComponentLocation();
-	FVector TargetLocation = ComputeTargetLocation();
+	FVector CurrentLocation_ = CameraRootPtr_->GetComponentLocation();
+	FVector TargetLocation_ = ComputeTargetLocation();
 
 	FVector NewLocation = FMath::VInterpTo(
-		CurrentLocation,
-		TargetLocation,
+		CurrentLocation_,
+		TargetLocation_,
 		deltaTime,
 		CameraResourceData_->PositionInterpSpeed
 	);
@@ -94,73 +98,47 @@ void UPFCameraResource::UpdateZoom(float deltaTime)
 	if (!CameraResourceData_)
 		return;
 
-	if (DiveAbility_->IsDiving()) DiveTheTimer += deltaTime;
-	else DiveTheTimer = 0.f;
+	if (DiveAbility_->IsDiving()) DiveTheTimer_ += deltaTime;
+	else DiveTheTimer_ = 0.f;
 	
 	// Detect transition
-	const bool IsDiveActive = DiveTheTimer > 1.f;
-	if (IsDiveActive != WasDiving)
+	IsDiveActive_ = DiveTheTimer_ > 1.f;
+	if (IsDiveActive_ != WasDiving_)
 	{
-		DiveTransitionTimer = 0.f;
-		WasDiving = IsDiveActive;
+		DiveTransitionTimer_ = 0.f;
+		WasDiving_ = IsDiveActive_;
+
+		ZoomStartDistance_ = SpringArmPtr_->TargetArmLength;
+		ZoomStartRotation_ = SpringArmPtr_->GetRelativeRotation();
 	}
 
-	DiveTransitionTimer += deltaTime;
+	DiveTransitionTimer_ += deltaTime;
 	
-	if (IsDiveActive)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[CameraResource] Dive %f"), DiveTheTimer);
-	}
-	
-	float DivingInterpDuration = IsDiveActive
+	float DivingInterpDuration_ = IsDiveActive_
 	? CameraResourceData_->DivingStartInterpDuration
 	: CameraResourceData_->DivingEndInterpDuration;
 
-	float Alpha = DiveTransitionTimer / DivingInterpDuration;
-	Alpha = FMath::Clamp(Alpha, 0.f, 1.f);
+	float Alpha_ = DiveTransitionTimer_ / DivingInterpDuration_;
+	Alpha_ = FMath::Clamp(Alpha_, 0.f, 1.f);
 	
 	// Distance
-	float StartDistance = IsDiveActive
-		? CameraResourceData_->BackDistance
-		: CameraResourceData_->DivingDistance;
-	
-	float TargetDistance = IsDiveActive
+	float TargetDistance_ = IsDiveActive_
 		? CameraResourceData_->DivingDistance
 		: CameraResourceData_->BackDistance;
-	
 
 	SpringArmPtr_->TargetArmLength = FMath::Lerp(
-		StartDistance,
-		TargetDistance,
-		Alpha
-	);
-
-	// Offset before
-	FVector StartSocketOffset = IsDiveActive
-		? FVector::ZeroVector
-		: CameraResourceData_->DivingSpringArm;
-
-	FVector TargetSocketOffset = IsDiveActive
-		? CameraResourceData_->DivingSpringArm
-		: FVector::ZeroVector;
-	
-	SpringArmPtr_->SocketOffset = FMath::Lerp(
-		StartSocketOffset,
-		TargetSocketOffset,
-		Alpha
+		ZoomStartDistance_,
+		TargetDistance_,
+		Alpha_
 	);
 
 	// Look downward
-	FRotator StartRotation = IsDiveActive
-		? FRotator::ZeroRotator
-		: CameraResourceData_->DivingRotation;
-	
-	FRotator TargetRotation = IsDiveActive
+	FRotator TargetRotation_ = IsDiveActive_
 		? CameraResourceData_->DivingRotation
 		: FRotator::ZeroRotator;
 
 	SpringArmPtr_->SetRelativeRotation(FMath::Lerp(
-		StartRotation,
-		TargetRotation,
-		Alpha));
+		ZoomStartRotation_,
+		TargetRotation_,
+		Alpha_));
 }

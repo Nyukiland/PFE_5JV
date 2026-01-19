@@ -45,7 +45,16 @@ protected:
 	TObjectPtr<UPFCameraResourceData> CameraResourceData_;
 
 private:
-	float DiveTheTimer = 0.f;
-	float DiveTransitionTimer = 0.f;
-	bool WasDiving = false;
+	//Dive
+	bool IsDiveActive_ = false;
+	float DiveTheTimer_ = 0.f;
+	float DiveTransitionTimer_ = 0.f;
+	bool WasDiving_ = false;
+	float ZoomStartDistance_;
+	FRotator ZoomStartRotation_;
+
+	// Flap
+	float FlapTimer_ = 0.f;
+	float FlapTransitionTimer_ = 0.f;
+	bool WasFlapping_ = false;
 };

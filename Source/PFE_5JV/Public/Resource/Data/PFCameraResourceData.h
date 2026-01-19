@@ -33,9 +33,6 @@ public:
 	UPROPERTY(EditAnywhere, Category="Camera|Diving", meta=(ToolTip="Distance prise par la caméra lorsque le player fait un piqué"))
 	float DivingDistance = 480.0f;
 
-	UPROPERTY(EditAnywhere, Category="Camera|Diving", meta=(ToolTip="[OPTIONNEl] Offset appliqué à la caméra lorsque le player fait un piqué"))
-	FVector DivingSpringArm = FVector(150.f, 0.f, 0.f);
-	
 	UPROPERTY(EditAnywhere, Category="Camera|Diving", meta=(ToolTip="Rotation appliquée à la caméra lorsque le player fait un piqué"))
 	FRotator DivingRotation = FRotator(-25.f, 0.f, 0.f);
 
@@ -44,4 +41,13 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category="Camera|Diving", meta=(ToolTip="Durée de la transition caméra pour passer du piqué à l'état normal"))
 	float DivingEndInterpDuration = 4.0f;
+	
+	UPROPERTY(EditAnywhere, Category="Camera|Diving", meta=(ToolTip=""))
+	float FlapDistanceOffset = 40.0f;
+	
+	UPROPERTY(EditAnywhere, Category="Camera|Diving", meta=(ToolTip="Mouvement vers le bas de la caméra lors du flap pour donner un effet de hauteur"))
+	float FlapRotationOffsetPitch = -5.0f;
+	
+	UPROPERTY(EditAnywhere, Category="Camera|Diving", meta=(ToolTip="Durée de la transition caméra pour passer de l'état normal au flap"))
+	float FlapInterpDuration = 0.2f;
 };
