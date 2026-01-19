@@ -29,5 +29,8 @@ public:
 	float SuperWingBeatTiming;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Multiplicateur à appliquer aux forces du battement d'aile pour le super battement d'aile"))
-	float SuperWingBeatMultiplier;
+	float SuperWingBeatVelocityMultiplier;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Multiplicateur à appliquer aux forces du battement d'aile pour le super battement d'aile"))
+	float SuperWingBeatHeightMultiplier;
 };

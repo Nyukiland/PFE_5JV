@@ -20,7 +20,7 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 		TimeUntilNextInputRegistration = DataPtr_->DelayBetweenInputRegistrations;
 	}
 
-	TimeLeftToObtainSuperBeatWing -= deltaTime;
+	TimeLeftToTriggerSuperBeatWing -= deltaTime;
 }
 
 void UPFWingBeatAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
@@ -42,7 +42,7 @@ void UPFWingBeatAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerO
 		UE_LOG(LogTemp, Error, TEXT("[BeatWingAbility] Bad Set up on data 'SuperWingBeatTiming'"));
 		return;
 	}
-	TimeLeftToObtainSuperBeatWing = DataPtr_->SuperWingBeatTiming;
+	TimeLeftToTriggerSuperBeatWing = DataPtr_->SuperWingBeatTiming;
 }
 
 void UPFWingBeatAbility::ReceiveInputLeft(float left)
@@ -65,9 +65,15 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 		return;
 	}
 
-	if (!DataPtr_ || !DataPtr_->SuperWingBeatMultiplier)
+	if (!DataPtr_ || !DataPtr_->SuperWingBeatVelocityMultiplier)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[BeatWingAbility] Bad Set up on data 'SuperWingBeatMultiplier'"));
+		return;
+	}
+
+	if (!DataPtr_ || !DataPtr_->SuperWingBeatHeightMultiplier)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[BeatWingAbility] Bad Set up on data 'SuperWingBeatHeightMultiplier'"));
 		return;
 	}
 
@@ -77,8 +83,8 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 		return;
 	}
 
-	bool IsSuperBeatWingActivated = (TimeLeftToObtainSuperBeatWing > 0.f);
-	UE_LOG(LogTemp, Warning, TEXT("TimeLeftToObtainSuperBeatWing : %f"),TimeLeftToObtainSuperBeatWing);
+	bool IsSuperBeatWingActivated = (TimeLeftToTriggerSuperBeatWing > 0.f);
+	UE_LOG(LogTemp, Warning, TEXT("TimeLeftToObtainSuperBeatWing : %f"),TimeLeftToTriggerSuperBeatWing);
 	if(IsSuperBeatWingActivated == true) UE_LOG(LogTemp, Error, TEXT("SuperBeatWingActivated"));
 	
 	GetAverageInputValue();
@@ -86,17 +92,17 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 	
 	float heightToGive = DataPtr_->ForceToGiveInHeight *
 		DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve->GetFloatValue(AverageInputValue_);
-	if(IsSuperBeatWingActivated == true) heightToGive *= DataPtr_->SuperWingBeatMultiplier;
+	if(IsSuperBeatWingActivated == true) heightToGive *= DataPtr_->SuperWingBeatHeightMultiplier;
 	PhysicResource_->AddForce(heightToGive * FVector::UpVector, true, false, DataPtr_->ForceToGiveInHeightDuration);
 	
 	float speedToGive = DataPtr_->ForceToGiveInVelocity *
 		DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve->GetFloatValue(AverageInputValue_);
-	if(IsSuperBeatWingActivated == true) speedToGive *= DataPtr_->SuperWingBeatMultiplier;
+	if(IsSuperBeatWingActivated == true) speedToGive *= DataPtr_->SuperWingBeatVelocityMultiplier;
 
 	PhysicResource_->AddForwardForce(speedToGive, false);
 
 	PhysicResource_->ResetGravityTimer();
-	TimeLeftToObtainSuperBeatWing = DataPtr_->SuperWingBeatTiming;
+	TimeLeftToTriggerSuperBeatWing = DataPtr_->SuperWingBeatTiming;
 }
 
 void UPFWingBeatAbility::GetAverageInputValue()
