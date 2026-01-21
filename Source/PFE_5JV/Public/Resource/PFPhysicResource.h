@@ -20,6 +20,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Duration;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Timer;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UCurveFloat> CurvePtr;
 
 	FForceToAdd()
@@ -28,6 +30,7 @@ public:
 		bShouldReset = false;
 		bShoudEndAdded = false;
 		Duration = 0;
+		Timer = 0;
 		CurvePtr = nullptr;
 	}
 
@@ -37,6 +40,7 @@ public:
 		bShouldReset = true;
 		bShoudEndAdded = false;
 		Duration = 0;
+		Timer = 0;
 		CurvePtr = nullptr;
 	}
 	
@@ -46,6 +50,7 @@ public:
 		bShouldReset = bShouldResetForce;
 		bShoudEndAdded = bShouldAddAtTheEnd;
 		Duration = duration;
+		Timer = duration;
 		CurvePtr = curvePtr;
 	}
 };

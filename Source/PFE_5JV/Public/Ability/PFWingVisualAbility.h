@@ -41,4 +41,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "WingVisual")
 	void ChangeRotation(float deltaTime);
+	
+	UFUNCTION(BlueprintCallable, Category = "WingVisual")
+	void WingTurnVisu(float deltaTime);
 };

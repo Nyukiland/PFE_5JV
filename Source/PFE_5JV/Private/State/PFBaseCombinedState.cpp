@@ -21,5 +21,6 @@ void UPFBaseCombinedState::OnEnter_Implementation()
 	WingBeat_ = CastChecked<UPFWingBeatAbility>(
 	Owner->GetAndActivateComponent(UPFWingBeatAbility::StaticClass()));
 
-	
+	Roll_ = CastChecked<UPFRollAbility>(
+		Owner->GetStateComponent(UPFRollAbility::StaticClass()));
 }

@@ -21,7 +21,7 @@ float UPFPhysicResource::GetForwardSpeedPercentage(bool bUseMaxAboveSpeed)
 		return 0.0f;
 	}
 
-	float max = bUseMaxAboveSpeed? DataPtr_->MaxAboveSpeed : DataPtr_->MaxSpeed;
+	float max = bUseMaxAboveSpeed ? DataPtr_->MaxAboveSpeed : DataPtr_->MaxSpeed;
 	return FMath::Clamp(CurrentForwardVelo_.Length() / DataPtr_->MaxSpeed, 0, 1);
 }
 
@@ -115,7 +115,7 @@ void UPFPhysicResource::ProcessVelocity(const float deltaTime)
 
 		FVector toAdd = CalculateForce(forceToAdd, deltaTime, GlobalVelocity_);
 
-		if (forceToAdd->Duration <= 0)
+		if (forceToAdd->Timer <= 0)
 		{
 			AllForces_.RemoveAt(i);
 		}
@@ -139,7 +139,7 @@ void UPFPhysicResource::ProcessVelocity(const float deltaTime)
 
 		FVector toAdd = CalculateForce(forceToAdd, deltaTime, ForwardVelo_);
 
-		if (forceToAdd->Duration <= 0)
+		if (forceToAdd->Timer <= 0)
 		{
 			ForwardForces_.RemoveAt(i);
 		}
@@ -204,7 +204,7 @@ void UPFPhysicResource::ProcessAngularVelocity(const float deltaTime)
 
 		FVector toAdd = CalculateForce(forceToAdd, deltaTime, AngularVelocity_);
 
-		if (forceToAdd->Duration <= 0)
+		if (forceToAdd->Timer <= 0)
 		{
 			AngularForces_.RemoveAt(i);
 		}
@@ -260,10 +260,10 @@ FVector UPFPhysicResource::CalculateForce(FForceToAdd* force, float deltaTime, F
 
 	if (force->CurvePtr)
 	{
-		toAdd = force->Force * force->CurvePtr->GetFloatValue(force->Duration);
+		toAdd = force->Force * force->CurvePtr->GetFloatValue((force->Duration - force->Timer)/force->Duration);
 	}
 
-	force->Duration -= deltaTime;
+	force->Timer -= deltaTime;
 
 	if (!force->bShouldReset)
 	{
@@ -271,7 +271,7 @@ FVector UPFPhysicResource::CalculateForce(FForceToAdd* force, float deltaTime, F
 		VelocityGlobal = VelocityGlobal.GetClampedToMaxSize(DataPtr_->MaxAboveSpeed);
 	}
 
-	if (force->Duration <= 0)
+	if (force->Timer <= 0)
 	{
 		if (force->bShoudEndAdded)
 		{

@@ -51,7 +51,7 @@ void UPFGlideAbility::ConstantMovement(float deltaTime)
 
 void UPFGlideAbility::AutoDiveIfNoSpeed(float deltaTime)
 {
-	if (!DataPtr_ || !PhysicResource_)
+	if (!DataPtr_ || !PhysicResource_ || !DataPtr_->AutoDiveSpeedCurve)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[GlideAbility] PhysicResource or Data bad set up"));
 		return;
@@ -64,27 +64,28 @@ void UPFGlideAbility::AutoDiveIfNoSpeed(float deltaTime)
 			return;
 		}
 
-		UE_LOG(LogTemp, Error, TEXT("[GlideAbility] Do Once Please"));
-
 		Timer_ = 0;
 		PhysicResource_->AddForwardForce(DataPtr_->AutoDiveSpeedGain,
 		                                 true,
 		                                 true,
-		                                 DataPtr_->AutoDiveSpeedLimit,
+		                                 DataPtr_->AutoDiveDuration,
 		                                 DataPtr_->AutoDiveSpeedCurve);
 	}
 
 	Timer_ += deltaTime;
-
-
+	
 	if (Timer_ <= DataPtr_->AutoDiveRotationTime)
 	{
 		float value0to1 = FMath::Clamp(Timer_/DataPtr_->AutoDiveRotationTime, 0, 1);
-		PhysicResource_->SetPitchRotationVisual(FMath::Clamp(0, 90, value0to1), -2);
+		PhysicResource_->SetPitchRotationVisual(FMath::Lerp(0, -DataPtr_->AutoDiveDiveRotation, value0to1), -2);
+		return;
 	}
-	else if (Timer_ <= DataPtr_->AutoDiveRotationTime)
+	else if (Timer_ >= (DataPtr_->AutoDiveDuration - DataPtr_->AutoDiveRotationTime))
 	{
-		float value0to1 = FMath::Clamp(Timer_/DataPtr_->AutoDiveRotationTime, 0, 1);
-		PhysicResource_->SetPitchRotationVisual(FMath::Clamp(0, 90, value0to1), -2);
+		float value0to1 = (Timer_ - (DataPtr_->AutoDiveDuration - DataPtr_->AutoDiveRotationTime))/DataPtr_->AutoDiveRotationTime;
+		value0to1 = FMath::Clamp(value0to1, 0, 1);
+		PhysicResource_->SetPitchRotationVisual(FMath::Lerp(-DataPtr_->AutoDiveDiveRotation, 0, value0to1), -2);
+		return;
 	}
+		PhysicResource_->SetPitchRotationVisual(-DataPtr_->AutoDiveDiveRotation, -2);
 }
