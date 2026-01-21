@@ -24,6 +24,8 @@ protected:
 
 	UPROPERTY(visibleAnywhere, BlueprintReadOnly, Category = "Glide")
 	FVector2D Input_;
+
+	float Timer_;
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
@@ -37,4 +39,7 @@ protected:
 	
 	UFUNCTION(BlueprintCallable, Category = "Glide")
 	void ConstantMovement(float deltaTime);
+
+	UFUNCTION(BlueprintCallable, Category = "Glide")
+	void AutoDiveIfNoSpeed(float deltaTime);
 };
