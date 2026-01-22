@@ -7,7 +7,7 @@ void UPFRollAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 {
 	Super::ComponentInit_Implementation(ownerObj);
 
-	PhysicResource_ = CastChecked<UPFPhysicResource>
+	PhysicResourcePtr_ = CastChecked<UPFPhysicResource>
 		(Owner->GetStateComponent(UPFPhysicResource::StaticClass()));
 }
 
@@ -17,7 +17,7 @@ void UPFRollAbility::CallRoll(int sideRoll)
 	RotationDir_ = sideRoll;
 	bIsRollComplete_ = false;
 	AccumulatedRollDegrees_ = 0;
-	PrevRotator_ = BirdVisual->GetRelativeRotation();
+	PrevRotator_ = BirdVisualPtr_->GetRelativeRotation();
 }
 
 bool UPFRollAbility::Roll(float deltaTime)
@@ -32,7 +32,7 @@ bool UPFRollAbility::Roll(float deltaTime)
 	{
 		if (!bIsRollComplete_)
 		{
-			BirdVisual->SetRelativeRotation(PrevRotator_);
+			BirdVisualPtr_->SetRelativeRotation(PrevRotator_);
 			bIsRollComplete_ = true;
 		}
 		
@@ -44,7 +44,7 @@ bool UPFRollAbility::Roll(float deltaTime)
 	float value = FMath::Clamp(Timer_/Data_->RollDuration, 0, 1);
 	
 	FVector rightVector = ForwardRoot->GetRightVector();
-	PhysicResource_->AddForce(Data_->RollForce * Data_->RollForceOverTime->GetFloatValue(value) * rightVector);
+	PhysicResourcePtr_->AddForce(Data_->RollForce * Data_->RollForceOverTime->GetFloatValue(value) * rightVector);
 	
 	float totalDegrees = Data_->RotationCount * 360.f;
 	float targetDegrees = totalDegrees * value;
@@ -52,9 +52,9 @@ bool UPFRollAbility::Roll(float deltaTime)
 
 	AccumulatedRollDegrees_ = targetDegrees;
 
-	FRotator BirdRot = BirdVisual->GetRelativeRotation();
+	FRotator BirdRot = BirdVisualPtr_->GetRelativeRotation();
 	BirdRot.Pitch += deltaDegrees * RotationDir_;
-	BirdVisual->SetRelativeRotation(BirdRot);
+	BirdVisualPtr_->SetRelativeRotation(BirdRot);
 	
 	return false;
 }

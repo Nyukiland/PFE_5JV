@@ -6,7 +6,7 @@ void UPFWingVisualAbility::ComponentInit_Implementation(APFPlayerCharacter* owne
 {
 	Super::ComponentInit_Implementation(ownerObj);
 
-	PhysicResource_ = CastChecked<UPFPhysicResource>
+	PhysicResourcePtr_ = CastChecked<UPFPhysicResource>
 		(Owner->GetStateComponent(UPFPhysicResource::StaticClass()));
 }
 
@@ -36,7 +36,7 @@ void UPFWingVisualAbility::ChangeRotation(float deltaTime)
 	CurrentMedianValue_ = FMath::Lerp(CurrentMedianValue_, highestValue, lerpSpeedToUse * deltaTime);
 
 	float value = FMath::Lerp(0, DataPtr_->MaxRotationPitch, CurrentMedianValue_);
-	PhysicResource_->SetPitchRotationVisual(value, -1);
+	PhysicResourcePtr_->SetPitchRotationVisual(value, -1);
 }
 
 void UPFWingVisualAbility::WingTurnVisu(float deltaTime)
@@ -50,7 +50,7 @@ void UPFWingVisualAbility::WingTurnVisu(float deltaTime)
 	float rotValue = FMath::Max(InputLeft_, InputRight_) - FMath::Min(InputLeft_, InputRight_);
 	rotValue *= InputRight_ > InputLeft_ ? 1 : -1;
 
-	FRotator birdRot = BirdVisual->GetRelativeRotation();
+	FRotator birdRot = BirdVisualPtr_->GetRelativeRotation();
 	birdRot.Pitch = FMath::Lerp(birdRot.Pitch, DataPtr_->MaxRotationPitch * rotValue, DataPtr_->LerpWingRotation * deltaTime);
-	BirdVisual->SetRelativeRotation(birdRot);
+	BirdVisualPtr_->SetRelativeRotation(birdRot);
 }

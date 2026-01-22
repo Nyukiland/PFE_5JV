@@ -20,13 +20,13 @@ public:
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "WingVisual")
-	TObjectPtr<UPFPhysicResource> PhysicResource_;
+	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WingVisual")
 	TObjectPtr<UPFWingVisualAbilityData> DataPtr_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingVisual")
-	TObjectPtr<UPrimitiveComponent> BirdVisual;
+	TObjectPtr<UPrimitiveComponent> BirdVisualPtr_;
 
 	float CurrentMedianValue_;
 	

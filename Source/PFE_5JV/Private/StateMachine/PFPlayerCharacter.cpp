@@ -164,6 +164,14 @@ void APFPlayerCharacter::ChangeState(TSubclassOf<UPFState> newState)
 	CurrentStatePtr_->OnEnter();
 }
 
+FName APFPlayerCharacter::GetCurrentStateName() const
+{
+	if (!CurrentStatePtr_)
+		return "NONE";
+	
+	return CurrentStatePtr_.GetFName();
+}
+
 UPFStateComponent* APFPlayerCharacter::GetStateComponent(TSubclassOf<UPFStateComponent> componentClass, int& outIndex)
 {
 	outIndex = -1;

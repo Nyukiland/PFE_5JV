@@ -6,21 +6,21 @@ void UPFBaseCombinedState::OnEnter_Implementation()
 {
 	Super::OnEnter_Implementation();
 
-	Glide_ = CastChecked<UPFGlideAbility>(
+	GlidePtr_ = CastChecked<UPFGlideAbility>(
 		Owner->GetAndActivateComponent(UPFGlideAbility::StaticClass()));
 	
-	Dive_ = CastChecked<UPFDiveAbility>(
+	DivePtr_ = CastChecked<UPFDiveAbility>(
 		Owner->GetAndActivateComponent(UPFDiveAbility::StaticClass()));
 	
-	Turn_ = CastChecked<UPFTurnAbility>(
+	TurnPtr_ = CastChecked<UPFTurnAbility>(
 		Owner->GetAndActivateComponent(UPFTurnAbility::StaticClass()));
 	
-	WingVisual_ = CastChecked<UPFWingVisualAbility>(
+	WingVisualPtr_ = CastChecked<UPFWingVisualAbility>(
 		Owner->GetAndActivateComponent(UPFWingVisualAbility::StaticClass()));
 
-	WingBeat_ = CastChecked<UPFWingBeatAbility>(
+	WingBeatPtr_ = CastChecked<UPFWingBeatAbility>(
 	Owner->GetAndActivateComponent(UPFWingBeatAbility::StaticClass()));
 
-	Roll_ = CastChecked<UPFRollAbility>(
+	RollPtr_ = CastChecked<UPFRollAbility>(
 		Owner->GetStateComponent(UPFRollAbility::StaticClass()));
 }

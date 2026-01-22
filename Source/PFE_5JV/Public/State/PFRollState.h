@@ -12,7 +12,7 @@ class PFE_5JV_API UPFRollState : public UPFState
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base")
-	TObjectPtr<UPFRollAbility> Roll_;
+	TObjectPtr<UPFRollAbility> RollPtr_;
 	
 public:
 	virtual void OnEnter_Implementation() override;

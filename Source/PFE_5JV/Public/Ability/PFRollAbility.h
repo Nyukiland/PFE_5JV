@@ -16,10 +16,10 @@ protected:
 	TObjectPtr<UPFRollAbilityData> Data_;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
-	TObjectPtr<UPFPhysicResource> PhysicResource_;
+	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingVisual")
-	TObjectPtr<UPrimitiveComponent> BirdVisual;
+	TObjectPtr<UPrimitiveComponent> BirdVisualPtr_;
 	
 	float Timer_;
 	int RotationDir_;

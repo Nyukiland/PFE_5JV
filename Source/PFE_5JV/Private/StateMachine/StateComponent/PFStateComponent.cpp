@@ -22,7 +22,7 @@ void UPFStateComponent::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 	}
 	
 	PhysicRoot = Cast<UPrimitiveComponent>(Owner->GetRootComponent());
-	ForwardRoot = Owner->ForwardRoot;
+	ForwardRoot = Owner->ForwardRootPtr;
 }
 
 void UPFStateComponent::ComponentEnable_Implementation()

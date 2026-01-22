@@ -15,7 +15,7 @@ class PFE_5JV_API APFPlayerCharacter : public APawn
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
-	TObjectPtr<USceneComponent> ForwardRoot;
+	TObjectPtr<USceneComponent> ForwardRootPtr;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
@@ -70,6 +70,9 @@ public:
 	//State
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	void ChangeState(TSubclassOf<UPFState> newState);
+
+	UFUNCTION(BlueprintCallable, Category = "Player")
+	FName GetCurrentStateName() const;
 
 	private:
 	//State Component

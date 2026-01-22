@@ -17,22 +17,22 @@ class PFE_5JV_API UPFBaseCombinedState : public UPFCombinedState
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base")
-	TObjectPtr<UPFGlideAbility> Glide_;
+	TObjectPtr<UPFGlideAbility> GlidePtr_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base")
-	TObjectPtr<UPFTurnAbility> Turn_;
+	TObjectPtr<UPFTurnAbility> TurnPtr_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base")
-	TObjectPtr<UPFDiveAbility> Dive_;
+	TObjectPtr<UPFDiveAbility> DivePtr_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base")
-	TObjectPtr<UPFWingVisualAbility> WingVisual_;
+	TObjectPtr<UPFWingVisualAbility> WingVisualPtr_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base")
-	TObjectPtr<UPFWingBeatAbility> WingBeat_;
+	TObjectPtr<UPFWingBeatAbility> WingBeatPtr_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base")
-	TObjectPtr<UPFRollAbility> Roll_;
+	TObjectPtr<UPFRollAbility> RollPtr_;
 	
 public:
 	virtual void OnEnter_Implementation() override;

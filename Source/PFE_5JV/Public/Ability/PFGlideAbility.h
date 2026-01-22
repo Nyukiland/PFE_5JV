@@ -17,7 +17,7 @@ protected:
 	FVector2D MoveInput_;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Glide")
-	TObjectPtr<UPFPhysicResource> PhysicResource_;
+	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Glide")
 	TObjectPtr<UPFGlideAbilityData> DataPtr_;
@@ -41,5 +41,11 @@ protected:
 	void ConstantMovement(float deltaTime);
 
 	UFUNCTION(BlueprintCallable, Category = "Glide")
-	void AutoDiveIfNoSpeed(float deltaTime);
+	bool ShouldGoInAutoDive();
+
+	UFUNCTION(BlueprintCallable, Category = "Glide")
+	void StartAutoDive();
+	
+	UFUNCTION(BlueprintCallable, Category = "Glide")
+	bool AutoDiveIfNoSpeed(float deltaTime);
 };

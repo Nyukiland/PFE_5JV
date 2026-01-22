@@ -16,7 +16,7 @@ protected:
 	TObjectPtr<UPFDiveAbilityData> DataPtr_;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
-	TObjectPtr<UPFPhysicResource> PhysicResource_;
+	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
 	
 	float HighestInput_;
 	float InputRight_;

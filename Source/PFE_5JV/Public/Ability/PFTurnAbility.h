@@ -17,7 +17,7 @@ protected:
 	TObjectPtr<UPFTurnAbilityData> DataPtr_;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
-	TObjectPtr<UPFPhysicResource> PhysicResource_;
+	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
 	
 	float RotationValue_;
 	float InputRight_;

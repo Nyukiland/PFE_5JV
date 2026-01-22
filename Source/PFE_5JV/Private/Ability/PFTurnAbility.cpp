@@ -7,7 +7,7 @@ void UPFTurnAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 {
 	Super::ComponentInit_Implementation(ownerObj);
 
-	PhysicResource_ = CastChecked<UPFPhysicResource>
+	PhysicResourcePtr_ = CastChecked<UPFPhysicResource>
 		(Owner->GetStateComponent(UPFPhysicResource::StaticClass()));
 }
 
@@ -34,17 +34,17 @@ void UPFTurnAbility::Turn(float deltaTime)
 
 	if (RotationValue_ == 0)
 	{
-		PhysicResource_->SetYawRotationForce(0);
+		PhysicResourcePtr_->SetYawRotationForce(0);
 		return;
 	}
 	
 	float value = DataPtr_->RotationForce;
 	value *= FMath::Sign(RotationValue_);
 	value *= DataPtr_->RotationForceBasedOnInput->GetFloatValue(FMath::Abs(RotationValue_));
-	float velocity0to1 = PhysicResource_->GetForwardSpeedPercentage();
+	float velocity0to1 = PhysicResourcePtr_->GetForwardSpeedPercentage();
 	value *= DataPtr_->RotationForceBasedOnVelocity->GetFloatValue(velocity0to1);
 	
-	PhysicResource_->SetYawRotationForce(value);
+	PhysicResourcePtr_->SetYawRotationForce(value);
 }
 
 void UPFTurnAbility::GetRotationValue()
