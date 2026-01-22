@@ -185,7 +185,6 @@ void UPFPhysicResource::SetYawRotationForce(float rotation, bool bShouldResetFor
 {
 	FForceToAdd forceToAdd(FVector(0, 0, rotation), bShouldResetForce, bShouldAddAtTheEnd, duration, curve);
 	AngularForces_.Add(forceToAdd);
-	AngularVelocity_.Z = rotation;
 }
 
 void UPFPhysicResource::ProcessAngularVelocity(const float deltaTime)

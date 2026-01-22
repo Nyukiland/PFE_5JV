@@ -16,8 +16,9 @@ void UPFRollAbility::CallRoll(int sideRoll)
 	Timer_ = 0;
 	RotationDir_ = sideRoll;
 	bIsRollComplete_ = false;
-	AccumulatedRollDegrees_ = 0;
+
 	PrevRotator_ = BirdVisualPtr_->GetRelativeRotation();
+	PrevQuat_ = PrevRotator_.Quaternion();
 }
 
 bool UPFRollAbility::Roll(float deltaTime)
@@ -27,7 +28,7 @@ bool UPFRollAbility::Roll(float deltaTime)
 		UE_LOG(LogTemp, Error, TEXT("[Roll] Bad Set up on Data"));
 		return false;
 	}
-	
+
 	if (Timer_ >= Data_->RollDuration)
 	{
 		if (!bIsRollComplete_)
@@ -35,26 +36,24 @@ bool UPFRollAbility::Roll(float deltaTime)
 			BirdVisualPtr_->SetRelativeRotation(PrevRotator_);
 			bIsRollComplete_ = true;
 		}
-		
+
 		return true;
 	}
 
 	Timer_ += deltaTime;
 
-	float value = FMath::Clamp(Timer_/Data_->RollDuration, 0, 1);
-	
+	float value = FMath::Clamp(Timer_ / Data_->RollDuration, 0, 1);
+
 	FVector rightVector = ForwardRoot->GetRightVector();
-	PhysicResourcePtr_->AddForce(Data_->RollForce * Data_->RollForceOverTime->GetFloatValue(value) * rightVector);
-	
-	float totalDegrees = Data_->RotationCount * 360.f;
-	float targetDegrees = totalDegrees * value;
-	float deltaDegrees = targetDegrees - AccumulatedRollDegrees_;
+	PhysicResourcePtr_->AddForce(Data_->RollForce * Data_->RollForceOverTime->GetFloatValue(value) * rightVector * RotationDir_);
 
-	AccumulatedRollDegrees_ = targetDegrees;
+	float totalDegrees = Data_->RotationCount * 360.f * -RotationDir_;
+	FQuat rollQuat = FQuat(FVector::ForwardVector,
+							FMath::DegreesToRadians(totalDegrees * value));
 
-	FRotator BirdRot = BirdVisualPtr_->GetRelativeRotation();
-	BirdRot.Pitch += deltaDegrees * RotationDir_;
-	BirdVisualPtr_->SetRelativeRotation(BirdRot);
-	
+	const FQuat NewQuat = rollQuat * PrevQuat_;
+
+	BirdVisualPtr_->SetRelativeRotation(NewQuat);
+
 	return false;
 }
