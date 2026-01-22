@@ -30,7 +30,7 @@ protected:
 	TObjectPtr<UCameraComponent> CameraPtr_;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Camera|References")
-	TObjectPtr<UPFDiveAbility> DiveAbility_;
+	TObjectPtr<UPFDiveAbility> DiveAbilityPtr_;
 
 	UFUNCTION(BlueprintCallable)
 	void UpdateRotation(float deltaTime);
