@@ -1,8 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PFWingVisualAbility.h"
 #include "Data/PFRollAbilityData.h"
+#include "Resource/PFPhysicResource.h"
 #include "StateMachine/StateComponent/PFAbility.h"
 #include "PFRollAbility.generated.h"
 

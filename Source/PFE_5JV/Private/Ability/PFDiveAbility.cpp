@@ -40,6 +40,25 @@ void UPFDiveAbility::Dive(float deltaTime)
 	PhysicResourcePtr_->AddForwardForce(speedToGive * deltaTime, false);
 }
 
+void UPFDiveAbility::DiveVisual(float deltaTime)
+{
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[DiveAbility] Bad set up on Data"))
+		return;
+	}
+	
+	float highestValue = FMath::Min(InputLeft_, InputRight_);
+	
+	float lerpSpeedToUse = highestValue >= CurrentMedianValue_ ?
+	DataPtr_->LerpPitchSpeedGoingUp : DataPtr_->LerpPitchSpeedGoingDown;
+		
+	CurrentMedianValue_ = FMath::Lerp(CurrentMedianValue_, highestValue, lerpSpeedToUse * deltaTime);
+
+	float value = FMath::Lerp(0, DataPtr_->MaxRotationPitch, CurrentMedianValue_);
+	PhysicResourcePtr_->SetPitchRotationVisual(value, -1);
+}
+
 bool UPFDiveAbility::IsDiving() const
 {
 	return HighestInput_ != 0;

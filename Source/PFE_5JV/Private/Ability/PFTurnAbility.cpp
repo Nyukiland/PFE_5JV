@@ -9,6 +9,9 @@ void UPFTurnAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 
 	PhysicResourcePtr_ = CastChecked<UPFPhysicResource>
 		(Owner->GetStateComponent(UPFPhysicResource::StaticClass()));
+
+	VisualResourcePtr_ = CastChecked<UPFVisualResource>
+		(Owner->GetStateComponent(UPFVisualResource::StaticClass()));
 }
 
 void UPFTurnAbility::ReceiveInputLeft(float left)
@@ -45,6 +48,19 @@ void UPFTurnAbility::Turn(float deltaTime)
 	value *= DataPtr_->RotationForceBasedOnVelocity->GetFloatValue(velocity0to1);
 	
 	PhysicResourcePtr_->SetYawRotationForce(value);
+}
+
+void UPFTurnAbility::TurnVisual(float deltaTime)
+{
+	if (!DataPtr_ || !VisualResourcePtr_ || !VisualResourcePtr_->BirdVisualPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[WingVisual] BirdVisualPtr_ or Bad set up on Data"))
+		return;
+	}
+
+	FRotator birdRot = VisualResourcePtr_->BirdVisualPtr_->GetRelativeRotation();
+	birdRot.Pitch = FMath::Lerp(birdRot.Pitch, DataPtr_->MaxWingRotation * -RotationValue_, DataPtr_->LerpWingRotation * deltaTime);
+	VisualResourcePtr_->BirdVisualPtr_->SetRelativeRotation(birdRot);
 }
 
 void UPFTurnAbility::GetRotationValue()

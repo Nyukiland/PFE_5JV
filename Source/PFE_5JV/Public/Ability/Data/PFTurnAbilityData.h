@@ -25,4 +25,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn", meta = (ClampMin = 0, ClampMax = 1),
 		meta = (ToolTip = "The minimum difference between the two input to consider them as different"))
 	float ToleranceRotBetweenInput;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Turn/WingRotation",
+	meta = (ToolTip = "Max rotation when the bird is turnin"))
+	float MaxWingRotation;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Turn/WingRotation",
+		meta = (ToolTip = "Speed at which the bird rotate when turning"))
+	float LerpWingRotation;
 };

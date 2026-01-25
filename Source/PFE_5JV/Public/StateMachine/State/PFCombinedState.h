@@ -20,6 +20,6 @@ class PFE_5JV_API UPFCombinedState : public UPFState
 
 	virtual void OnExit_Implementation() override;
 
-	UFUNCTION(blueprintable)
-	void AddSubState(TSubclassOf<UPFState> stateClass);
+	UFUNCTION(BlueprintCallable)
+	virtual void AddSubState(TSubclassOf<UPFState> stateClass);
 };

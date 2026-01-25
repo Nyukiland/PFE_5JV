@@ -21,6 +21,7 @@ protected:
 	float HighestInput_;
 	float InputRight_;
 	float InputLeft_;
+	float CurrentMedianValue_;
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
@@ -33,6 +34,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Dive")
 	void Dive(float deltaTime);
+
+	UFUNCTION(BlueprintCallable, Category="Dive")
+	void DiveVisual(float deltaTime);
 
 	UFUNCTION(BlueprintCallable, Category="Dive")
 	bool IsDiving()const;

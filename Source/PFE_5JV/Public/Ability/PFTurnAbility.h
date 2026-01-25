@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Data/PFTurnAbilityData.h"
+#include "Resource/PFVisualResource.h"
 #include "StateMachine/StateComponent/PFAbility.h"
 #include "PFTurnAbility.generated.h"
 
@@ -12,16 +13,23 @@ class PFE_5JV_API UPFTurnAbility : public UPFAbility
 {
 	GENERATED_BODY()
 
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Turn")
+	float InputRight_;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Turn")
+	float InputLeft_;
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn")
 	TObjectPtr<UPFTurnAbilityData> DataPtr_;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
+	TObjectPtr<UPFVisualResource> VisualResourcePtr_;
 	
 	float RotationValue_;
-	float InputRight_;
-	float InputLeft_;
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
@@ -34,6 +42,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Dive")
 	void Turn(float deltaTime);
+
+	UFUNCTION(BlueprintCallable, Category="Dive")
+	void TurnVisual(float deltaTime);
 
 private:
 	void GetRotationValue();
