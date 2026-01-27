@@ -6,6 +6,9 @@ void UPFAutoDiveState::OnEnter_Implementation()
 {
 	Super::OnEnter_Implementation();
 
-	GlidePtr_ = CastChecked<UPFGlideAbility>(
-		Owner->GetAndActivateComponent(UPFGlideAbility::StaticClass()));
+	DivePtr_ = CastChecked<UPFDiveAbility>(
+		Owner->GetAndActivateComponent(UPFDiveAbility::StaticClass()));
+
+	WingBeatPtr_ = CastChecked<UPFWingBeatAbility>(
+		Owner->GetAndActivateComponent(UPFWingBeatAbility::StaticClass()));
 }

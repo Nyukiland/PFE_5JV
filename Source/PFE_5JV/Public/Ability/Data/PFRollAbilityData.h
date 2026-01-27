@@ -17,7 +17,7 @@ public:
 	float RollForce;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Roll")
-	TObjectPtr<UCurveFloat> RollForceOverTime;
+	TObjectPtr<UCurveFloat> RollForceOverTimePtr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Roll")
 	int RotationCount;

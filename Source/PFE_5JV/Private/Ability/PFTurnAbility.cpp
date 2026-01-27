@@ -14,6 +14,15 @@ void UPFTurnAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 		(Owner->GetStateComponent(UPFVisualResource::StaticClass()));
 }
 
+void UPFTurnAbility::ComponentDisable_Implementation()
+{
+	Super::ComponentDisable_Implementation();
+
+	InputLeft_ = 0.0f;
+	InputRight_ = 0.0f;
+	GetRotationValue();
+}
+
 void UPFTurnAbility::ReceiveInputLeft(float left)
 {
 	InputLeft_ = left;
@@ -28,8 +37,8 @@ void UPFTurnAbility::ReceiveInputRight(float right)
 
 void UPFTurnAbility::Turn(float deltaTime)
 {
-	if (!DataPtr_ || !DataPtr_->RotationForceBasedOnInput
-		|| !DataPtr_->RotationForceBasedOnVelocity)
+	if (!DataPtr_ || !DataPtr_->RotationForceBasedOnInputPtr
+		|| !DataPtr_->RotationForceBasedOnVelocityPtr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[TurnAbility] Bad set up on data"));
 		return;
@@ -43,9 +52,9 @@ void UPFTurnAbility::Turn(float deltaTime)
 	
 	float value = DataPtr_->RotationForce;
 	value *= FMath::Sign(RotationValue_);
-	value *= DataPtr_->RotationForceBasedOnInput->GetFloatValue(FMath::Abs(RotationValue_));
+	value *= DataPtr_->RotationForceBasedOnInputPtr->GetFloatValue(FMath::Abs(RotationValue_));
 	float velocity0to1 = PhysicResourcePtr_->GetForwardSpeedPercentage();
-	value *= DataPtr_->RotationForceBasedOnVelocity->GetFloatValue(velocity0to1);
+	value *= DataPtr_->RotationForceBasedOnVelocityPtr->GetFloatValue(velocity0to1);
 	
 	PhysicResourcePtr_->SetYawRotationForce(value);
 }

@@ -34,13 +34,21 @@ public:
         meta = (ToolTip = "The friction applied to the player when going horizontal"))
     float BaseAirFriction;
 
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction",
+        meta = (ToolTip = "How long before the friction reach it's full capacity"))
+    float TimerMaxFriction;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction",
+        meta = (ToolTip = "Use the Timer Max Friction to evaluate the curve and use a percentage of the friction"))
+    TObjectPtr<UCurveFloat> FrictionTimerControlCurvePtr;
+
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Above",
         meta = (ToolTip = "The friction applied to the player when going above the max speed"))
     float AboveSpeedFriction;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Above",
         meta = (ToolTip = "The curve used for the friction when going above speed, 0 is max speed, 1 is above max speed"))
-    TObjectPtr<UCurveFloat> AboveSpeedFrictionCurve;
+    TObjectPtr<UCurveFloat> AboveSpeedFrictionCurvePtr;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Friction Up",
         meta = (ToolTip = "The friction applied to the player when going up"))
@@ -48,7 +56,7 @@ public:
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Friction Up",
         meta = (ToolTip = "The curve used for the friction based on the rotation"))
-    TObjectPtr<UCurveFloat> AirFrictionCurveUp;
+    TObjectPtr<UCurveFloat> AirFrictionCurveUpPtr;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Friction Down",
         meta = (ToolTip = "The friction applied to the player when going horizontal"))
@@ -56,5 +64,5 @@ public:
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Friction Down",
         meta = (ToolTip = "The curve used for the friction based on the rotation"))
-    TObjectPtr<UCurveFloat> AirFrictionCurveDown;
+    TObjectPtr<UCurveFloat> AirFrictionCurveDownPtr;
 };

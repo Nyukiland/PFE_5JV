@@ -101,8 +101,10 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 
 	PhysicResource_->AddForwardForce(speedToGive, false);
 
-	PhysicResource_->ResetGravityTimer();
+	PhysicResource_->ResetPhysicsTimer();
 	TimeLeftToTriggerSuperBeatWing = DataPtr_->SuperWingBeatTiming;
+
+	OnWingBeatCalled.Broadcast();
 }
 
 void UPFWingBeatAbility::GetAverageInputValue()

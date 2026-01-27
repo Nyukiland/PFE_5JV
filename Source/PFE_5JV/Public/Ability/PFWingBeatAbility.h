@@ -8,12 +8,17 @@
 class UPFWingBeatAbilityData;
 class UPFPhysicResource;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWingBeatCalled);
 
 UCLASS(Abstract, Blueprintable)
 class PFE_5JV_API UPFWingBeatAbility : public UPFAbility
 {
 	GENERATED_BODY()
 
+public:
+	UPROPERTY(BlueprintAssignable, Category="Dive")
+	FOnWingBeatCalled OnWingBeatCalled;
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive")
 	TObjectPtr<UPFWingBeatAbilityData> DataPtr_;

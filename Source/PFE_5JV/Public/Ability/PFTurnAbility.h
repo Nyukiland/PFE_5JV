@@ -33,6 +33,7 @@ protected:
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
+	virtual void ComponentDisable_Implementation() override;
 	
 	UFUNCTION(BlueprintCallable, Category="Dive")
 	void ReceiveInputLeft(float left);

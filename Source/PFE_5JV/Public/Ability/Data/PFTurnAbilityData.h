@@ -16,11 +16,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn",
 		meta = (ToolTip = "The amount of rotation based on the current input"))
-	TObjectPtr<UCurveFloat> RotationForceBasedOnInput;
+	TObjectPtr<UCurveFloat> RotationForceBasedOnInputPtr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn",
 		meta = (ToolTip = "The amount of rotation based on the current velocity"))
-	TObjectPtr<UCurveFloat> RotationForceBasedOnVelocity;
+	TObjectPtr<UCurveFloat> RotationForceBasedOnVelocityPtr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn", meta = (ClampMin = 0, ClampMax = 1),
 		meta = (ToolTip = "The minimum difference between the two input to consider them as different"))

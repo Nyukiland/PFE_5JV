@@ -70,7 +70,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PhysicResource")
 	TObjectPtr<UPFPhysicResourceData> DataPtr_;
 
-	float GravityTimer_;
+	float GravityTimer_ = 0;
+	float FrictionTimer_ = 0;
 	FVector GlobalVelocity_;
 	FVector ForwardVelo_;
 	FVector AngularVelocity_;
@@ -131,8 +132,11 @@ public:
 	void DoGravity(const float deltaTime);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	void ResetGravityTimer();
-
+	void ResetPhysicsTimer();
+	
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	float FrictionPercentValue() const;
+	
 private:
 	FVector CalculateForce(FForceToAdd* force, float deltaTime, FVector& VelocityGlobal);
 };

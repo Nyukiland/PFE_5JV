@@ -33,24 +33,4 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Glide/AutoDive",
 		meta = (ToolTip = "The speed at which the bird auto dive"))
 	float AutoDiveSpeedLimit = 500.0f;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Glide/AutoDive",
-		meta = (ToolTip = "How long will the auto dive last"))
-	float AutoDiveDuration = 1.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Glide/AutoDive",
-		meta = (ToolTip = "How long the bird will take to rotate, make sure it's under half the duration"))
-	float AutoDiveRotationTime = 0.2f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Glide/AutoDive",
-		meta = (ToolTip = "Speed gained over time"))
-	TObjectPtr<UCurveFloat> AutoDiveSpeedCurve;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Glide/AutoDive",
-		meta = (ToolTip = "The speed the bird will gain by the end of the auto dive"))
-	float AutoDiveSpeedGain;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Glide/AutoDive",
-		meta = (ToolTip = "The dive rotation"))
-	float AutoDiveDiveRotation = -90.0f;
 };

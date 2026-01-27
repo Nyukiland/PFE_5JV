@@ -1,18 +1,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Ability/PFGlideAbility.h"
-#include "StateMachine/State/PFState.h"
+#include "Ability/PFDiveAbility.h"
+#include "Ability/PFWingBeatAbility.h"
+#include "StateMachine/State/PFCombinedState.h"
 #include "PFAutoDiveState.generated.h"
 
 UCLASS()
-class PFE_5JV_API UPFAutoDiveState : public UPFState
+class PFE_5JV_API UPFAutoDiveState : public UPFCombinedState
 {
 	GENERATED_BODY()
 
 	protected:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "AutoDive")
-	TObjectPtr<UPFGlideAbility> GlidePtr_;
+	TObjectPtr<UPFDiveAbility> DivePtr_;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "AutoDive")
+	TObjectPtr<UPFWingBeatAbility> WingBeatPtr_;
 
 public:
 	virtual void OnEnter_Implementation() override;

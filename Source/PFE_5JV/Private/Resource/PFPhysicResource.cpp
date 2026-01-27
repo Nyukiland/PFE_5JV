@@ -61,19 +61,19 @@ float UPFPhysicResource::GetCurrentAirFriction() const
 
 	float alignment = GetAlignmentWithUp();
 
-	if (alignment > 0 && DataPtr_->AirFrictionCurveUp)
+	if (alignment > 0 && DataPtr_->AirFrictionCurveUpPtr)
 	{
 		return FMath::Lerp(DataPtr_->BaseAirFriction,
 							DataPtr_->AirFrictionGoingUp,
-							DataPtr_->AirFrictionCurveUp->GetFloatValue(alignment));
+							DataPtr_->AirFrictionCurveUpPtr->GetFloatValue(alignment));
 	}
-	if (alignment < 0 && DataPtr_->AirFrictionCurveDown)
+	if (alignment < 0 && DataPtr_->AirFrictionCurveDownPtr)
 	{
 		alignment = FMath::Abs(alignment);
 
 		return FMath::Lerp(DataPtr_->BaseAirFriction,
 							DataPtr_->AirFrictionGoingDown,
-							DataPtr_->AirFrictionCurveDown->GetFloatValue(alignment));
+							DataPtr_->AirFrictionCurveDownPtr->GetFloatValue(alignment));
 	}
 
 	return DataPtr_->BaseAirFriction;
@@ -81,19 +81,26 @@ float UPFPhysicResource::GetCurrentAirFriction() const
 
 void UPFPhysicResource::ProcessAirFriction(const float deltaTime)
 {
-	if (!DataPtr_)
+	if (!DataPtr_ || !DataPtr_->FrictionTimerControlCurvePtr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[PhysicResource] DataPtr_ is null"));
 		return;
 	}
 
+	if (FrictionTimer_ < DataPtr_->TimerMaxFriction)
+	{
+		FrictionTimer_ += deltaTime;
+	}
+	
 	float friction = GetCurrentAirFriction();
-
+	friction *= FrictionPercentValue();
+	friction *= deltaTime;
+	
 	FVector dir = GlobalVelocity_.GetSafeNormal();
-	GlobalVelocity_ -= friction * deltaTime * dir;
+	GlobalVelocity_ -= friction * dir;
 
 	dir = ForwardVelo_.GetSafeNormal();
-	ForwardVelo_ -= friction * deltaTime * dir;
+	ForwardVelo_ -= friction * dir;
 
 	ForwardVelo_ = ForwardVelo_.GetClampedToSize(0, DataPtr_->MaxAboveSpeed);
 	GlobalVelocity_ = GlobalVelocity_.GetClampedToSize(0, DataPtr_->MaxAboveSpeed);
@@ -174,7 +181,7 @@ void UPFPhysicResource::ProcessMaxSpeed(const float deltaTime)
 	float maxSpeedScaled = velocity.Length() - DataPtr_->MaxSpeed;
 	float value01 = FMath::Clamp(speedScaled / maxSpeedScaled, 0.f, 1.f);
 
-	velocity -= DataPtr_->AboveSpeedFrictionCurve->GetFloatValue(value01) * deltaTime * dir;
+	velocity -= DataPtr_->AboveSpeedFrictionCurvePtr->GetFloatValue(value01) * deltaTime * dir;
 
 	PhysicRoot->SetPhysicsLinearVelocity(velocity);
 }
@@ -248,9 +255,16 @@ void UPFPhysicResource::DoGravity(const float deltaTime)
 	AllForces_.Add(FForceToAdd(gravity * FVector::UpVector));
 }
 
-void UPFPhysicResource::ResetGravityTimer()
+void UPFPhysicResource::ResetPhysicsTimer()
 {
 	GravityTimer_ = 0;
+	FrictionTimer_ = 0;
+}
+
+float UPFPhysicResource::FrictionPercentValue() const
+{
+	return DataPtr_->FrictionTimerControlCurvePtr->GetFloatValue(
+		FMath::Clamp(FrictionTimer_ / DataPtr_->TimerMaxFriction, 0, 1));
 }
 
 FVector UPFPhysicResource::CalculateForce(FForceToAdd* force, float deltaTime, FVector& VelocityGlobal)

@@ -45,7 +45,7 @@ bool UPFRollAbility::Roll(float deltaTime)
 	float value = FMath::Clamp(Timer_ / Data_->RollDuration, 0, 1);
 
 	FVector rightVector = ForwardRoot->GetRightVector();
-	PhysicResourcePtr_->AddForce(Data_->RollForce * Data_->RollForceOverTime->GetFloatValue(value) * rightVector * RotationDir_);
+	PhysicResourcePtr_->AddForce(Data_->RollForce * Data_->RollForceOverTimePtr->GetFloatValue(value) * rightVector * RotationDir_);
 
 	float totalDegrees = Data_->RotationCount * 360.f * -RotationDir_;
 	FQuat rollQuat = FQuat(FVector::ForwardVector,
