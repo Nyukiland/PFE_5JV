@@ -2,6 +2,19 @@
 
 #include "StateMachine/PFPlayerCharacter.h"
 
+void UPFPhysicResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
+{
+	Super::ComponentInit_Implementation(ownerObj);
+
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[PhysicResource] No Data available"))
+		return;
+	}
+	
+	ForwardVelo_ = FVector::ForwardVector * DataPtr_->InitialSpeed;
+}
+
 float UPFPhysicResource::GetCurrentSpeedPercentage()
 {
 	if (!DataPtr_)
@@ -187,8 +200,7 @@ void UPFPhysicResource::ProcessMaxSpeed(const float deltaTime)
 }
 
 void UPFPhysicResource::SetYawRotationForce(float rotation, bool bShouldResetForce, bool bShouldAddAtTheEnd,
-											float duration,
-											UCurveFloat* curve)
+											float duration, UCurveFloat* curve)
 {
 	FForceToAdd forceToAdd(FVector(0, 0, rotation), bShouldResetForce, bShouldAddAtTheEnd, duration, curve);
 	AngularForces_.Add(forceToAdd);
@@ -230,10 +242,16 @@ void UPFPhysicResource::SetPitchRotationVisual(float rotation, int priority)
 	PitchRotation_ = rotation;
 }
 
-void UPFPhysicResource::ProcessPitchVisual()
+void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
 {
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[PhysicResource] DataPtr_ is null"));
+		return;
+	}
+	
 	FRotator rotation = ForwardRoot->GetRelativeRotation();
-	rotation.Pitch = PitchRotation_;
+	rotation.Pitch = FMath::Lerp(rotation.Pitch, PitchRotation_, deltaTime * DataPtr_->PitchRotationLerpSpeed);
 	ForwardRoot->SetRelativeRotation(rotation);
 
 	PitchRotation_ = 0;

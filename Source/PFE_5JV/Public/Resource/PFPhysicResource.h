@@ -86,6 +86,8 @@ protected:
 	int PitchPriority_;
 	
 public:
+	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
+	
 	UFUNCTION(Blueprintable, Category = "PhysicResource")
 	float GetCurrentSpeedPercentage();
 
@@ -126,7 +128,7 @@ public:
 	void SetPitchRotationVisual(float rotation, int priority);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	void ProcessPitchVisual();
+	void ProcessPitchVisual(float deltaTime);
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void DoGravity(const float deltaTime);

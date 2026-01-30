@@ -59,17 +59,15 @@ void UPFTurnAbility::Turn(float deltaTime)
 	PhysicResourcePtr_->SetYawRotationForce(value);
 }
 
-void UPFTurnAbility::TurnVisual(float deltaTime)
+void UPFTurnAbility::TurnVisual()
 {
-	if (!DataPtr_ || !VisualResourcePtr_ || !VisualResourcePtr_->BirdVisualPtr_)
+	if (!DataPtr_ || !VisualResourcePtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[WingVisual] BirdVisualPtr_ or Bad set up on Data"))
 		return;
 	}
 
-	FRotator birdRot = VisualResourcePtr_->BirdVisualPtr_->GetRelativeRotation();
-	birdRot.Pitch = FMath::Lerp(birdRot.Pitch, DataPtr_->MaxWingRotation * -RotationValue_, DataPtr_->LerpWingRotation * deltaTime);
-	VisualResourcePtr_->BirdVisualPtr_->SetRelativeRotation(birdRot);
+	VisualResourcePtr_->SetRollRotation(DataPtr_->MaxWingRotation * -RotationValue_, 0);
 }
 
 void UPFTurnAbility::GetRotationValue()

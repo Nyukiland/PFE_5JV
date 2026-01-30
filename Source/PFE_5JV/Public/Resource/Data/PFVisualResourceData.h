@@ -8,5 +8,8 @@ UCLASS(Blueprintable, BlueprintType)
 class PFE_5JV_API UPFVisualResourceData : public UDataAsset
 {
 	GENERATED_BODY()
-	
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+	float LerpWingRotation;
 };

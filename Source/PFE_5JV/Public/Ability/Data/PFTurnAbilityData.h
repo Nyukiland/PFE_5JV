@@ -29,8 +29,4 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Turn/WingRotation",
 	meta = (ToolTip = "Max rotation when the bird is turnin"))
 	float MaxWingRotation;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Turn/WingRotation",
-		meta = (ToolTip = "Speed at which the bird rotate when turning"))
-	float LerpWingRotation;
 };

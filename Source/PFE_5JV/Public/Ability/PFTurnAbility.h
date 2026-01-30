@@ -23,10 +23,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn")
 	TObjectPtr<UPFTurnAbilityData> DataPtr_;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Turn")
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Turn")
 	TObjectPtr<UPFVisualResource> VisualResourcePtr_;
 	
 	float RotationValue_;
@@ -35,17 +35,17 @@ public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 	virtual void ComponentDisable_Implementation() override;
 	
-	UFUNCTION(BlueprintCallable, Category="Dive")
+	UFUNCTION(BlueprintCallable, Category="Turn")
 	void ReceiveInputLeft(float left);
 
-	UFUNCTION(BlueprintCallable, Category="Dive")
+	UFUNCTION(BlueprintCallable, Category="Turn")
 	void ReceiveInputRight(float right);
 	
-	UFUNCTION(BlueprintCallable, Category="Dive")
+	UFUNCTION(BlueprintCallable, Category="Turn")
 	void Turn(float deltaTime);
 
-	UFUNCTION(BlueprintCallable, Category="Dive")
-	void TurnVisual(float deltaTime);
+	UFUNCTION(BlueprintCallable, Category="Turn")
+	void TurnVisual();
 
 private:
 	void GetRotationValue();

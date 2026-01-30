@@ -17,4 +17,13 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
 	TObjectPtr<UPFVisualResourceData> DataPtr_;
+
+	float RollRotation_;
+	int RollPriority_;
+	
+public:
+	void SetRollRotation(float rotation, int priority);
+
+	UFUNCTION(BlueprintCallable, Category = "Visual")
+	void ProcessRollRotation(float deltaTime);
 };
