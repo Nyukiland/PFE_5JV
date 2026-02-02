@@ -37,8 +37,11 @@ void UPFTurnAbility::ReceiveInputRight(float right)
 
 void UPFTurnAbility::Turn(float deltaTime)
 {
-	if (!DataPtr_ || !DataPtr_->RotationForceBasedOnInputPtr
-		|| !DataPtr_->RotationForceBasedOnVelocityPtr)
+	if (!DataPtr_ || !PhysicResourcePtr_
+		|| !DataPtr_->RotationForceBasedOnInputPtr
+		|| !DataPtr_->RotationForceBasedOnVelocityPtr
+		|| !DataPtr_->SlowForceBasedOnInputPtr
+		|| !DataPtr_->SlowForceBasedOnVelocityPtr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[TurnAbility] Bad set up on data"));
 		return;
@@ -50,13 +53,22 @@ void UPFTurnAbility::Turn(float deltaTime)
 		return;
 	}
 	
-	float value = DataPtr_->RotationForce;
-	value *= FMath::Sign(RotationValue_);
-	value *= DataPtr_->RotationForceBasedOnInputPtr->GetFloatValue(FMath::Abs(RotationValue_));
 	float velocity0to1 = PhysicResourcePtr_->GetForwardSpeedPercentage();
-	value *= DataPtr_->RotationForceBasedOnVelocityPtr->GetFloatValue(velocity0to1);
+	float valueAbs = FMath::Abs(RotationValue_);
 	
-	PhysicResourcePtr_->SetYawRotationForce(value);
+	// Rotation
+	float rotValue = DataPtr_->RotationForce;
+	rotValue *= FMath::Sign(RotationValue_);
+	rotValue *= DataPtr_->RotationForceBasedOnInputPtr->GetFloatValue(valueAbs);
+	rotValue *= DataPtr_->RotationForceBasedOnVelocityPtr->GetFloatValue(velocity0to1);
+	
+	PhysicResourcePtr_->SetYawRotationForce(rotValue);
+
+	// Slow Down
+	float slowValue = DataPtr_->SlowForce;
+	slowValue *= DataPtr_->SlowForceBasedOnInputPtr->GetFloatValue(slowValue);
+	slowValue *= DataPtr_->SlowForceBasedOnVelocityPtr->GetFloatValue(velocity0to1);
+	PhysicResourcePtr_->AddForwardForce(slowValue);
 }
 
 void UPFTurnAbility::TurnVisual()
