@@ -21,6 +21,11 @@ void UPFDiveAbility::ComponentDisable_Implementation()
 	InputRight_ = 0.0f;
 	GetHighestValue();
 	Timer_ = 0.0f;
+
+	bIsDivingStateGoingUp_ = false;
+	SpeedBeforeDive_ = 0.0f;
+	GoingUpTimer_ = 10;
+	MaxTimeGoingUp_ = 0;
 }
 
 void UPFDiveAbility::ReceiveInputLeft(float left)
@@ -51,6 +56,48 @@ void UPFDiveAbility::Dive(float deltaTime)
 	speedToGive *= DataPtr_->DiveAccelerationBasedOnSpeedCurvePtr->GetFloatValue(velocity0to1);
 
 	PhysicResourcePtr_->AddForwardForce(speedToGive * deltaTime, false);
+}
+
+void UPFDiveAbility::AfterDiveGoingUp(float deltaTime)
+{
+	if (!DataPtr_ || !PhysicResourcePtr_
+		|| !DataPtr_->GoingUpRotationCurve
+		|| !DataPtr_->GoingUpDurationCurve)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[DiveAbility] Bad Set up on data"));
+		return;
+	}
+
+	if (!DataPtr_->bUseUCurveGoingUp)
+		return;
+
+	if (IsDiving() && !bIsDivingStateGoingUp_)
+	{
+		bIsDivingStateGoingUp_ = true;
+		GoingUpTimer_ = 100;
+		SpeedBeforeDive_ = PhysicResourcePtr_->GetCurrentVelocity().Length();
+	}
+
+	if (!IsDiving() && bIsDivingStateGoingUp_)
+	{
+		bIsDivingStateGoingUp_ = false;
+		
+		float value01 = PhysicResourcePtr_->GetCurrentVelocity().Length()- SpeedBeforeDive_;
+		value01 /= PhysicResourcePtr_->GetMaxSpeed();
+		value01 = FMath::Clamp(value01, 0.0f, 1.0f);
+		MaxTimeGoingUp_ = DataPtr_->MaxTimeForGoingUpAfterDive;
+		MaxTimeGoingUp_ *= DataPtr_->GoingUpDurationCurve->GetFloatValue(value01);
+	}
+
+	if (bIsDivingStateGoingUp_ || GoingUpTimer_ > MaxTimeGoingUp_)
+		return;
+
+	GoingUpTimer_ += deltaTime;
+
+	float timer01 = FMath::Clamp(GoingUpTimer_/MaxTimeGoingUp_, 0, 1);
+	float rotationValue = DataPtr_->MaxUpRotationPitch;
+	rotationValue *= DataPtr_->GoingUpRotationCurve->GetFloatValue(timer01);
+	PhysicResourcePtr_->SetPitchRotationVisual(rotationValue, -1);
 }
 
 void UPFDiveAbility::DiveVisual(float deltaTime)

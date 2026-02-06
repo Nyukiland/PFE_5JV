@@ -15,6 +15,17 @@ void UPFPhysicResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 	ForwardVelo_ = FVector::ForwardVector * DataPtr_->InitialSpeed;
 }
 
+float UPFPhysicResource::GetMaxSpeed() const
+{
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[PhysicResource] No Data available"))
+		return 0;
+	}
+
+	return DataPtr_->MaxSpeed;
+}
+
 float UPFPhysicResource::GetCurrentSpeedPercentage()
 {
 	if (!DataPtr_)

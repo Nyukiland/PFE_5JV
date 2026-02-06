@@ -34,6 +34,11 @@ protected:
 
 	float Timer_;
 	
+	bool bIsDivingStateGoingUp_;
+	float SpeedBeforeDive_;
+	float GoingUpTimer_ = 10;
+	float MaxTimeGoingUp_ = 0;
+	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 
@@ -47,6 +52,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Dive")
 	void Dive(float deltaTime);
+
+	UFUNCTION(BlueprintCallable, Category="Dive")
+	void AfterDiveGoingUp(float deltaTime);
 
 	UFUNCTION(BlueprintCallable, Category="Dive")
 	void DiveVisual(float deltaTime);

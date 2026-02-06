@@ -41,4 +41,24 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Glide/AutoDive",
 		meta = (ToolTip = "The dive rotation", ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 	float AutoDiveDiveRotationPercentage = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive/GoingUP",
+			meta = (ToolTip = "To use the curve to go up after a dive"))
+	bool bUseUCurveGoingUp;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive/GoingUP",
+		meta = (ToolTip = "The rotation go to when the dive is called"))
+	float MaxUpRotationPitch;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive/GoingUP",
+		meta = (ToolTip = "The time it will take for the entire going up to be completed"))
+	float MaxTimeForGoingUpAfterDive;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive/GoingUP",
+		meta = (ToolTip = "the rotation after the dive based on the duration"))
+	TObjectPtr<UCurveFloat> GoingUpRotationCurve;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive/GoingUP",
+		meta = (ToolTip = "Based on the gained speed how much time will be allowed for the going up"))
+	TObjectPtr<UCurveFloat> GoingUpDurationCurve;
 };

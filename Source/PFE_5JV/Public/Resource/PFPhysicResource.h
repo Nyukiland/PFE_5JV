@@ -87,11 +87,14 @@ protected:
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
+
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	float GetMaxSpeed() const;
 	
-	UFUNCTION(Blueprintable, Category = "PhysicResource")
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	float GetCurrentSpeedPercentage();
 
-	UFUNCTION(Blueprintable, Category = "PhysicResource")
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	float GetForwardSpeedPercentage(bool bUseMaxAboveSpeed = false);
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bShouldResetForce, bShouldAddAtTheEnd, duration, curve"))
