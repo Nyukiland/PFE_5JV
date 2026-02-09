@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Data/PFRollAbilityData.h"
 #include "Resource/PFPhysicResource.h"
+#include "Resource/PFVisualResource.h"
 #include "StateMachine/StateComponent/PFAbility.h"
 #include "PFRollAbility.generated.h"
 
@@ -15,11 +16,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Roll")
 	TObjectPtr<UPFRollAbilityData> Data_;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Roll")
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingVisual")
-	TObjectPtr<UPrimitiveComponent> BirdVisualPtr_;
+	UPROPERTY(visibleAnywhere, BlueprintReadOnly, Category="Roll")
+	TObjectPtr<UPFVisualResource> VisualResourcePtr_;
 	
 	float Timer_;
 	int RotationDir_;

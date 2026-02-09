@@ -20,10 +20,24 @@ protected:
 
 	float RollRotation_;
 	int RollPriority_;
+
+	FRotator BaseBirdVisuRotator_;
+	FRotator BirdVisuRotation_;
+	int BirdVisuPriority_;
 	
 public:
+	UFUNCTION(BlueprintCallable, Category = "Visual")
+	void SetBirdVisualRotation(FRotator rotation, int priority);
+	
+	UFUNCTION(BlueprintCallable, Category = "Visual")
 	void SetRollRotation(float rotation, int priority);
 
 	UFUNCTION(BlueprintCallable, Category = "Visual")
 	void ProcessRollRotation(float deltaTime);
+
+	UFUNCTION(BlueprintCallable, Category = "Visual")
+	void ProcessBirdVisuRotation(float deltaTime);
+
+protected:
+	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 };

@@ -9,6 +9,9 @@ void UPFRollAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 
 	PhysicResourcePtr_ = CastChecked<UPFPhysicResource>
 		(Owner->GetStateComponent(UPFPhysicResource::StaticClass()));
+
+	VisualResourcePtr_ = CastChecked<UPFVisualResource>
+		(Owner->GetStateComponent(UPFPhysicResource::StaticClass()));
 }
 
 void UPFRollAbility::CallRoll(int sideRoll)
