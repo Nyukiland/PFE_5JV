@@ -27,6 +27,9 @@ protected:
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Visual")
+	FRotator GetBirdVisualRotation() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Visual")
 	void SetBirdVisualRotation(FRotator rotation, int priority);
 	
 	UFUNCTION(BlueprintCallable, Category = "Visual")

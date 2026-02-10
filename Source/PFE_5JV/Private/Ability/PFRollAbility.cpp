@@ -20,7 +20,7 @@ void UPFRollAbility::CallRoll(int sideRoll)
 	RotationDir_ = sideRoll;
 	bIsRollComplete_ = false;
 
-	PrevRotator_ = BirdVisualPtr_->GetRelativeRotation();
+	PrevRotator_ = VisualResourcePtr_->GetBirdVisualRotation();
 	PrevQuat_ = PrevRotator_.Quaternion();
 }
 
@@ -36,7 +36,6 @@ bool UPFRollAbility::Roll(float deltaTime)
 	{
 		if (!bIsRollComplete_)
 		{
-			BirdVisualPtr_->SetRelativeRotation(PrevRotator_);
 			bIsRollComplete_ = true;
 		}
 
@@ -56,7 +55,7 @@ bool UPFRollAbility::Roll(float deltaTime)
 
 	const FQuat NewQuat = rollQuat * PrevQuat_;
 
-	BirdVisualPtr_->SetRelativeRotation(NewQuat);
+	VisualResourcePtr_->SetBirdVisualRotation(NewQuat.Rotator(), -2);
 
 	return false;
 }

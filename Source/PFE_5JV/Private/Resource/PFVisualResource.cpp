@@ -1,5 +1,10 @@
 #include "Resource/PFVisualResource.h"
 
+FRotator UPFVisualResource::GetBirdVisualRotation() const
+{
+	return BirdVisualPtr_->GetRelativeRotation();
+}
+
 void UPFVisualResource::SetBirdVisualRotation(FRotator rotation, int priority)
 {
 	if (priority > BirdVisuPriority_ || rotation.IsNearlyZero())
@@ -42,10 +47,12 @@ void UPFVisualResource::ProcessBirdVisuRotation(float deltaTime)
 		return;
 	}
 	
-	FRotator birdRot = BirdVisualPtr_->GetRelativeRotation();
-	birdRot.Pitch = FRotator::Lerp(birdRot.Pitch, RollRotation_, DataPtr_->LerpWingRotation * deltaTime);
-	BirdVisualPtr_->SetRelativeRotation(birdRot);
-
+	FQuat CurrentQuat = BirdVisualPtr_->GetRelativeRotation().Quaternion();
+	const FQuat TargetQuat  = BirdVisuRotation_.Quaternion();
+	FQuat NewQuat = FQuat::Slerp(CurrentQuat, TargetQuat, DataPtr_->LerpWingRotation * deltaTime);
+	
+	BirdVisualPtr_->SetRelativeRotation(NewQuat);
+	
 	BirdVisuRotation_ = BaseBirdVisuRotator_;
 	BirdVisuPriority_ = 1000;
 }
