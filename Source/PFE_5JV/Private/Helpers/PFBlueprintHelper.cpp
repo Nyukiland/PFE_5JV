@@ -33,11 +33,97 @@ void UPFBlueprintHelper::CheckCurrentLayout(EKeyboardOutputPin& outputPins)
 }
 
 float& UPFBlueprintHelper::SmoothValueByRef(float& curValue, const float valueToReach, const float smoothSpeed,
-	const float deltaTime)
+                                            const float deltaTime)
 {
 	float t = smoothSpeed * deltaTime;
 	t = FMath::Clamp(t, 0, 1);
 
 	curValue = FMath::Lerp(curValue, valueToReach, t);
 	return curValue;
+}
+
+void UPFBlueprintHelper::FilterAllInputRaw(FName givenInputName, EPlayerInput& outputPins)
+{
+	outputPins = GetEnumFromInputName(givenInputName);
+}
+
+void UPFBlueprintHelper::FilterAllInputWithTrigger(FName givenInputName, ETriggerEvent triggerToFilter,
+                                                   ETriggerEvent givenTrigger, EPlayerInput& outputPins)
+{
+	if (givenTrigger != triggerToFilter)
+	{
+		outputPins = EPlayerInput::NONE;
+		return;
+	}
+
+	outputPins = GetEnumFromInputName(givenInputName);
+}
+
+void UPFBlueprintHelper::FilterSpecificInputRaw(EPlayerInput inputToFilter, FName givenInputName, EExecPinsResult& outputPins)
+{
+	if (givenInputName != GetInputNameFromEnum(inputToFilter))
+	{
+		outputPins = EExecPinsResult::Blocked;
+		return;
+	}
+
+	outputPins = EExecPinsResult::Passed;
+}
+
+void UPFBlueprintHelper::FilterSpecificInputWithTrigger(EPlayerInput inputToFilter, ETriggerEvent triggerToFilter,
+                                                        FName givenInputName, ETriggerEvent givenTrigger,
+                                                        EExecPinsResult& outputPins)
+{
+	if (givenTrigger != triggerToFilter)
+	{
+		outputPins = EExecPinsResult::Blocked;
+		return;
+	}
+
+	if (givenInputName != GetInputNameFromEnum(inputToFilter))
+	{
+		outputPins = EExecPinsResult::Blocked;
+		return;
+	}
+
+	outputPins = EExecPinsResult::Passed;
+}
+
+FName UPFBlueprintHelper::GetInputNameFromEnum(EPlayerInput Input)
+{
+	switch (Input)
+	{
+	case EPlayerInput::LeftTrigger:
+		return "IA_LeftTrigger";
+
+	case EPlayerInput::RightTrigger:
+		return "IA_RightTrigger";
+
+	case EPlayerInput::WingBeat:
+		return "IA_WingBeat";
+
+	case EPlayerInput::Move:
+		return "IA_Move";
+
+	default:
+		return NAME_None;
+	}
+}
+
+EPlayerInput UPFBlueprintHelper::GetEnumFromInputName(FName inputName)
+{
+	static const TMap<FName, EPlayerInput> InputMap =
+	{
+		{ "IA_LeftTrigger",  EPlayerInput::LeftTrigger },
+		{ "IA_RightTrigger", EPlayerInput::RightTrigger },
+		{ "IA_WingBeat",     EPlayerInput::WingBeat },
+		{ "IA_Move",         EPlayerInput::Move }
+	};
+
+	if (const EPlayerInput* Found = InputMap.Find(inputName))
+	{
+		return *Found;
+	}
+
+	return EPlayerInput::NONE;
 }
