@@ -21,18 +21,28 @@ protected:
 
 	UPROPERTY(visibleAnywhere, BlueprintReadOnly, Category="Roll")
 	TObjectPtr<UPFVisualResource> VisualResourcePtr_;
-	
-	float Timer_;
+
+	float PressTimeRight_;
+	float PressTimeLeft_;
+	float TimerRoll_;
+	float TimerPreRoll_;
 	int RotationDir_;
 	bool bIsRollComplete_ = true;
-	FRotator PrevRotator_;
 	FQuat PrevQuat_;
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
+
+	virtual void ComponentEnable_Implementation() override;
 	
 	UFUNCTION(BlueprintCallable, Category = "Roll")
-	void CallRoll(int sideRoll);
+	void TryCallRollRight(float inputValue, int rotationSide);
+
+	UFUNCTION(BlueprintCallable, Category = "Roll")
+	void TryCallRollLeft(float inputValue, int rotationSide);
+
+	UFUNCTION(BlueprintCallable, Category = "Roll")
+	bool PreRollCheck(float deltatTime);
 	
 	UFUNCTION(BlueprintCallable, Category = "Roll")
 	bool Roll(float deltaTime);
