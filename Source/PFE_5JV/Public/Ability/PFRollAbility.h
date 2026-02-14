@@ -23,7 +23,9 @@ protected:
 	TObjectPtr<UPFVisualResource> VisualResourcePtr_;
 
 	float PressTimeRight_;
+	bool bIsDownRight_;
 	float PressTimeLeft_;
+	bool bIsDownLeft_;
 	float TimerRoll_;
 	float TimerPreRoll_;
 	int RotationDir_;

@@ -12,7 +12,7 @@ void UPFRollAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 		(Owner->GetStateComponent(UPFPhysicResource::StaticClass()));
 
 	VisualResourcePtr_ = CastChecked<UPFVisualResource>
-		(Owner->GetStateComponent(UPFPhysicResource::StaticClass()));
+		(Owner->GetStateComponent(UPFVisualResource::StaticClass()));
 }
 
 void UPFRollAbility::ComponentEnable_Implementation()
@@ -28,7 +28,6 @@ void UPFRollAbility::ComponentEnable_Implementation()
 	// TimerPreRoll_ = -1;
 	// RotationDir_ = 0;
 	// bIsRollComplete_ = true;
-	// PrevQuat_ = VisualResourcePtr_->GetBirdVisualRotation().Quaternion();
 }
 
 void UPFRollAbility::TryCallRollRight(float inputValue, int rotationSide)
@@ -41,10 +40,17 @@ void UPFRollAbility::TryCallRollRight(float inputValue, int rotationSide)
 	
 	if (!bIsRollComplete_)
 		return;
-	
+
 	if (inputValue < Data_->ThresholdInput)
+	{
+		bIsDownRight_ = false;
+		return;
+	}
+
+	if (bIsDownRight_)
 		return;
 
+	bIsDownRight_ = true;
 	float pressTime = UGameplayStatics::GetRealTimeSeconds(Owner->GetWorld());
 	
 	if (PressTimeRight_ == 0 ||
@@ -55,6 +61,7 @@ void UPFRollAbility::TryCallRollRight(float inputValue, int rotationSide)
 	}
 
 	RotationDir_ += rotationSide;
+	TimerPreRoll_ = 0;
 }
 
 void UPFRollAbility::TryCallRollLeft(float inputValue, int rotationSide)
@@ -69,7 +76,15 @@ void UPFRollAbility::TryCallRollLeft(float inputValue, int rotationSide)
 		return;
 	
 	if (inputValue < Data_->ThresholdInput)
+	{
+		bIsDownLeft_ = false;
 		return;
+	}
+
+	if (bIsDownLeft_)
+		return;
+
+	bIsDownLeft_ = true;
 
 	float pressTime = UGameplayStatics::GetRealTimeSeconds(Owner->GetWorld());
 	
@@ -81,6 +96,7 @@ void UPFRollAbility::TryCallRollLeft(float inputValue, int rotationSide)
 	}
 
 	RotationDir_ += rotationSide;
+	TimerPreRoll_ = 0;
 }
 
 bool UPFRollAbility::PreRollCheck(float deltatTime)
@@ -136,12 +152,9 @@ bool UPFRollAbility::Roll(float deltaTime)
 	PhysicResourcePtr_->AddForce(Data_->RollForce * Data_->RollForceOverTimePtr->GetFloatValue(value) * rightVector * RotationDir_);
 
 	float totalDegrees = Data_->RotationCount * 360.f * -RotationDir_;
-	FQuat rollQuat = FQuat(FVector::ForwardVector,
-							FMath::DegreesToRadians(totalDegrees * value));
+	float currentDegrees = totalDegrees * value;
 
-	const FQuat NewQuat = rollQuat * PrevQuat_;
-
-	VisualResourcePtr_->SetBirdVisualRotation(NewQuat.Rotator(), -2);
+	VisualResourcePtr_->SetRollRotation(currentDegrees, -2);
 
 	return false;
 }
