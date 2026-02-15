@@ -87,6 +87,7 @@ void UPFDiveAbility::AfterDiveGoingUp(float deltaTime)
 		value01 = FMath::Clamp(value01, 0.0f, 1.0f);
 		MaxTimeGoingUp_ = DataPtr_->MaxTimeForGoingUpAfterDive;
 		MaxTimeGoingUp_ *= DataPtr_->GoingUpDurationCurve->GetFloatValue(value01);
+		GoingUpTimer_ = 0;
 	}
 
 	if (bIsDivingStateGoingUp_ || GoingUpTimer_ > MaxTimeGoingUp_)
