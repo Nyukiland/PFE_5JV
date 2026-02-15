@@ -18,10 +18,4 @@ protected:
 	
 public:
 	virtual void OnEnter_Implementation() override;
-
-	UFUNCTION(BlueprintCallable, Category = "Base")
-	void RollCheckInputLeft(float inputValue);
-	
-	UFUNCTION(BlueprintCallable, Category = "Base")
-	void RollCheckInputRight(float inputValue);
 };

@@ -14,6 +14,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Visual")
 	TObjectPtr<UPrimitiveComponent> BirdVisualPtr_;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Visual")
+	TObjectPtr<UPrimitiveComponent> BirdMeshObjectPtr_;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
 	TObjectPtr<UPFVisualResourceData> DataPtr_;
@@ -24,6 +27,8 @@ protected:
 	FRotator BaseBirdVisuRotator_;
 	FRotator BirdVisuRotation_;
 	int BirdVisuPriority_;
+
+	float CurrentRollValue_;
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Visual")

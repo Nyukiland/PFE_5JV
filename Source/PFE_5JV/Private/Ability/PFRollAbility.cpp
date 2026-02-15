@@ -151,9 +151,8 @@ bool UPFRollAbility::Roll(float deltaTime)
 	FVector rightVector = ForwardRoot->GetRightVector();
 	PhysicResourcePtr_->AddForce(Data_->RollForce * Data_->RollForceOverTimePtr->GetFloatValue(value) * rightVector * RotationDir_);
 
-	float totalDegrees = Data_->RotationCount * 360.f * -RotationDir_;
+	float totalDegrees = Data_->RotationCount * 360.f * RotationDir_;
 	float currentDegrees = totalDegrees * value;
-
 	VisualResourcePtr_->SetRollRotation(currentDegrees, -2);
 
 	return false;

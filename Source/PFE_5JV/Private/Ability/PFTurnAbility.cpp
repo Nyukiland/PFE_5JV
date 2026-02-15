@@ -79,7 +79,7 @@ void UPFTurnAbility::TurnVisual()
 		return;
 	}
 
-	VisualResourcePtr_->SetRollRotation(DataPtr_->MaxWingRotation * -RotationValue_, 0);
+	VisualResourcePtr_->SetRollRotation(DataPtr_->MaxWingRotation * RotationValue_, 0);
 }
 
 void UPFTurnAbility::GetRotationValue()

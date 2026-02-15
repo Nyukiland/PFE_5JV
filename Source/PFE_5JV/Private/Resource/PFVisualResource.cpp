@@ -22,12 +22,20 @@ void UPFVisualResource::ProcessRollRotation(float deltaTime)
 		return;
 	}
 	
+	float delta = FMath::FindDeltaAngleDegrees(CurrentRollValue_, RollRotation_);
+
+	float speed = DataPtr_->LerpWingRotation;
+	CurrentRollValue_ += delta * FMath::Clamp(speed * deltaTime, 0.f, 1.f);
+
+	CurrentRollValue_ = FRotator::NormalizeAxis(CurrentRollValue_);
+
 	FRotator birdRot = BirdVisualPtr_->GetRelativeRotation();
-	birdRot.Pitch = FMath::Lerp(birdRot.Pitch, RollRotation_, DataPtr_->LerpWingRotation * deltaTime);
+	birdRot.Roll = CurrentRollValue_;
 	BirdVisualPtr_->SetRelativeRotation(birdRot);
 
-	RollRotation_ = 0;
+	RollRotation_ = 0.f;
 	RollPriority_ = 1000;
+
 }
 
 void UPFVisualResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
