@@ -35,6 +35,9 @@ public:
 	FRotator GetBirdVisualRotation() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Visual")
+	void AddToRollRotation(float rotationToAdd, int priority);
+	
+	UFUNCTION(BlueprintCallable, Category = "Visual")
 	void SetRollRotation(float rotation, int priority);
 
 	UFUNCTION(BlueprintCallable, Category = "Visual")

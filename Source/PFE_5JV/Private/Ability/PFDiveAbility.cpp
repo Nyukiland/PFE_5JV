@@ -77,7 +77,7 @@ void UPFDiveAbility::AfterDiveGoingUp(float deltaTime)
 		GoingUpTimer_ = 100;
 		SpeedBeforeDive_ = PhysicResourcePtr_->GetCurrentVelocity().Length();
 	}
-
+	
 	if (!IsDiving() && bIsDivingStateGoingUp_)
 	{
 		bIsDivingStateGoingUp_ = false;
@@ -92,7 +92,7 @@ void UPFDiveAbility::AfterDiveGoingUp(float deltaTime)
 
 	if (bIsDivingStateGoingUp_ || GoingUpTimer_ > MaxTimeGoingUp_)
 		return;
-
+	
 	GoingUpTimer_ += deltaTime;
 
 	float timer01 = FMath::Clamp(GoingUpTimer_/MaxTimeGoingUp_, 0, 1);

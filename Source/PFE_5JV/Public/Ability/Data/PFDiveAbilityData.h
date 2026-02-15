@@ -61,4 +61,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive/GoingUP",
 		meta = (ToolTip = "Based on the gained speed how much time will be allowed for the going up"))
 	TObjectPtr<UCurveFloat> GoingUpDurationCurve;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive/DiveRoll",
+		meta = (ToolTip = "The time between each input register"))
+	float TimeBeforeInputRegister;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive/DiveRoll",
+		meta = (ToolTip = "The differential needed to start the roll"))
+	float DiveRollInputChangeNeeded;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive/DiveRoll",
+		meta = (ToolTip = "The rotation force when diving"))
+	float DiveRollRotationForce;
 };

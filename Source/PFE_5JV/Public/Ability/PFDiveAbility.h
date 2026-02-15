@@ -38,6 +38,8 @@ protected:
 	float SpeedBeforeDive_;
 	float GoingUpTimer_ = 10;
 	float MaxTimeGoingUp_ = 0;
+
+	
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;

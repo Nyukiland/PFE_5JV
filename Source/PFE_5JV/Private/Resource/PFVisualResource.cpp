@@ -5,6 +5,15 @@ FRotator UPFVisualResource::GetBirdVisualRotation() const
 	return BirdVisualPtr_->GetRelativeRotation();
 }
 
+void UPFVisualResource::AddToRollRotation(float rotationToAdd, int priority)
+{
+	if (priority > RollPriority_ || FMath::Abs(rotationToAdd) < 1)
+		return;
+
+	RollPriority_ = priority;
+	RollRotation_ = CurrentRollValue_ + rotationToAdd;
+}
+
 void UPFVisualResource::SetRollRotation(float rotation, int priority)
 {
 	if (priority > RollPriority_ || FMath::Abs(rotation) < 1)
