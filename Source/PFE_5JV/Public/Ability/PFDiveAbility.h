@@ -32,14 +32,18 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
 	float HighestInput_;
 
-	float Timer_;
+	float TimerAutoDive_;
 	
 	bool bIsDivingStateGoingUp_;
 	float SpeedBeforeDive_;
 	float GoingUpTimer_ = 10;
 	float MaxTimeGoingUp_ = 0;
 
-	
+	float RecordedPreviousInputRight_;
+	float RecordedPreviousInputLeft_;
+	float TimerInputRecording_;
+	bool bIsDiveRollPreviousDivingState_;
+	int DiveRollDirection;
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
@@ -62,6 +66,9 @@ public:
 	void DiveVisual(float deltaTime);
 
 	UFUNCTION(BlueprintCallable, Category="Dive")
+	void DiveRoll(float deltaTime);
+
+	UFUNCTION(BlueprintCallable, Category="Dive")
 	bool IsDiving() const;
 
 	UFUNCTION(BlueprintCallable, Category="AutoDive")
@@ -72,4 +79,7 @@ public:
 	
 private:
 	void GetHighestValue();
+
+	void DiveRollInputRecording(float deltaTime);
+	void DiveRollCheck();
 };
