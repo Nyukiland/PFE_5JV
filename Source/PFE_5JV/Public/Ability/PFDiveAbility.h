@@ -42,6 +42,7 @@ protected:
 	float RecordedPreviousInputRight_;
 	float RecordedPreviousInputLeft_;
 	float TimerInputRecording_;
+	float TimerWaitToRollDive_;
 	bool bIsDiveRollPreviousDivingState_;
 	int DiveRollDirection;
 	

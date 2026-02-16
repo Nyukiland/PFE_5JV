@@ -134,8 +134,14 @@ void UPFDiveAbility::DiveRoll(float deltaTime)
 
 	if (DiveRollDirection == 0)
 	{
+		TimerWaitToRollDive_ = 0;
 		return;
 	}
+
+	TimerWaitToRollDive_ += deltaTime;
+	
+	if (TimerWaitToRollDive_ < 0.1f)
+		return;
 
 	VisualResourcePtr_->AddToRollRotation(DataPtr_->DiveRollRotationForce * DiveRollDirection, -3);
 }
@@ -214,14 +220,18 @@ void UPFDiveAbility::DiveRollCheck()
 		DiveRollDirection = 0;
 		return;
 	}
+
+	float deltaLeft = FMath::Abs(RecordedPreviousInputLeft_ - InputLeft_);
+	bool validDeltaLeft = deltaLeft > DataPtr_->DiveRollInputChangeNeeded;
 	
-	if (FMath::Abs(RecordedPreviousInputLeft_ - InputLeft_) > DataPtr_->DiveRollInputChangeNeeded
-		&& InputRight_ == 1)
+	float deltaRight = FMath::Abs(RecordedPreviousInputRight_ - InputRight_);
+	bool validDeltaRight = deltaRight > DataPtr_->DiveRollInputChangeNeeded;
+	
+	if (validDeltaLeft && !validDeltaRight && InputRight_ == 1)
 	{
 		DiveRollDirection = -1;
 	}
-	else if (FMath::Abs(RecordedPreviousInputRight_ - InputRight_) > DataPtr_->DiveRollInputChangeNeeded
-		&& InputLeft_ == 1)
+	else if (!validDeltaLeft && validDeltaRight && InputLeft_ == 1)
 	{
 		DiveRollDirection = 1;
 	}
