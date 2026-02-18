@@ -40,3 +40,8 @@ void UPFStateComponent::ComponentTick_Implementation(float deltaTime)
 	
 }
 
+FString UPFStateComponent::GetInfo_Implementation()
+{
+	return TEXT("");
+}
+

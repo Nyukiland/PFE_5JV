@@ -15,6 +15,22 @@ void UPFPhysicResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 	ForwardVelo_ = FVector::ForwardVector * DataPtr_->InitialSpeed;
 }
 
+FString UPFPhysicResource::GetInfo_Implementation()
+{
+	FString text = TEXT("<hb>Physic:</>");
+	text += FString::Printf(TEXT("\n <b>GlobalVelocity:</b> %s"), *GlobalVelocity_.ToString());
+	text += FString::Printf(TEXT("\n <b>Magnitude</b>: %f"), GlobalVelocity_.Length());
+	text += TEXT("\n");
+	text += FString::Printf(TEXT("\n <b>ForwardVelocity</b>: %s"), *ForwardVelo_.ToString());
+	text += FString::Printf(TEXT("\n <b>Magnitude</b>: %f"), ForwardVelo_.Length());
+	text += TEXT("\n");
+	text += FString::Printf(TEXT("\n <b>Friction percent</b>: %f"), FrictionPercentValue());
+	text += TEXT("\n");
+	text += FString::Printf(TEXT("\n <b>Height</b>: %f"), Owner->ForwardRootPtr->GetComponentLocation().Y);
+
+	return text;
+}
+
 float UPFPhysicResource::GetMaxSpeed() const
 {
 	if (!DataPtr_)

@@ -43,4 +43,8 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void ComponentTick(float deltaTime);
 	virtual void ComponentTick_Implementation(float deltaTime);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	FString GetInfo();
+	virtual FString GetInfo_Implementation();
 };

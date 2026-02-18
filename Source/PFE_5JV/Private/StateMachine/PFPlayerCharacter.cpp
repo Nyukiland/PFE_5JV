@@ -59,7 +59,7 @@ void APFPlayerCharacter::BeginPlay()
 		{
 			classNative = classNative->GetSuperClass();
 		}
-		
+
 		if (ComponentIndexMap_.Contains(classNative))
 			UE_LOG(LogTemp, Error, TEXT("[Player] Duplicate component detected"));
 
@@ -145,6 +145,33 @@ UPFStateComponent* APFPlayerCharacter::GetAndActivateComponent(TSubclassOf<UPFSt
 	return comp;
 }
 
+FText APFPlayerCharacter::GetInfoFromComponent() const
+{
+	FString text;
+
+	FString stateName = CurrentStatePtr_ == nullptr ? TEXT("") : CurrentStatePtr_->GetName();
+	
+	text = TEXT("<hb>State:</>");
+	text += FString::Printf(TEXT("\n<b>CurrentState</b>: %s"), *stateName);
+	
+	for (int i = 0; i < ResourcesCount_ + ActiveAbilities_; i++)
+	{
+		if (StateComponentsPtr_[i] == nullptr)
+			continue;
+
+		FString temp = StateComponentsPtr_[i]->GetInfo();
+
+		if (!temp.IsEmpty())
+		{
+			text += TEXT("\n") + temp;
+			text += TEXT("\n");
+			text += TEXT("\n");
+		}
+	}
+
+	return FText::FromString(text);
+}
+
 void APFPlayerCharacter::ChangeState(TSubclassOf<UPFState> newState)
 {
 	if (!newState)
@@ -168,7 +195,7 @@ FName APFPlayerCharacter::GetCurrentStateName() const
 {
 	if (!CurrentStatePtr_)
 		return "NONE";
-	
+
 	return CurrentStatePtr_.GetFName();
 }
 
@@ -258,7 +285,7 @@ void APFPlayerCharacter::SwapComponents(int a, int b)
 
 	ComponentIndexMap_[GetNativeClass(StateComponentsPtr_[a]->GetClass())] = b;
 	ComponentIndexMap_[GetNativeClass(StateComponentsPtr_[b]->GetClass())] = a;
-	
+
 	StateComponentsPtr_.Swap(a, b);
 }
 

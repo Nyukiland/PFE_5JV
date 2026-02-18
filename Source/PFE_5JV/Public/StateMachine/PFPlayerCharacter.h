@@ -62,11 +62,14 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	void DeactivateAbilityComponent(TSubclassOf<UPFStateComponent> componentClass);
-
+	
 	//Need to cast due to Blueprint compatibility
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	UPFStateComponent* GetAndActivateComponent(TSubclassOf<UPFStateComponent> componentClass);
 
+	UFUNCTION(BlueprintCallable, Category = "Player")
+	FText GetInfoFromComponent() const;
+	
 	//State
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	void ChangeState(TSubclassOf<UPFState> newState);

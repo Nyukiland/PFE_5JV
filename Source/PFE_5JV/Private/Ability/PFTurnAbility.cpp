@@ -23,6 +23,15 @@ void UPFTurnAbility::ComponentDisable_Implementation()
 	GetRotationValue();
 }
 
+FString UPFTurnAbility::GetInfo_Implementation()
+{
+	FString text = TEXT("<hb>Turn:</>");
+	text += FString::Printf(TEXT("\n <b>Input Right</b>: %f"), InputRight_);
+	text += FString::Printf(TEXT("\n <b>Input Left</b>: %f"), InputLeft_);
+
+	return text;
+}
+
 void UPFTurnAbility::ReceiveInputLeft(float left)
 {
 	InputLeft_ = left;
