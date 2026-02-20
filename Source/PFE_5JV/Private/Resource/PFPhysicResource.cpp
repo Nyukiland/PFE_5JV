@@ -18,15 +18,15 @@ void UPFPhysicResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 FString UPFPhysicResource::GetInfo_Implementation()
 {
 	FString text = TEXT("<hb>Physic:</>");
-	text += FString::Printf(TEXT("\n <b>GlobalVelocity:</b> %s"), *GlobalVelocity_.ToString());
-	text += FString::Printf(TEXT("\n <b>Magnitude</b>: %f"), GlobalVelocity_.Length());
+	text += TEXT("\n <b>GlobalVelocity: </>") + FString::Printf(TEXT("%s"), *GlobalVelocity_.ToString());
+	text += TEXT("\n <b>Magnitude: </>") + FString::Printf(TEXT("%f"), GlobalVelocity_.Length());
 	text += TEXT("\n");
-	text += FString::Printf(TEXT("\n <b>ForwardVelocity</b>: %s"), *ForwardVelo_.ToString());
-	text += FString::Printf(TEXT("\n <b>Magnitude</b>: %f"), ForwardVelo_.Length());
+	text += TEXT("\n <b>ForwardVelocity: </>") + FString::Printf(TEXT("%s"), *ForwardVelo_.ToString());
+	text += TEXT("\n <b>Magnitude: </>") + FString::Printf(TEXT("%f"), ForwardVelo_.Length());
 	text += TEXT("\n");
-	text += FString::Printf(TEXT("\n <b>Friction percent</b>: %f"), FrictionPercentValue());
+	text += TEXT("\n <b>Friction percent: </>") + FString::Printf(TEXT("%f"), FrictionPercentValue());
 	text += TEXT("\n");
-	text += FString::Printf(TEXT("\n <b>Height</b>: %f"), Owner->ForwardRootPtr->GetComponentLocation().Y);
+	text += TEXT("\n <b>Height: </>") + FString::Printf(TEXT("%f"), Owner->ForwardRootPtr->GetComponentLocation().Y);
 
 	return text;
 }
