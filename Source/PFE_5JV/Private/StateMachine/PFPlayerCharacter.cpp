@@ -151,8 +151,8 @@ FText APFPlayerCharacter::GetInfoFromComponent() const
 
 	FString stateName = CurrentStatePtr_ == nullptr ? TEXT("") : CurrentStatePtr_->GetName();
 	
-	text = TEXT("<hb>State:</>");
-	text += FString::Printf(TEXT("\n<b>CurrentState</b>: %s"), *stateName);
+	text = TEXT("<hb>State:</>\n");
+	text += TEXT("<b>CurrentState</>: ") + FString::Printf(TEXT( "%s"), *stateName);
 	
 	for (int i = 0; i < ResourcesCount_ + ActiveAbilities_; i++)
 	{

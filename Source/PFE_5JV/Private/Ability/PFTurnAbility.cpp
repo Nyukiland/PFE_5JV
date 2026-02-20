@@ -26,8 +26,8 @@ void UPFTurnAbility::ComponentDisable_Implementation()
 FString UPFTurnAbility::GetInfo_Implementation()
 {
 	FString text = TEXT("<hb>Turn:</>");
-	text += FString::Printf(TEXT("\n <b>Input Right</b>: %f"), InputRight_);
-	text += FString::Printf(TEXT("\n <b>Input Left</b>: %f"), InputLeft_);
+	text += TEXT("\n <b>Input Right: </>") + FString::Printf(TEXT("%f"), InputRight_);
+	text += TEXT("\n <b>Input Left: </>") + FString::Printf(TEXT("%f"), InputLeft_);
 
 	return text;
 }
