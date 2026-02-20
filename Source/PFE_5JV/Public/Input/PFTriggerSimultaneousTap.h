@@ -19,19 +19,19 @@ public:
 
 	/** First input action to monitor */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simultaneous Tap")
-	TObjectPtr<const UInputAction> ActionA;
+	TObjectPtr<const UInputAction> ActionAPtr;
 
 	/** Second input action to monitor */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simultaneous Tap")
-	TObjectPtr<const UInputAction> ActionB;
+	TObjectPtr<const UInputAction> ActionBPtr;
 
 	/** Max allowed time difference between taps (seconds) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simultaneous Tap", meta = (ClampMin = "0.0"))
 	float TapTolerance = 0.15f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Simultaneous Tap")
-	bool bisActivatedOnce = false;
-	bool bisSecondInputTooLate = false;
+	bool bIsActivatedOnce = false;
+	bool bIsSecondInputTooLate = false;
 
 protected:
 	void ResetSimultaneousTap();

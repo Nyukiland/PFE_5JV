@@ -8,9 +8,9 @@
 void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 {
 	Super::ComponentTick_Implementation(deltaTime);
-	
+
+	// registration of inputs to compare with inputs a certain amount of time later
 	TimeUntilNextInputRegistration -= deltaTime;
-		
 	if(TimeUntilNextInputRegistration <= 0.f)
 	{
 		PreviousInputRightRegistered_ = PreviousInputRight_;
@@ -83,21 +83,19 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 		return;
 	}
 
-	bool IsSuperBeatWingActivated = (TimeLeftToTriggerSuperBeatWing > 0.f);
-	UE_LOG(LogTemp, Warning, TEXT("TimeLeftToObtainSuperBeatWing : %f"),TimeLeftToTriggerSuperBeatWing);
-	if(IsSuperBeatWingActivated == true) UE_LOG(LogTemp, Error, TEXT("SuperBeatWingActivated"));
+	const bool bIsSuperBeatWingActivated = (TimeLeftToTriggerSuperBeatWing > 0.f);
+	if(bIsSuperBeatWingActivated == true) UE_LOG(LogTemp, Error, TEXT("SuperBeatWingActivated"));
 	
 	GetAverageInputValue();
-	// UE_LOG(LogTemp, Warning, TEXT("AverageInputValue : %f"), this->AverageInputValue_);
 	
 	float heightToGive = DataPtr_->ForceToGiveInHeight *
 		DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve->GetFloatValue(AverageInputValue_);
-	if(IsSuperBeatWingActivated == true) heightToGive *= DataPtr_->SuperWingBeatHeightMultiplier;
+	if(bIsSuperBeatWingActivated == true) heightToGive *= DataPtr_->SuperWingBeatHeightMultiplier;
 	PhysicResource_->AddForce(heightToGive * FVector::UpVector, true, false, DataPtr_->ForceToGiveInHeightDuration);
 	
 	float speedToGive = DataPtr_->ForceToGiveInVelocity *
 		DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve->GetFloatValue(AverageInputValue_);
-	if(IsSuperBeatWingActivated == true) speedToGive *= DataPtr_->SuperWingBeatVelocityMultiplier;
+	if(bIsSuperBeatWingActivated == true) speedToGive *= DataPtr_->SuperWingBeatVelocityMultiplier;
 
 	PhysicResource_->AddForwardForce(speedToGive, false);
 
@@ -110,9 +108,7 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 void UPFWingBeatAbility::GetAverageInputValue()
 {
 	float RightInputDiff = FMathf::Abs(PreviousInputRightRegistered_ - 1);
-	// UE_LOG(LogTemp, Warning, TEXT("RightInputDiff : %f = PreviousInputRightRegistered_ : %f - InputRightRegistered_ : %f"), RightInputDiff, PreviousInputRightRegistered_, InputRightRegistered_);
 	float LeftInputDiff = FMathf::Abs(PreviousInputLeftRegistered_ - 1);
-	// UE_LOG(LogTemp, Warning, TEXT("LeftInputDiff : %f = PreviousInputLeftRegistered_ %f - InputLeftRegistered_ %f"), LeftInputDiff, PreviousInputLeftRegistered_, InputLeftRegistered_);
-
+	
 	AverageInputValue_ = (RightInputDiff + LeftInputDiff)/2;
 }
