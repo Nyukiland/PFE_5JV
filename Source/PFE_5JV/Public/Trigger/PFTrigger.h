@@ -2,26 +2,29 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "APFTrigger.generated.h"
+#include "PFTrigger.generated.h"
 
+class UPFTriggerBehavior;
 class APFPlayerCharacter;
 class UBoxComponent;
 
-UCLASS()
-class PFE_5JV_API AAPFTrigger : public AActor
+UCLASS(Abstract, Blueprintable)
+class PFE_5JV_API APFTrigger : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
-	AAPFTrigger();
+	APFTrigger();
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger")
 	TObjectPtr<APFPlayerCharacter> PlayerInTriggerPtr;
 	
-protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Trigger")
 	TObjectPtr<UBoxComponent> TriggerBoxPtr_;
+
+protected:
+	TArray<TObjectPtr<UPFTriggerBehavior>> BehaviorsPtr_;
 	
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;

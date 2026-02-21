@@ -2,17 +2,25 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "UTriggerBehavior.generated.h"
+#include "PFTriggerBehavior.generated.h"
 
+
+class APFTrigger;
 
 UCLASS(Abstract, Blueprintable)
-class PFE_5JV_API UUTriggerBehavior : public UActorComponent
+class PFE_5JV_API UPFTriggerBehavior : public UActorComponent
 {
 	GENERATED_BODY()
 
+protected:
+	UPROPERTY(visibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<APFTrigger> TriggerObjectPtr_;
+	
 public:	
-	UUTriggerBehavior();
+	UPFTriggerBehavior();
 
+	void Init(APFTrigger* parentTrigger);
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void OnTriggerEnter();
 	virtual void OnTriggerEnter_Implementation();
