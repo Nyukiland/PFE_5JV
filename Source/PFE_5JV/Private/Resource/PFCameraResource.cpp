@@ -79,7 +79,7 @@ void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRot
         NewRotation.Yaw = YawRotation + FMath::Clamp(DeltaYaw,-DataPtr_->MaxYawAngle, DataPtr_->MaxYawAngle);
     } else {
         FRotator DesiredRotation = NewRotation;
-        DesiredRotation.Yaw = YawRotation;
+        DesiredRotation.Yaw = YawRotation + CameraYawOffset_;
         NewRotation = FMath::RInterpTo(NewRotation, DesiredRotation, DeltaTime, DataPtr_->YawLagSpeed); }
 
     // Pitch
@@ -87,7 +87,7 @@ void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRot
         NewRotation.Pitch = PitchRotation + FMath::Clamp(DeltaPitch, -DataPtr_->MaxPitchAngle, DataPtr_->MaxPitchAngle);
     } else {
         FRotator DesiredRotation = NewRotation;
-        DesiredRotation.Pitch = PitchRotation;
+        DesiredRotation.Pitch = PitchRotation + CameraPitchOffset_;
         NewRotation = FMath::RInterpTo(NewRotation, DesiredRotation, DeltaTime, DataPtr_->PitchLagSpeed); }
     
     // Roll
