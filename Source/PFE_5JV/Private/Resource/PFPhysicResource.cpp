@@ -11,7 +11,7 @@ void UPFPhysicResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 		UE_LOG(LogTemp, Error, TEXT("[PhysicResource] No Data available"))
 		return;
 	}
-	
+
 	ForwardVelo_ = FVector::ForwardVector * DataPtr_->InitialSpeed;
 }
 
@@ -66,14 +66,14 @@ float UPFPhysicResource::GetForwardSpeedPercentage(bool bUseMaxAboveSpeed)
 }
 
 void UPFPhysicResource::AddForce(FVector force, bool bShouldResetForce, bool bShouldAddAtTheEnd, float duration,
-								UCurveFloat* curve)
+                                 UCurveFloat* curve)
 {
 	FForceToAdd forceToAdd(force, bShouldResetForce, bShouldAddAtTheEnd, duration, curve);
-	AllForces_.Add(forceToAdd);
+	GlobalForces_.Add(forceToAdd);
 }
 
 void UPFPhysicResource::AddForwardForce(float force, bool bShouldResetForce, bool bShouldAddAtTheEnd, float duration,
-										UCurveFloat* curve)
+                                        UCurveFloat* curve)
 {
 	FForceToAdd forceToAdd(FVector::ForwardVector * force, bShouldResetForce, bShouldAddAtTheEnd, duration, curve);
 	ForwardForces_.Add(forceToAdd);
@@ -104,16 +104,16 @@ float UPFPhysicResource::GetCurrentAirFriction() const
 	if (alignment > 0 && DataPtr_->AirFrictionCurveUpPtr)
 	{
 		return FMath::Lerp(DataPtr_->BaseAirFriction,
-							DataPtr_->AirFrictionGoingUp,
-							DataPtr_->AirFrictionCurveUpPtr->GetFloatValue(alignment));
+		                   DataPtr_->AirFrictionGoingUp,
+		                   DataPtr_->AirFrictionCurveUpPtr->GetFloatValue(alignment));
 	}
 	if (alignment < 0 && DataPtr_->AirFrictionCurveDownPtr)
 	{
 		alignment = FMath::Abs(alignment);
 
 		return FMath::Lerp(DataPtr_->BaseAirFriction,
-							DataPtr_->AirFrictionGoingDown,
-							DataPtr_->AirFrictionCurveDownPtr->GetFloatValue(alignment));
+		                   DataPtr_->AirFrictionGoingDown,
+		                   DataPtr_->AirFrictionCurveDownPtr->GetFloatValue(alignment));
 	}
 
 	return DataPtr_->BaseAirFriction;
@@ -131,11 +131,11 @@ void UPFPhysicResource::ProcessAirFriction(const float deltaTime)
 	{
 		FrictionTimer_ += deltaTime;
 	}
-	
+
 	float friction = GetCurrentAirFriction();
 	friction *= FrictionPercentValue();
 	friction *= deltaTime;
-	
+
 	FVector dir = GlobalVelocity_.GetSafeNormal();
 	GlobalVelocity_ -= friction * dir;
 
@@ -150,13 +150,13 @@ void UPFPhysicResource::ProcessVelocity(const float deltaTime)
 {
 	FVector velocity = GlobalVelocity_;
 
-	for (int i = AllForces_.Num() - 1; i >= 0; i--)
+	for (int i = GlobalForces_.Num() - 1; i >= 0; i--)
 	{
-		FForceToAdd* forceToAdd = &AllForces_[i];
+		FForceToAdd* forceToAdd = &GlobalForces_[i];
 
 		if (!forceToAdd)
 		{
-			AllForces_.RemoveAt(i);
+			GlobalForces_.RemoveAt(i);
 			continue;
 		}
 
@@ -164,7 +164,7 @@ void UPFPhysicResource::ProcessVelocity(const float deltaTime)
 
 		if (forceToAdd->Timer <= 0)
 		{
-			AllForces_.RemoveAt(i);
+			GlobalForces_.RemoveAt(i);
 		}
 
 		velocity += toAdd;
@@ -196,7 +196,15 @@ void UPFPhysicResource::ProcessVelocity(const float deltaTime)
 
 	CurrentForwardVelo_ = velocityForward;
 
-	velocity += ForwardRoot->GetForwardVector() * velocityForward.Length();
+	if (FMath::Abs(CurrentOverrideForwardVelo_) > 0.1f)
+	{
+		velocity += ForwardRoot->GetForwardVector() * CurrentOverrideForwardVelo_;
+		CurrentOverrideForwardVelo_ = 0;
+	}
+	else
+	{
+		velocity += ForwardRoot->GetForwardVector() * velocityForward.Length();
+	}
 
 	PhysicRoot->SetPhysicsLinearVelocity(velocity);
 }
@@ -227,7 +235,7 @@ void UPFPhysicResource::ProcessMaxSpeed(const float deltaTime)
 }
 
 void UPFPhysicResource::SetYawRotationForce(float rotation, bool bShouldResetForce, bool bShouldAddAtTheEnd,
-											float duration, UCurveFloat* curve)
+                                            float duration, UCurveFloat* curve)
 {
 	FForceToAdd forceToAdd(FVector(0, 0, rotation), bShouldResetForce, bShouldAddAtTheEnd, duration, curve);
 	AngularForces_.Add(forceToAdd);
@@ -276,7 +284,7 @@ void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
 		UE_LOG(LogTemp, Error, TEXT("[PhysicResource] DataPtr_ is null"));
 		return;
 	}
-	
+
 	FRotator rotation = ForwardRoot->GetRelativeRotation();
 	rotation.Pitch = FMath::Lerp(rotation.Pitch, PitchRotation_, deltaTime * DataPtr_->PitchRotationLerpSpeed);
 	ForwardRoot->SetRelativeRotation(rotation);
@@ -297,7 +305,7 @@ void UPFPhysicResource::DoGravity(const float deltaTime)
 	float timeValue = FMath::Clamp((GravityTimer_ - DataPtr_->TimerMaxGravity) / DataPtr_->GravityLerpTime, 0, 1);
 	float gravity = FMath::Lerp(0, DataPtr_->Gravity, timeValue);
 
-	AllForces_.Add(FForceToAdd(gravity * FVector::UpVector));
+	GlobalForces_.Add(FForceToAdd(gravity * FVector::UpVector));
 }
 
 void UPFPhysicResource::ResetPhysicsTimer()
@@ -312,13 +320,52 @@ float UPFPhysicResource::FrictionPercentValue() const
 		FMath::Clamp(FrictionTimer_ / DataPtr_->TimerMaxFriction, 0, 1));
 }
 
+void UPFPhysicResource::OverrideForwardVelocity(float force)
+{
+	CurrentOverrideForwardVelo_ = force;
+}
+
+void UPFPhysicResource::RemoveGlobalForces()
+{
+	GlobalForces_.Empty();
+}
+
+void UPFPhysicResource::RemoveForwardForces()
+{
+	ForwardForces_.Empty();
+}
+
+void UPFPhysicResource::RemoveAngularForces()
+{
+	AngularForces_.Empty();
+}
+
+void UPFPhysicResource::RemoveVelocityForces()
+{
+	RemoveGlobalForces();
+	RemoveForwardForces();
+}
+
+void UPFPhysicResource::RemoveAllForces()
+{
+	RemoveVelocityForces();
+	RemoveAngularForces();
+}
+
+void UPFPhysicResource::StopAllMotion()
+{
+	RemoveAllForces();
+	ForwardVelo_ = FVector::ZeroVector;
+	GlobalVelocity_ = FVector::ZeroVector;
+}
+
 FVector UPFPhysicResource::CalculateForce(FForceToAdd* force, float deltaTime, FVector& VelocityGlobal)
 {
 	FVector toAdd = force->Force;
 
 	if (force->CurvePtr)
 	{
-		toAdd = force->Force * force->CurvePtr->GetFloatValue((force->Duration - force->Timer)/force->Duration);
+		toAdd = force->Force * force->CurvePtr->GetFloatValue((force->Duration - force->Timer) / force->Duration);
 	}
 
 	force->Timer -= deltaTime;

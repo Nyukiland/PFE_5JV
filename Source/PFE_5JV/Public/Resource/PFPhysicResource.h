@@ -76,7 +76,7 @@ protected:
 	FVector ForwardVelo_;
 	FVector AngularVelocity_;
 	UPROPERTY()
-	TArray<FForceToAdd> AllForces_;
+	TArray<FForceToAdd> GlobalForces_;
 	UPROPERTY()
 	TArray<FForceToAdd> ForwardForces_;
 	UPROPERTY()
@@ -84,6 +84,8 @@ protected:
 
 	float PitchRotation_;
 	int PitchPriority_;
+
+	float CurrentOverrideForwardVelo_;
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
@@ -142,6 +144,27 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	float FrictionPercentValue() const;
+
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource/Debug")
+	void OverrideForwardVelocity(float force);
+	
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource/Debug")
+	void RemoveGlobalForces();
+
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource/Debug")
+	void RemoveForwardForces();
+
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource/Debug")
+	void RemoveAngularForces();
+	
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource/Debug")
+	void RemoveVelocityForces();
+
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource/Debug")
+	void RemoveAllForces();
+
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource/Debug")
+	void StopAllMotion();
 	
 private:
 	FVector CalculateForce(FForceToAdd* force, float deltaTime, FVector& VelocityGlobal);
