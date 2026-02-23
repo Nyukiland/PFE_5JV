@@ -45,9 +45,12 @@ protected:
 	float TimerWaitToRollDive_;
 	bool bIsDiveRollPreviousDivingState_;
 	int DiveRollDirection;
+
+	float ElapsedTime_;
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
+	virtual void ComponentTick_Implementation(float DeltaTime) override;
 
 	virtual void ComponentDisable_Implementation() override;
 
@@ -70,7 +73,7 @@ public:
 	void DiveRoll(float deltaTime);
 
 	UFUNCTION(BlueprintCallable, Category="Dive")
-	bool IsDiving() const;
+	bool IsDiving();
 
 	UFUNCTION(BlueprintCallable, Category="AutoDive")
 	void AutoDive(float deltaTime);

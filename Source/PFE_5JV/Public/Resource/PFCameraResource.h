@@ -1,60 +1,70 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PFPhysicResource.h"
 #include "Ability/PFDiveAbility.h"
 #include "Data/PFCameraResourceData.h"
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFCameraResource.generated.h"
 
+class UPFTurnAbility;
 class UCameraComponent;
 class USpringArmComponent;
 
-UCLASS()
+UCLASS(ClassGroup=(Camera), meta=(BlueprintSpawnableComponent))
 class PFE_5JV_API UPFCameraResource : public UPFResource
 {
 	GENERATED_BODY()
 
 public:
 	UPFCameraResource();
-	
-protected:
-	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
-	
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
-	TObjectPtr<USceneComponent> CameraRootPtr_;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
-	TObjectPtr<USpringArmComponent> SpringArmPtr_;
+	void ComponentInit_Implementation(APFPlayerCharacter* ownerObj);
+	virtual void ComponentTick_Implementation(float deltaTime) override;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
+	TObjectPtr<UPFCameraResourceData> DataPtr_;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
 	TObjectPtr<UCameraComponent> CameraPtr_;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Camera|References")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
+	TObjectPtr<USceneComponent> CameraRootPtr_;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
+	TObjectPtr<UPrimitiveComponent> VisualResourcePtr_;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
+	TObjectPtr<UPFPhysicResource> PhysicReferencePtr_;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
 	TObjectPtr<UPFDiveAbility> DiveAbilityPtr_;
-
-	UFUNCTION(BlueprintCallable)
-	void UpdateRotation(float deltaTime);
-	UFUNCTION(BlueprintCallable)
-	void UpdatePosition(float deltaTime);
-	UFUNCTION(blueprintCallable)
-	void UpdateZoom(float deltaTime);
-
-	FVector ComputeTargetLocation() const;
-
-	UPROPERTY(EditAnywhere, blueprintReadWrite)
-	TObjectPtr<UPFCameraResourceData> CameraResourceData_;
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
+	TObjectPtr<UPFTurnAbility> TurnAbilityPtr_;
 
 private:
-	//Dive
-	bool IsDiveActive_ = false;
-	float DiveTheTimer_ = 0.f;
-	float DiveTransitionTimer_ = 0.f;
-	bool WasDiving_ = false;
-	float ZoomStartDistance_;
-	FRotator ZoomStartRotation_;
 
-	// Flap
-	float FlapTimer_ = 0.f;
-	float FlapTransitionTimer_ = 0.f;
-	bool WasFlapping_ = false;
+	void UpdateCameraRotation(float DeltaTime, FRotator& FinalRotation);
+	void UpdateTurningRoll(float DeltaTime);
+	void UpdateCameraShake(float DeltaTime, FRotator& FinalRotation);
+	float InterpAngle(float Current, float Target, float DeltaTime, float Speed);
+
+	// Base rotation
+	float CameraYawOffset_   = 0.f;
+	float CameraPitchOffset_ = 0.f;
+	float CameraRollOffset_  = 0.f;
+	float LastActorYaw_   = 0.f;
+	float LastActorPitch_ = 0.f;
+	float LastActorRoll_  = 0.f;
+
+	//Shake
+	float ShakeTime_ = 0.f;
+
+	//Roll
+	float PreviousYaw_ = 0.f;
+	float BaseCameraRoll_ = 0.f;
+	float CurrentTurnRoll_ = 0.f;
+	FRotator FinalBaseRotation_;
+	FRotator SmoothedCameraRotation_;
 };

@@ -73,4 +73,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive/DiveRoll",
 		meta = (ToolTip = "The rotation force when diving"))
 	float DiveRollRotationForce;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive/PitchRotation",
+		meta = (ToolTip = "The threshold to wait before considering a height movement to be a dive"))
+	float Threshold_;
 };

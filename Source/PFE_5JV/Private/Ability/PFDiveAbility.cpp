@@ -28,6 +28,14 @@ void UPFDiveAbility::ComponentDisable_Implementation()
 	MaxTimeGoingUp_ = 0;
 }
 
+void UPFDiveAbility::ComponentTick_Implementation(float DeltaTime)
+{
+	if (HighestInput_ != 0)
+		ElapsedTime_ += DeltaTime;
+	else
+		ElapsedTime_ = 0;
+}
+
 void UPFDiveAbility::ReceiveInputLeft(float left)
 {
 	InputLeft_ = left;
@@ -146,9 +154,12 @@ void UPFDiveAbility::DiveRoll(float deltaTime)
 	VisualResourcePtr_->AddToRollRotation(DataPtr_->DiveRollRotationForce * DiveRollDirection, -3);
 }
 
-bool UPFDiveAbility::IsDiving() const
+bool UPFDiveAbility::IsDiving()
 {
-	return HighestInput_ != 0;
+	if (ElapsedTime_ >= DataPtr_->Threshold_ && HighestInput_ != 0)
+		return true;
+	
+	return false;
 }
 
 void UPFDiveAbility::AutoDive(float deltaTime)

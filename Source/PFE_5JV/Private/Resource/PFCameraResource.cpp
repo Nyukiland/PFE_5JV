@@ -1,144 +1,139 @@
 #include "Resource/PFCameraResource.h"
+
+#include "EnhancedInputComponent.h"
+#include "Ability/PFTurnAbility.h"
 #include "Camera/CameraComponent.h"
-#include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
 UPFCameraResource::UPFCameraResource()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.bCanEverTick = true;
 }
 
 void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 {
-	Super::ComponentInit_Implementation(ownerObj);
+    Super::ComponentInit_Implementation(ownerObj);
 
-	DiveAbilityPtr_ = CastChecked<UPFDiveAbility>(Owner->GetStateComponent(UPFDiveAbility::StaticClass()));
+    PhysicReferencePtr_ = Owner->GetStateComponent<UPFPhysicResource>();
+    TurnAbilityPtr_ = Owner->GetStateComponent<UPFTurnAbility>();
+    DiveAbilityPtr_ = Owner->GetStateComponent<UPFDiveAbility>();
 
-	if (!CameraRootPtr_)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[CameraResource] The reference to the CameraRoot is null"));
-	}
-	if (!SpringArmPtr_)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[CameraResource] The reference to the SpringArm is null"));
-	}
-	if (!CameraPtr_)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[CameraResource] The reference to the Camera is null"));
-	}
+    if(!CameraPtr_)
+        UE_LOG(LogTemp, Error, TEXT("The Camera referenced in PlayerCharacter blueprint is NULL"))
 
-	CameraRootPtr_->DetachFromComponent(
-		FDetachmentTransformRules::KeepWorldTransform
-	);
+    if(!CameraRootPtr_)
+        UE_LOG(LogTemp, Error, TEXT("The CameraRoot referenced in PlayerCharacter blueprint is NULL"))
+
+    if(!DataPtr_)
+        UE_LOG(LogTemp, Error, TEXT("The Data referenced in PlayerCharacter blueprint is NULL"))
+
+    if(!PhysicReferencePtr_)
+        UE_LOG(LogTemp, Error, TEXT("The PhysicResource referenced in PlayerCharacter blueprint is NULL"))
+
+    if(!VisualResourcePtr_)
+        UE_LOG(LogTemp, Error, TEXT("The VisualResource referenced in PlayerCharacter blueprint is NULL"))
+
+    if(!TurnAbilityPtr_)
+        UE_LOG(LogTemp, Error, TEXT("The TurnAbility referenced in PlayerCharacter blueprint is NULL"))
+
+    CameraRootPtr_->SetUsingAbsoluteRotation(true);
+    PreviousYaw_ = Owner->GetActorRotation().Yaw;
+    SmoothedCameraRotation_ = Owner->GetActorRotation();
+    BaseCameraRoll_ = CameraPtr_->GetRelativeRotation().Roll;
+    CurrentTurnRoll_ = 0.f;
 }
 
-void UPFCameraResource::UpdateRotation(float deltaTime)
+void UPFCameraResource::ComponentTick_Implementation(float deltaTime)
 {
-	if (!CameraResourceData_)
-		return;
-	
-	FRotator ownerRot = Owner->GetActorRotation();
-	FRotator cameraRot = CameraRootPtr_->GetComponentRotation();
-	FRotator deltaRot = (ownerRot - cameraRot).GetNormalized();
-	
-	const bool isDiving = IsDiveActive_ ||
-							DiveTransitionTimer_ < CameraResourceData_->DivingEndInterpDuration;
-	if (!isDiving)
-	{
-		// Limit Yaw and Pitch max span
-		deltaRot.Yaw   = FMath::Clamp(deltaRot.Yaw,   -CameraResourceData_->MaxYawWhenRotating, CameraResourceData_->MaxYawWhenRotating);
-		deltaRot.Pitch = FMath::Clamp(deltaRot.Pitch, -CameraResourceData_->MaxPitchWhenRotating, CameraResourceData_->MaxPitchWhenRotating);
-	}
-	deltaRot.Roll  = 0.f;
+    Super::ComponentTick_Implementation(deltaTime);
 
-	FRotator targetRotation = cameraRot + deltaRot;
-	FRotator currentRotation = CameraRootPtr_->GetComponentRotation();
+    if (!CameraRootPtr_ || !CameraPtr_ || !DataPtr_ || !PhysicReferencePtr_ || !VisualResourcePtr_ || !TurnAbilityPtr_)
+        return;
 
-	FRotator newRotation = FMath::RInterpTo(
-		currentRotation,
-		targetRotation,
-		deltaTime,
-		CameraResourceData_->RotationInterpSpeed
-	);
+    FRotator FinalRotation = SmoothedCameraRotation_;
+    
+    UpdateCameraRotation(deltaTime, FinalRotation);
+    // UpdateCameraShake(deltaTime, FinalRotation);
 
-	CameraRootPtr_->SetWorldRotation(newRotation);
+    SmoothedCameraRotation_ = FinalRotation;
+    CameraRootPtr_->SetWorldRotation(FinalRotation);
+    
+    UpdateTurningRoll(deltaTime);
 }
 
-FVector UPFCameraResource::ComputeTargetLocation() const
+void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRotation)
 {
-	if (!CameraResourceData_)
-		return Owner->GetActorLocation();
-	
-	FVector back = -Owner->GetActorForwardVector() * CameraResourceData_->BackDistance;
-	FVector up = FVector(0.f, 0.f, CameraResourceData_->UpDistance);
+    float YawRotation = Owner->GetActorRotation().Yaw;
+    float PitchRotation = PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch;
+    float RollRotation = VisualResourcePtr_->GetRelativeRotation().Roll;
+    FRotator CameraRotation = FinalRotation;
+    
+    float DeltaYaw = FMath::FindDeltaAngleDegrees(YawRotation, CameraRotation.Yaw);
+    float DeltaPitch = FMath::FindDeltaAngleDegrees(PitchRotation, CameraRotation.Pitch);
+    float DeltaRoll = FMath::FindDeltaAngleDegrees(RollRotation, CameraRotation.Roll);
+    
+    FRotator NewRotation = CameraRotation;
+    // Yaw
+    if (FMath::Abs(DeltaYaw) > DataPtr_->MaxYawAngle) {
+        NewRotation.Yaw = YawRotation + FMath::Clamp(DeltaYaw,-DataPtr_->MaxYawAngle, DataPtr_->MaxYawAngle);
+    } else {
+        FRotator DesiredRotation = NewRotation;
+        DesiredRotation.Yaw = YawRotation;
+        NewRotation = FMath::RInterpTo(NewRotation, DesiredRotation, DeltaTime, DataPtr_->YawLagSpeed); }
 
-	return Owner->GetActorLocation() + back + up;
+    // Pitch
+    if (FMath::Abs(DeltaPitch) > DataPtr_->MaxPitchAngle) {
+        NewRotation.Pitch = PitchRotation + FMath::Clamp(DeltaPitch, -DataPtr_->MaxPitchAngle, DataPtr_->MaxPitchAngle);
+    } else {
+        FRotator DesiredRotation = NewRotation;
+        DesiredRotation.Pitch = PitchRotation;
+        NewRotation = FMath::RInterpTo(NewRotation, DesiredRotation, DeltaTime, DataPtr_->PitchLagSpeed); }
+    
+    // Roll
+    if (FMath::Abs(DeltaRoll) > DataPtr_->MaxRollAngle) {
+        NewRotation.Roll = RollRotation + FMath::Clamp(DeltaRoll, -DataPtr_->MaxRollAngle, DataPtr_->MaxRollAngle);
+    } else {
+        FRotator DesiredRotation = NewRotation;
+        DesiredRotation.Roll = RollRotation;
+        NewRotation = FMath::RInterpTo(NewRotation, DesiredRotation, DeltaTime, DataPtr_->RollLagSpeed); }
+
+    //Apply
+    FinalRotation = NewRotation;
+    GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Caméra: %f/%f/%f"), CameraPtr_->GetComponentRotation().Yaw, CameraPtr_->GetComponentRotation().Pitch, CameraPtr_->GetComponentRotation().Roll));
+    GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, FString::Printf(TEXT("Oiseau: %f/%f/%f"), DeltaYaw, DeltaPitch, DeltaRoll));
 }
 
-void UPFCameraResource::UpdatePosition(float deltaTime)
+void UPFCameraResource::UpdateTurningRoll(float DeltaTime)
 {
-	if (!CameraResourceData_)
-		return;
-	
-	FVector currentLocation = CameraRootPtr_->GetComponentLocation();
-	FVector targetLocation = ComputeTargetLocation();
+    float InputYaw = TurnAbilityPtr_->InputRight_ - TurnAbilityPtr_->InputLeft_;
+    float TargetRoll = BaseCameraRoll_ + InputYaw * DataPtr_->MaxTurnRoll;
+    
+    float NewRoll = FMath::FInterpTo(CameraPtr_->GetRelativeRotation().Roll, TargetRoll, DeltaTime, DataPtr_->TurnRollSpeed);
+    NewRoll = FMath::Clamp(NewRoll, BaseCameraRoll_ - DataPtr_->MaxTurnRoll, BaseCameraRoll_ + DataPtr_->MaxTurnRoll);
 
-	FVector newLocation = FMath::VInterpTo(
-		currentLocation,
-		targetLocation,
-		deltaTime,
-		CameraResourceData_->PositionInterpSpeed
-	);
+    FRotator RelativeRotation = CameraPtr_->GetRelativeRotation();
+    RelativeRotation.Roll = NewRoll;
+    CameraPtr_->SetRelativeRotation(RelativeRotation);
 
-	CameraRootPtr_->SetWorldLocation(newLocation);
+    GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue,FString::Printf(TEXT("InputYaw: %.2f | TargetRoll: %.2f | CurrentTurnRoll: %.2f"), InputYaw, TargetRoll, CurrentTurnRoll_));
 }
 
-void UPFCameraResource::UpdateZoom(float deltaTime)
+void UPFCameraResource::UpdateCameraShake(float DeltaTime, FRotator& FinalRotation)
 {
-	if (!CameraResourceData_)
-		return;
+    if (!DiveAbilityPtr_->IsDiving())
+        return;
 
-	if (DiveAbilityPtr_->IsDiving()) DiveTheTimer_ += deltaTime;
-	else DiveTheTimer_ = 0.f;
-	
-	// Detect transition
-	IsDiveActive_ = DiveTheTimer_ > 1.f;
-	if (IsDiveActive_ != WasDiving_)
-	{
-		DiveTransitionTimer_ = 0.f;
-		WasDiving_ = IsDiveActive_;
+    ShakeTime_ += DeltaTime;
 
-		ZoomStartDistance_ = SpringArmPtr_->TargetArmLength;
-		ZoomStartRotation_ = SpringArmPtr_->GetRelativeRotation();
-	}
+    float NoiseRoll  = FMath::PerlinNoise1D(ShakeTime_ * DataPtr_->ShakeFrequency);
+    float NoisePitch = FMath::PerlinNoise1D((ShakeTime_ + 100.f) * DataPtr_->ShakeFrequency);
+    float NoiseYaw   = FMath::PerlinNoise1D((ShakeTime_ + 200.f) * DataPtr_->ShakeFrequency);
 
-	DiveTransitionTimer_ += deltaTime;
-	
-	float divingInterpDuration = IsDiveActive_
-	? CameraResourceData_->DivingStartInterpDuration
-	: CameraResourceData_->DivingEndInterpDuration;
+    FRotator ShakeOffset;
+    ShakeOffset.Roll  = NoiseRoll  * DataPtr_->RollAmplitude;
+    ShakeOffset.Pitch = NoisePitch * DataPtr_->PitchAmplitude;
+    ShakeOffset.Yaw   = NoiseYaw   * DataPtr_->YawAmplitude;
 
-	float alpha = DiveTransitionTimer_ / divingInterpDuration;
-	alpha = FMath::Clamp(alpha, 0.f, 1.f);
-	
-	// Distance
-	float targetDistance = IsDiveActive_
-		? CameraResourceData_->DivingDistance
-		: CameraResourceData_->BackDistance;
-
-	SpringArmPtr_->TargetArmLength = FMath::Lerp(
-		ZoomStartDistance_,
-		targetDistance,
-		alpha
-	);
-
-	// Look downward
-	FRotator targetRotation = IsDiveActive_
-		? CameraResourceData_->DivingRotation
-		: FRotator::ZeroRotator;
-
-	SpringArmPtr_->SetRelativeRotation(FMath::Lerp(
-		ZoomStartRotation_,
-		targetRotation,
-		alpha));
+    FinalRotation += ShakeOffset;
 }
