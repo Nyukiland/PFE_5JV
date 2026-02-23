@@ -118,8 +118,48 @@ void APFPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 UPFStateComponent* APFPlayerCharacter::GetStateComponent(TSubclassOf<UPFStateComponent> componentClass)
 {
-	int i = 0;
-	return GetStateComponent(componentClass, i);
+	return GetStateComponentIntern(componentClass);
+}
+
+DEFINE_FUNCTION(APFPlayerCharacter::execGetStateComponent)
+{
+	P_GET_OBJECT(UClass, ComponentClass);
+	P_FINISH;
+	P_NATIVE_BEGIN;
+
+	UPFStateComponent* Result = nullptr;
+
+	if (ComponentClass)
+	{
+		Result = P_THIS->GetStateComponent(ComponentClass);
+	}
+
+	*(UPFStateComponent**)RESULT_PARAM = Result;
+
+	P_NATIVE_END;
+}
+
+UPFStateComponent* APFPlayerCharacter::GetAndActivateComponent(TSubclassOf<UPFStateComponent> componentClass)
+{
+	return GetAndActivateComponentIntern(componentClass);
+}
+
+DEFINE_FUNCTION(APFPlayerCharacter::execGetAndActivateComponent)
+{
+	P_GET_OBJECT(UClass, ComponentClass);
+	P_FINISH;
+	P_NATIVE_BEGIN;
+
+	UPFStateComponent* Result = nullptr;
+
+	if (ComponentClass)
+	{
+		Result = P_THIS->GetStateComponent(ComponentClass);
+	}
+
+	*(UPFStateComponent**)RESULT_PARAM = Result;
+
+	P_NATIVE_END;
 }
 
 void APFPlayerCharacter::ActivateAbilityComponent(TSubclassOf<UPFStateComponent> componentClass)
@@ -134,15 +174,6 @@ void APFPlayerCharacter::DeactivateAbilityComponent(TSubclassOf<UPFStateComponen
 	int i = 0;
 	UPFStateComponent* comp = GetStateComponent(componentClass, i);
 	DeactivateAbilityComponent(comp, i);
-}
-
-UPFStateComponent* APFPlayerCharacter::GetAndActivateComponent(TSubclassOf<UPFStateComponent> componentClass)
-{
-	int i = 0;
-	UPFStateComponent* comp = GetStateComponent(componentClass, i);
-	ActivateAbilityComponent(comp, i);
-
-	return comp;
 }
 
 FText APFPlayerCharacter::GetInfoFromComponent() const
@@ -212,6 +243,21 @@ UPFStateComponent* APFPlayerCharacter::GetStateComponent(TSubclassOf<UPFStateCom
 	outIndex = -1;
 	UE_LOG(LogTemp, Error, TEXT("[PlayerCharacter] Failed to get component of class: %s"), *componentClass->GetName());
 	return nullptr;
+}
+
+UPFStateComponent* APFPlayerCharacter::GetStateComponentIntern(TSubclassOf<UPFStateComponent> componentClass)
+{
+	int i = 0;
+	return GetStateComponent(componentClass, i);
+}
+
+UPFStateComponent* APFPlayerCharacter::GetAndActivateComponentIntern(TSubclassOf<UPFStateComponent> componentClass)
+{
+	int i = 0;
+	UPFStateComponent* comp = GetStateComponent(componentClass, i);
+	ActivateAbilityComponent(comp, i);
+
+	return comp;
 }
 
 void APFPlayerCharacter::ActivateAbilityComponent(UPFStateComponent* comp, int index)

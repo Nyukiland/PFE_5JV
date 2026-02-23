@@ -124,6 +124,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void ProcessMaxSpeed(const float deltaTime);
 	
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	void ProcessOverrideSpeed();
+	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bShouldResetForce, bShouldAddAtTheEnd, duration, curve"))
 	void SetYawRotationForce(float rotation, bool bShouldResetForce = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);
 	

@@ -53,20 +53,34 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	//State Component
-	//Need to cast due to Blueprint compatibility
-	UFUNCTION(BlueprintCallable, Category = "Player")
-	UPFStateComponent* GetStateComponent(TSubclassOf<UPFStateComponent> componentClass);
+	template<typename T>
+	T* GetStateComponent()
+	{
+		return Cast<T>(GetStateComponent(T::StaticClass()));
+	}
 
+	template<typename T>
+	T* GetAndActivateComponent()
+	{
+		return Cast<T>(GetAndActivateComponent(T::StaticClass()));
+	}
+
+	UFUNCTION(BlueprintCallable, CustomThunk,
+		meta = (DeterminesOutputType = "ComponentClass", DynamicOutputParam = "ReturnValue"))
+	UPFStateComponent* GetStateComponent(TSubclassOf<UPFStateComponent> ComponentClass);
+	DECLARE_FUNCTION(execGetStateComponent);
+
+	UFUNCTION(BlueprintCallable, CustomThunk,
+	meta = (DeterminesOutputType = "ComponentClass", DynamicOutputParam = "ReturnValue"))
+	UPFStateComponent* GetAndActivateComponent(TSubclassOf<UPFStateComponent> ComponentClass);
+	DECLARE_FUNCTION(execGetAndActivateComponent);
+	
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	void ActivateAbilityComponent(TSubclassOf<UPFStateComponent> componentClass);
 
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	void DeactivateAbilityComponent(TSubclassOf<UPFStateComponent> componentClass);
 	
-	//Need to cast due to Blueprint compatibility
-	UFUNCTION(BlueprintCallable, Category = "Player")
-	UPFStateComponent* GetAndActivateComponent(TSubclassOf<UPFStateComponent> componentClass);
-
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	FText GetInfoFromComponent() const;
 	
@@ -80,6 +94,10 @@ public:
 	private:
 	//State Component
 	UPFStateComponent* GetStateComponent(TSubclassOf<UPFStateComponent> componentClass, int& outIndex);
+
+	UPFStateComponent* GetStateComponentIntern(TSubclassOf<UPFStateComponent> componentClass);
+
+	UPFStateComponent* GetAndActivateComponentIntern(TSubclassOf<UPFStateComponent> componentClass);
 
 	void ActivateAbilityComponent(UPFStateComponent* componentClass, int index);
 

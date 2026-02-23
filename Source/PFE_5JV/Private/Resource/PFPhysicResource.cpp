@@ -196,15 +196,7 @@ void UPFPhysicResource::ProcessVelocity(const float deltaTime)
 
 	CurrentForwardVelo_ = velocityForward;
 
-	if (FMath::Abs(CurrentOverrideForwardVelo_) > 0.1f)
-	{
-		velocity += ForwardRoot->GetForwardVector() * CurrentOverrideForwardVelo_;
-		CurrentOverrideForwardVelo_ = 0;
-	}
-	else
-	{
-		velocity += ForwardRoot->GetForwardVector() * velocityForward.Length();
-	}
+	velocity += ForwardRoot->GetForwardVector() * velocityForward.Length();
 
 	PhysicRoot->SetPhysicsLinearVelocity(velocity);
 }
@@ -232,6 +224,15 @@ void UPFPhysicResource::ProcessMaxSpeed(const float deltaTime)
 	velocity -= DataPtr_->AboveSpeedFrictionCurvePtr->GetFloatValue(value01) * deltaTime * dir;
 
 	PhysicRoot->SetPhysicsLinearVelocity(velocity);
+}
+
+void UPFPhysicResource::ProcessOverrideSpeed()
+{
+	if (FMath::Abs(CurrentOverrideForwardVelo_) > 0.1f)
+	{
+		PhysicRoot->SetPhysicsLinearVelocity(ForwardRoot->GetForwardVector() * CurrentOverrideForwardVelo_);
+		CurrentOverrideForwardVelo_ = 0;
+	}
 }
 
 void UPFPhysicResource::SetYawRotationForce(float rotation, bool bShouldResetForce, bool bShouldAddAtTheEnd,
