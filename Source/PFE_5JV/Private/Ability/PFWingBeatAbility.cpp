@@ -5,6 +5,16 @@
 #include "Resource/PFPhysicResource.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
+FString UPFWingBeatAbility::GetInfo_Implementation()
+{
+	FString text = TEXT("<hb>WingBeat:</>");
+	text += TEXT("\n <b>CurrentHeight: </>") + FString::Printf(TEXT("%f"), CurrentHeight);
+	text += TEXT("\n <b>HeightAtWingBeatBeginning: </>") + FString::Printf(TEXT("%f"), HeightAtWingBeatBeginning);
+	text += TEXT("\n <b>MaxHeightGain: </>") + FString::Printf(TEXT("%f"), MaxHeightGain);
+	text += TEXT("\n <b>EffectiveHeightGainAfter3S: </>") + FString::Printf(TEXT("%f"), EffectiveHeightGainAfter3S);
+	return text;
+}
+
 void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 {
 	Super::ComponentTick_Implementation(deltaTime);
@@ -21,12 +31,29 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 	}
 
 	TimeLeftToTriggerSuperBeatWing -= deltaTime;
+	
+	if(Owner->ForwardRootPtr->GetComponentLocation().Z > CurrentHeight)
+	{
+		MaxHeightGain = Owner->ForwardRootPtr->GetComponentLocation().Z - HeightAtWingBeatBeginning;
+	}
+	CurrentHeight = Owner->ForwardRootPtr->GetComponentLocation().Z;
+
+	if(TimeEffectiveHeightCalculus > 0.f)
+	{
+		TimeEffectiveHeightCalculus -= deltaTime;
+		TimeEffectiveHeightCalculus= FMath::Clamp(TimeEffectiveHeightCalculus, 0.0f, 3.0f);
+		if(TimeEffectiveHeightCalculus == 0.f)
+		{
+			EffectiveHeightGainAfter3S = Owner->ForwardRootPtr->GetComponentLocation().Z - HeightAtWingBeatBeginning;
+			TimeEffectiveHeightCalculus = -1.f;
+		}
+	}	
 }
 
 void UPFWingBeatAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 {
 	Super::ComponentInit_Implementation(ownerObj);
-
+	
 	PhysicResource_ = CastChecked<UPFPhysicResource>
 	(Owner->GetStateComponent(UPFPhysicResource::StaticClass()));
 	
@@ -59,6 +86,10 @@ void UPFWingBeatAbility::ReceiveInputRight(float right)
 
 void UPFWingBeatAbility::WingBeat(float deltaTime)
 {
+	// Debug Data :
+	HeightAtWingBeatBeginning = Owner->ForwardRootPtr->GetComponentLocation().Z;;
+	TimeEffectiveHeightCalculus = 3.f;
+	
 	if (!DataPtr_ || !DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[BeatWingAbility] Bad Set up on data WingBeatAccelerationBasedOnAverageInputValueCurve"));
@@ -88,21 +119,26 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 	
 	GetAverageInputValue();
 	
-	float heightToGive = DataPtr_->ForceToGiveInHeight *
+	float HeightToGive = DataPtr_->ForceToGiveInHeight *
 		DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve->GetFloatValue(AverageInputValue_);
-	if(bIsSuperBeatWingActivated == true) heightToGive *= DataPtr_->SuperWingBeatHeightMultiplier;
-	PhysicResource_->AddForce(heightToGive * FVector::UpVector, true, false, DataPtr_->ForceToGiveInHeightDuration);
-	
-	float speedToGive = DataPtr_->ForceToGiveInVelocity *
-		DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve->GetFloatValue(AverageInputValue_);
-	if(bIsSuperBeatWingActivated == true) speedToGive *= DataPtr_->SuperWingBeatVelocityMultiplier;
+	if(bIsSuperBeatWingActivated == true) HeightToGive *= DataPtr_->SuperWingBeatHeightMultiplier;
+	PhysicResource_->AddForce(HeightToGive * FVector::UpVector, true, false, DataPtr_->ForceToGiveInHeightDuration);
 
-	PhysicResource_->AddForwardForce(speedToGive, false);
+	// Debug
+	MaxHeightGain = Owner->ForwardRootPtr->GetComponentLocation().Z - HeightAtWingBeatBeginning;
+	
+	float SpeedToGive = DataPtr_->ForceToGiveInVelocity *
+		DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve->GetFloatValue(AverageInputValue_);
+	if(bIsSuperBeatWingActivated == true) SpeedToGive *= DataPtr_->SuperWingBeatVelocityMultiplier;
+
+	PhysicResource_->AddForwardForce(SpeedToGive, false);
 
 	PhysicResource_->ResetPhysicsTimer();
 	TimeLeftToTriggerSuperBeatWing = DataPtr_->SuperWingBeatTiming;
 
 	OnWingBeatCalled.Broadcast();
+
+
 }
 
 void UPFWingBeatAbility::GetAverageInputValue()

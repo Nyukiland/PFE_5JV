@@ -92,7 +92,6 @@ ETriggerState UPFTriggerSimultaneousTap::UpdateState_Implementation(const UEnhan
 			// if the delay between the two buttons pressed are lower than the tolerance, trigger the effect :  
 			if (TimeDiff <= TapTolerance)
 			{
-				GEngine->AddOnScreenDebugMessage(1, 1.f, FColor::Cyan, FString::Printf(TEXT("Tolerance acceptable : %f <= %f"),  TimeDiff, TapTolerance));
 				bIsActivatedOnce = true;
 				return ETriggerState::Triggered;
 			}

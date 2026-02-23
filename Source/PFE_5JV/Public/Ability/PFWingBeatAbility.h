@@ -18,6 +18,7 @@ class PFE_5JV_API UPFWingBeatAbility : public UPFAbility
 public:
 	UPROPERTY(BlueprintAssignable, Category="Dive")
 	FOnWingBeatCalled OnWingBeatCalled;
+	virtual FString GetInfo_Implementation() override;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive")
@@ -47,6 +48,13 @@ protected:
 	float AverageInputValue_;
 	float TimeUntilNextInputRegistration;
 	float TimeLeftToTriggerSuperBeatWing;
+
+	// Debug datas :
+	float CurrentHeight;
+	float HeightAtWingBeatBeginning;
+	float MaxHeightGain;
+	float EffectiveHeightGainAfter3S;
+	float TimeEffectiveHeightCalculus = -1.f;
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;

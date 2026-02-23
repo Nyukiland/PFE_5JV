@@ -26,8 +26,7 @@ FString UPFPhysicResource::GetInfo_Implementation()
 	text += TEXT("\n");
 	text += TEXT("\n <b>Friction percent: </>") + FString::Printf(TEXT("%f"), FrictionPercentValue());
 	text += TEXT("\n");
-	text += TEXT("\n <b>Height: </>") + FString::Printf(TEXT("%f"), Owner->ForwardRootPtr->GetComponentLocation().Y);
-
+	text += TEXT("\n <b>Height: </>") + FString::Printf(TEXT("%f"), Owner->ForwardRootPtr->GetComponentLocation().Z);
 	return text;
 }
 
@@ -135,11 +134,12 @@ void UPFPhysicResource::ProcessAirFriction(const float deltaTime)
 	float friction = GetCurrentAirFriction();
 	friction *= FrictionPercentValue();
 	friction *= deltaTime;
-
-	FVector dir = GlobalVelocity_.GetSafeNormal();
+	
+	FVector dir = GlobalVelocity_.Length() > 1 ?
+		GlobalVelocity_.GetSafeNormal() :  GlobalVelocity_;
 	GlobalVelocity_ -= friction * dir;
 
-	dir = ForwardVelo_.GetSafeNormal();
+	dir = ForwardVelo_.Length() > 1 ? ForwardVelo_.GetSafeNormal() : ForwardVelo_;
 	ForwardVelo_ -= friction * dir;
 
 	ForwardVelo_ = ForwardVelo_.GetClampedToSize(0, DataPtr_->MaxAboveSpeed);

@@ -27,7 +27,7 @@ public:
 
 	/** Max allowed time difference between taps (seconds) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simultaneous Tap", meta = (ClampMin = "0.0"))
-	float TapTolerance = 0.025f;
+	float TapTolerance = 0.05f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Simultaneous Tap")
 	bool bIsActivatedOnce = false;
