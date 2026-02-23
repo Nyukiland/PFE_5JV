@@ -7,11 +7,9 @@ void UPFTurnAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 {
 	Super::ComponentInit_Implementation(ownerObj);
 
-	PhysicResourcePtr_ = CastChecked<UPFPhysicResource>
-		(Owner->GetStateComponent(UPFPhysicResource::StaticClass()));
+	PhysicResourcePtr_ = Owner->GetStateComponent<UPFPhysicResource>();
 
-	VisualResourcePtr_ = CastChecked<UPFVisualResource>
-		(Owner->GetStateComponent(UPFVisualResource::StaticClass()));
+	VisualResourcePtr_ = Owner->GetStateComponent<UPFVisualResource>();
 }
 
 void UPFTurnAbility::ComponentDisable_Implementation()
@@ -75,9 +73,9 @@ void UPFTurnAbility::Turn(float deltaTime)
 
 	// Slow Down
 	float slowValue = DataPtr_->SlowForce;
-	slowValue *= DataPtr_->SlowForceBasedOnInputPtr->GetFloatValue(slowValue);
+	slowValue *= DataPtr_->SlowForceBasedOnInputPtr->GetFloatValue(valueAbs);
 	slowValue *= DataPtr_->SlowForceBasedOnVelocityPtr->GetFloatValue(velocity0to1);
-	PhysicResourcePtr_->AddForwardForce(slowValue);
+	PhysicResourcePtr_->AddForwardForce(-slowValue * deltaTime, false);
 }
 
 void UPFTurnAbility::TurnVisual()

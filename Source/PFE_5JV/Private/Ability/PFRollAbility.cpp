@@ -8,11 +8,9 @@ void UPFRollAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 {
 	Super::ComponentInit_Implementation(ownerObj);
 
-	PhysicResourcePtr_ = CastChecked<UPFPhysicResource>
-		(Owner->GetStateComponent(UPFPhysicResource::StaticClass()));
+	PhysicResourcePtr_ = Owner->GetStateComponent<UPFPhysicResource>();
 
-	VisualResourcePtr_ = CastChecked<UPFVisualResource>
-		(Owner->GetStateComponent(UPFVisualResource::StaticClass()));
+	VisualResourcePtr_ = Owner->GetStateComponent<UPFVisualResource>();
 }
 
 void UPFRollAbility::ComponentEnable_Implementation()

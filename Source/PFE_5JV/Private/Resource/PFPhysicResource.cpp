@@ -19,10 +19,10 @@ FString UPFPhysicResource::GetInfo_Implementation()
 {
 	FString text = TEXT("<hb>Physic:</>");
 	text += TEXT("\n <b>ForwardVelocity: </>") + FString::Printf(TEXT("%s"), *ForwardVelo_.ToString());
-	text += TEXT("\n <y.b>Magnitude: ") + FString::Printf(TEXT("%f"), ForwardVelo_.Length()) + TEXT("</>");
+	text += TEXT("\n <y.b>Magnitude: ") + FString::Printf(TEXT("%f"), CurrentForwardVelo_.Length()) + TEXT("</>");
 	text += TEXT("\n");
 	text += TEXT("\n <b>GlobalVelocity: </>") + FString::Printf(TEXT("%s"), *GlobalVelocity_.ToString());
-	text += TEXT("\n <b>Magnitude: </>") + FString::Printf(TEXT("%f"), GlobalVelocity_.Length());
+	text += TEXT("\n <b>Magnitude: </>") + FString::Printf(TEXT("%f"), CurrentGlobalVelo_.Length());
 	text += TEXT("\n");
 	text += TEXT("\n <b>Friction percent: </>") + FString::Printf(TEXT("%f"), FrictionPercentValue());
 	text += TEXT("\n");
