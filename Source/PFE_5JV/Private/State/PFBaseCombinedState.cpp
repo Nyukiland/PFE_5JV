@@ -6,6 +6,5 @@ void UPFBaseCombinedState::OnEnter_Implementation()
 {
 	Super::OnEnter_Implementation();
 
-	GlidePtr_ = CastChecked<UPFGlideAbility>(
-		Owner->GetAndActivateComponent(UPFGlideAbility::StaticClass()));
+	GlidePtr_ = Owner->GetAndActivateComponent<UPFGlideAbility>();
 }

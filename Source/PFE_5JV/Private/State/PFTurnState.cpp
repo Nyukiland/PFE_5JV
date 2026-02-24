@@ -7,6 +7,5 @@ void UPFTurnState::OnEnter_Implementation()
 {
 	Super::OnEnter_Implementation();
 
-	TurnPtr_ = CastChecked<UPFTurnAbility>(
-		Owner->GetAndActivateComponent(UPFTurnAbility::StaticClass()));
+	TurnPtr_ = Owner->GetAndActivateComponent<UPFTurnAbility>();
 }

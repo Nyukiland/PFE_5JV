@@ -7,6 +7,5 @@ void UPFCheckRollState::OnEnter_Implementation()
 {
 	Super::OnEnter_Implementation();
 
-	RollPtr_ = CastChecked<UPFRollAbility>(
-		Owner->GetStateComponent(UPFRollAbility::StaticClass()));
+	RollPtr_ = Owner->GetStateComponent<UPFRollAbility>();
 }

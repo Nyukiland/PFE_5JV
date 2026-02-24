@@ -54,8 +54,7 @@ void UPFWingBeatAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerO
 {
 	Super::ComponentInit_Implementation(ownerObj);
 	
-	PhysicResource_ = CastChecked<UPFPhysicResource>
-	(Owner->GetStateComponent(UPFPhysicResource::StaticClass()));
+	PhysicResource_ = ownerObj->GetStateComponent<UPFPhysicResource>();
 	
 	if (!DataPtr_ || !DataPtr_->DelayBetweenInputRegistrations)
 	{

@@ -7,6 +7,5 @@ void UPFDiveState::OnEnter_Implementation()
 {
 	Super::OnEnter_Implementation();
 
-	DivePtr_ = CastChecked<UPFDiveAbility>(
-		Owner->GetAndActivateComponent(UPFDiveAbility::StaticClass()));
+	DivePtr_ = Owner->GetAndActivateComponent<UPFDiveAbility>();
 }

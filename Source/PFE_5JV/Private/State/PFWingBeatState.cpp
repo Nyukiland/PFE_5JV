@@ -7,6 +7,5 @@ void UPFWingBeatState::OnEnter_Implementation()
 {
 	Super::OnEnter_Implementation();
 
-	WingBeatPtr_ = CastChecked<UPFWingBeatAbility>(
-	Owner->GetAndActivateComponent(UPFWingBeatAbility::StaticClass()));
+	WingBeatPtr_ = Owner->GetAndActivateComponent<UPFWingBeatAbility>();
 }
