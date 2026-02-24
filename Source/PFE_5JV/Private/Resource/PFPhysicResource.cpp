@@ -13,6 +13,7 @@ void UPFPhysicResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 	}
 
 	ForwardVelo_ = FVector::ForwardVector * DataPtr_->InitialSpeed;
+	CurrentForwardVelo_ = ForwardVelo_;
 }
 
 FString UPFPhysicResource::GetInfo_Implementation()
