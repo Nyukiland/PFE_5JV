@@ -58,7 +58,8 @@ void UPFCameraResource::ComponentTick_Implementation(float deltaTime)
 
     SmoothedCameraRotation_ = FinalRotation;
     CameraRootPtr_->SetWorldRotation(FinalRotation);
-    
+
+    UpdateCameraDistance(deltaTime);
     UpdateTurningRoll(deltaTime);
 }
 
@@ -115,8 +116,6 @@ void UPFCameraResource::UpdateTurningRoll(float DeltaTime)
     FRotator RelativeRotation = CameraPtr_->GetRelativeRotation();
     RelativeRotation.Roll = NewRoll;
     CameraPtr_->SetRelativeRotation(RelativeRotation);
-
-    GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue,FString::Printf(TEXT("InputYaw: %.2f | TargetRoll: %.2f | CurrentTurnRoll: %.2f"), InputYaw, TargetRoll, CurrentTurnRoll_));
 }
 
 void UPFCameraResource::UpdateCameraShake(float DeltaTime, FRotator& FinalRotation)
@@ -136,4 +135,22 @@ void UPFCameraResource::UpdateCameraShake(float DeltaTime, FRotator& FinalRotati
     ShakeOffset.Yaw   = NoiseYaw   * DataPtr_->YawAmplitude;
 
     FinalRotation += ShakeOffset;
+}
+
+void UPFCameraResource::UpdateCameraDistance(float DeltaTime)
+{
+    float CurrentSpeed = PhysicReferencePtr_->GetCurrentVelocity().Length();
+    float MaxSpeed = PhysicReferencePtr_->GetMaxSpeed();
+
+    if (MaxSpeed <= 0.f)
+        return;
+
+    float TargetDistance = PhysicReferencePtr_->GetCurrentSpeedPercentage() * DataPtr_->MaxDistanceToCamera;
+    FVector TargetRelativeLocation = FVector(-TargetDistance, 0.f, 0.f);
+
+    FVector NewLocation = FMath::VInterpTo(CameraPtr_->GetRelativeLocation(), TargetRelativeLocation, DeltaTime, DataPtr_->DistanceInterpSpeed);
+
+    CameraPtr_->SetRelativeLocation(NewLocation);
+
+    GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Speed : %f / Distance : %f/%f"), PhysicReferencePtr_->GetCurrentSpeedPercentage(), TargetDistance, DataPtr_->MaxDistanceToCamera));
 }

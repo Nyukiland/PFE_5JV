@@ -46,9 +46,9 @@ public:
 private:
 
 	void UpdateCameraRotation(float DeltaTime, FRotator& FinalRotation);
-	void UpdateTurningRoll(float DeltaTime);
 	void UpdateCameraShake(float DeltaTime, FRotator& FinalRotation);
-	float InterpAngle(float Current, float Target, float DeltaTime, float Speed);
+	void UpdateTurningRoll(float DeltaTime);
+	void UpdateCameraDistance(float DeltaTime);
 
 	// Base rotation
 	float CameraYawOffset_   = 0.f;

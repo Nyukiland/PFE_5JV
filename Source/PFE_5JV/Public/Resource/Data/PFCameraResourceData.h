@@ -44,7 +44,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Shake", meta=(ToolTip=""))
 	float PitchAmplitude = 10.f;
 	
-	
 	float YawAmplitude = 8.f;
 
 	/* ===== Roll ===== */
@@ -57,4 +56,12 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Roll", meta=(ToolTip="Conversion de la vitesse vers le roll"))
 	float TurnSensitivity = 6.f;
+
+	/* ===== Distance ===== */
+
+	UPROPERTY(EditAnywhere, Category = "Distance", meta = (ToolTip = ""))
+	float MaxDistanceToCamera = 20.f;
+
+	UPROPERTY(EditAnywhere, Category = "Distance", meta = (ToolTip = ""))
+	float DistanceInterpSpeed = 5.f;
 };
