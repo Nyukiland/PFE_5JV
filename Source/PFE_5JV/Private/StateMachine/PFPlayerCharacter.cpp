@@ -1,5 +1,7 @@
 #include "StateMachine/PFPlayerCharacter.h"
 
+#include "Helpers/PFBlueprintHelper.h"
+#include "Resource/PFInputFilteringResource.h"
 #include "StateMachine/State/PFState.h"
 #include "StateMachine/StateComponent/PFAbility.h"
 #include "StateMachine/StateComponent/PFResource.h"
@@ -338,10 +340,17 @@ void APFPlayerCharacter::SwapComponents(int a, int b)
 void APFPlayerCharacter::OnInputAction(const FInputActionInstance& instance)
 {
 	const UInputAction* action = instance.GetSourceAction();
-	const FInputActionValue& value = instance.GetValue();
-	const ETriggerEvent triggerEvent = instance.GetTriggerEvent();
-
+	const float value = instance.GetValue().Get<float>();
+	
 	if (!action || !CurrentStatePtr_) return;
 
-	CurrentStatePtr_->OnInputTriggered(action->GetFName(), triggerEvent, value);
+	if (action->GetFName() == "IA_LeftTrigger")
+	{
+		GetStateComponent<UPFInputFilteringResource>()->ReceiveInputLeft(value);
+	}
+
+	if (action->GetFName() == "IA_RightTrigger")
+	{
+		GetStateComponent<UPFInputFilteringResource>()->ReceiveInputRight(value);
+	}
 }
