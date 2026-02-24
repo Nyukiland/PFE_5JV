@@ -95,10 +95,6 @@ public:
 	//State Component
 	UPFStateComponent* GetStateComponent(TSubclassOf<UPFStateComponent> componentClass, int& outIndex);
 
-	UPFStateComponent* GetStateComponentIntern(TSubclassOf<UPFStateComponent> componentClass);
-
-	UPFStateComponent* GetAndActivateComponentIntern(TSubclassOf<UPFStateComponent> componentClass);
-
 	void ActivateAbilityComponent(UPFStateComponent* componentClass, int index);
 
 	void DeactivateAbilityComponent(UPFStateComponent* componentClass, int index);
@@ -109,4 +105,7 @@ public:
 
 	//Input
 	void OnInputAction(const FInputActionInstance& instance);
+
+	//Helper
+	UClass* GetNativeClass(TSubclassOf<UPFStateComponent> nativeClass);
 };

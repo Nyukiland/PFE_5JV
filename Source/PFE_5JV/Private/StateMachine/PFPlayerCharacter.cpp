@@ -53,12 +53,7 @@ void APFPlayerCharacter::BeginPlay()
 	{
 		UPFStateComponent* comp = StateComponentsPtr_[i];
 
-		UClass* classNative = comp->GetClass();
-
-		while (classNative && Cast<UBlueprintGeneratedClass>(classNative))
-		{
-			classNative = classNative->GetSuperClass();
-		}
+		UClass* classNative = GetNativeClass(comp->GetClass());
 
 		if (ComponentIndexMap_.Contains(classNative))
 			UE_LOG(LogTemp, Error, TEXT("[Player] Duplicate component detected"));
@@ -118,7 +113,8 @@ void APFPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 UPFStateComponent* APFPlayerCharacter::GetStateComponent(TSubclassOf<UPFStateComponent> componentClass)
 {
-	return GetStateComponentIntern(componentClass);
+	int i = 0;
+	return GetStateComponent(componentClass, i);
 }
 
 DEFINE_FUNCTION(APFPlayerCharacter::execGetStateComponent)
@@ -141,7 +137,11 @@ DEFINE_FUNCTION(APFPlayerCharacter::execGetStateComponent)
 
 UPFStateComponent* APFPlayerCharacter::GetAndActivateComponent(TSubclassOf<UPFStateComponent> componentClass)
 {
-	return GetAndActivateComponentIntern(componentClass);
+	int i = 0;
+	UPFStateComponent* comp = GetStateComponent(componentClass, i);
+	ActivateAbilityComponent(comp, i);
+
+	return comp;
 }
 
 DEFINE_FUNCTION(APFPlayerCharacter::execGetAndActivateComponent)
@@ -234,7 +234,9 @@ UPFStateComponent* APFPlayerCharacter::GetStateComponent(TSubclassOf<UPFStateCom
 {
 	outIndex = -1;
 
-	if (int* foundIndex = ComponentIndexMap_.Find(componentClass))
+	UClass* nativeClass = GetNativeClass(componentClass);
+	
+	if (int* foundIndex = ComponentIndexMap_.Find(nativeClass))
 	{
 		outIndex = *foundIndex;
 		return StateComponentsPtr_[outIndex];
@@ -243,21 +245,6 @@ UPFStateComponent* APFPlayerCharacter::GetStateComponent(TSubclassOf<UPFStateCom
 	outIndex = -1;
 	UE_LOG(LogTemp, Error, TEXT("[PlayerCharacter] Failed to get component of class: %s"), *componentClass->GetName());
 	return nullptr;
-}
-
-UPFStateComponent* APFPlayerCharacter::GetStateComponentIntern(TSubclassOf<UPFStateComponent> componentClass)
-{
-	int i = 0;
-	return GetStateComponent(componentClass, i);
-}
-
-UPFStateComponent* APFPlayerCharacter::GetAndActivateComponentIntern(TSubclassOf<UPFStateComponent> componentClass)
-{
-	int i = 0;
-	UPFStateComponent* comp = GetStateComponent(componentClass, i);
-	ActivateAbilityComponent(comp, i);
-
-	return comp;
 }
 
 void APFPlayerCharacter::ActivateAbilityComponent(UPFStateComponent* comp, int index)
@@ -322,13 +309,6 @@ void APFPlayerCharacter::SwapComponents(int a, int b)
 {
 	if (a == b) return;
 
-	auto GetNativeClass = [](UClass* nativeclass)
-	{
-		while (nativeclass && Cast<UBlueprintGeneratedClass>(nativeclass))
-			nativeclass = nativeclass->GetSuperClass();
-		return nativeclass;
-	};
-
 	ComponentIndexMap_[GetNativeClass(StateComponentsPtr_[a]->GetClass())] = b;
 	ComponentIndexMap_[GetNativeClass(StateComponentsPtr_[b]->GetClass())] = a;
 
@@ -344,4 +324,20 @@ void APFPlayerCharacter::OnInputAction(const FInputActionInstance& instance)
 	if (!action || !CurrentStatePtr_) return;
 
 	CurrentStatePtr_->OnInputTriggered(action->GetFName(), triggerEvent, value);
+}
+
+UClass* APFPlayerCharacter::GetNativeClass(TSubclassOf<UPFStateComponent> nativeClass)
+{
+	if (!nativeClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[PlayerCharacter] No given class in get nativeClass"));
+		return nullptr;
+	}
+	
+	while (nativeClass && Cast<UBlueprintGeneratedClass>(nativeClass))
+	{
+		nativeClass = nativeClass->GetSuperClass();
+	}
+
+	return nativeClass;
 }
