@@ -18,11 +18,12 @@ void UPFPhysicResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 FString UPFPhysicResource::GetInfo_Implementation()
 {
 	FString text = TEXT("<hb>Physic:</>");
-	text += TEXT("\n <b>ForwardVelocity: </>") + FString::Printf(TEXT("%s"), *ForwardVelo_.ToString());
-	text += TEXT("\n <y.b>Magnitude: ") + FString::Printf(TEXT("%f"), CurrentForwardVelo_.Length()) + TEXT("</>");
+	text += TEXT("\n <y.b> Forward Magnitude: ") + FString::Printf(TEXT("%f"), CurrentForwardVelo_.Length()) +
+		TEXT("</>");
+	text += TEXT("\n <b>GlobalVelocity: </>") + FString::Printf(TEXT("%s"), *CurrentGlobalVelo_.ToString());
 	text += TEXT("\n");
-	text += TEXT("\n <b>GlobalVelocity: </>") + FString::Printf(TEXT("%s"), *GlobalVelocity_.ToString());
-	text += TEXT("\n <b>Magnitude: </>") + FString::Printf(TEXT("%f"), CurrentGlobalVelo_.Length());
+	text += TEXT("\n <b>Forward Force Count: </>") + FString::Printf(TEXT("%i"), ForwardForces_.Num());
+	text += TEXT("\n <b>Global Force Count: </>") + FString::Printf(TEXT("%i"), GlobalForces_.Num());
 	text += TEXT("\n");
 	text += TEXT("\n <b>Friction percent: </>") + FString::Printf(TEXT("%f"), FrictionPercentValue());
 	text += TEXT("\n");
@@ -61,18 +62,18 @@ float UPFPhysicResource::GetForwardSpeedPercentage(bool bUseMaxAboveSpeed)
 	}
 
 	float max = bUseMaxAboveSpeed ? DataPtr_->MaxAboveSpeed : DataPtr_->MaxSpeed;
-	return FMath::Clamp(CurrentForwardVelo_.Length() / DataPtr_->MaxSpeed, 0, 1);
+	return FMath::Clamp(CurrentForwardVelo_.Length() / max, 0, 1);
 }
 
 void UPFPhysicResource::AddForce(FVector force, bool bShouldResetForce, bool bShouldAddAtTheEnd, float duration,
-                                 UCurveFloat* curve)
+								UCurveFloat* curve)
 {
 	FForceToAdd forceToAdd(force, bShouldResetForce, bShouldAddAtTheEnd, duration, curve);
 	GlobalForces_.Add(forceToAdd);
 }
 
 void UPFPhysicResource::AddForwardForce(float force, bool bShouldResetForce, bool bShouldAddAtTheEnd, float duration,
-                                        UCurveFloat* curve)
+										UCurveFloat* curve)
 {
 	FForceToAdd forceToAdd(FVector::ForwardVector * force, bShouldResetForce, bShouldAddAtTheEnd, duration, curve);
 	ForwardForces_.Add(forceToAdd);
@@ -103,16 +104,16 @@ float UPFPhysicResource::GetCurrentAirFriction() const
 	if (alignment > 0 && DataPtr_->AirFrictionCurveUpPtr)
 	{
 		return FMath::Lerp(DataPtr_->BaseAirFriction,
-		                   DataPtr_->AirFrictionGoingUp,
-		                   DataPtr_->AirFrictionCurveUpPtr->GetFloatValue(alignment));
+							DataPtr_->AirFrictionGoingUp,
+							DataPtr_->AirFrictionCurveUpPtr->GetFloatValue(alignment));
 	}
 	if (alignment < 0 && DataPtr_->AirFrictionCurveDownPtr)
 	{
 		alignment = FMath::Abs(alignment);
 
 		return FMath::Lerp(DataPtr_->BaseAirFriction,
-		                   DataPtr_->AirFrictionGoingDown,
-		                   DataPtr_->AirFrictionCurveDownPtr->GetFloatValue(alignment));
+							DataPtr_->AirFrictionGoingDown,
+							DataPtr_->AirFrictionCurveDownPtr->GetFloatValue(alignment));
 	}
 
 	return DataPtr_->BaseAirFriction;
@@ -134,9 +135,8 @@ void UPFPhysicResource::ProcessAirFriction(const float deltaTime)
 	float friction = GetCurrentAirFriction();
 	friction *= FrictionPercentValue();
 	friction *= deltaTime;
-	
-	FVector dir = GlobalVelocity_.Length() > 1 ?
-		GlobalVelocity_.GetSafeNormal() :  GlobalVelocity_;
+
+	FVector dir = GlobalVelocity_.Length() > 1 ? GlobalVelocity_.GetSafeNormal() : GlobalVelocity_;
 	GlobalVelocity_ -= friction * dir;
 
 	dir = ForwardVelo_.Length() > 1 ? ForwardVelo_.GetSafeNormal() : ForwardVelo_;
@@ -236,7 +236,7 @@ void UPFPhysicResource::ProcessOverrideSpeed()
 }
 
 void UPFPhysicResource::SetYawRotationForce(float rotation, bool bShouldResetForce, bool bShouldAddAtTheEnd,
-                                            float duration, UCurveFloat* curve)
+											float duration, UCurveFloat* curve)
 {
 	FForceToAdd forceToAdd(FVector(0, 0, rotation), bShouldResetForce, bShouldAddAtTheEnd, duration, curve);
 	AngularForces_.Add(forceToAdd);
