@@ -1,9 +1,9 @@
-#include "State/PFTurnState.h"
+#include "State/PFTurnSubState.h"
 
 #include "Ability/PFTurnAbility.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
-void UPFTurnState::OnEnter_Implementation()
+void UPFTurnSubState::OnEnter_Implementation()
 {
 	Super::OnEnter_Implementation();
 

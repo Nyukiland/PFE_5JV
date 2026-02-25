@@ -2,18 +2,18 @@
 
 #include "CoreMinimal.h"
 #include "StateMachine/State/PFState.h"
-#include "PFDiveState.generated.h"
+#include "PFWingBeatSubState.generated.h"
 
-class UPFDiveAbility;
+class UPFWingBeatAbility;
 
 UCLASS(Abstract, Blueprintable)
-class PFE_5JV_API UPFDiveState : public UPFState
+class PFE_5JV_API UPFWingBeatSubState : public UPFState
 {
 	GENERATED_BODY()
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base")
-	TObjectPtr<UPFDiveAbility> DivePtr_;
+	TObjectPtr<UPFWingBeatAbility> WingBeatPtr_;
 	
 public:
 	virtual void OnEnter_Implementation() override;

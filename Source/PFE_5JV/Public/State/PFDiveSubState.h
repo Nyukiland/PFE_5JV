@@ -2,18 +2,18 @@
 
 #include "CoreMinimal.h"
 #include "StateMachine/State/PFState.h"
-#include "PFCheckRollState.generated.h"
+#include "PFDiveSubState.generated.h"
 
-class UPFRollAbility;
+class UPFDiveAbility;
 
 UCLASS(Abstract, Blueprintable)
-class PFE_5JV_API UPFCheckRollState : public UPFState
+class PFE_5JV_API UPFDiveSubState : public UPFState
 {
 	GENERATED_BODY()
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base")
-	TObjectPtr<UPFRollAbility> RollPtr_;
+	TObjectPtr<UPFDiveAbility> DivePtr_;
 	
 public:
 	virtual void OnEnter_Implementation() override;

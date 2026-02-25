@@ -13,6 +13,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Courbe pour l'accélération en fonction de la moyenne des différences d'inputs avec l'enregistrement de valeur précédent"))
 	TObjectPtr<UCurveFloat> WingBeatAccelerationBasedOnAverageInputValueCurve;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Courbe pour le gain de hauteur en fonction de la durée d'application de la force"))
+	TObjectPtr<UCurveFloat> WingBeatHeightGainedBasedOnForceDurationCurve;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Intervalle de temps entre deux enregistrements d'input (en seconde)"))
 	float DelayBetweenInputRegistrations;
 		
