@@ -47,6 +47,11 @@ void UPFVisualResource::ProcessRollRotation(float deltaTime)
 
 }
 
+void UPFVisualResource::ChangeMeshMaterial(int MaterialIndex, UMaterialInterface* NewMaterialPtr) const
+{
+	BirdMeshObjectPtr_->SetMaterial(MaterialIndex, NewMaterialPtr);
+}
+
 void UPFVisualResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 {
 	Super::ComponentInit_Implementation(ownerObj);

@@ -17,6 +17,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Visual")
 	TObjectPtr<UPrimitiveComponent> BirdMeshObjectPtr_;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+	TObjectPtr<UMaterialInterface> NormalMaterialPtr_;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+	TObjectPtr<UMaterialInterface> BeatWingMaterialPtr_;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
 	TObjectPtr<UPFVisualResourceData> DataPtr_;
@@ -42,6 +48,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Visual")
 	void ProcessRollRotation(float deltaTime);
+
+	UFUNCTION(BlueprintCallable, Category = "Visual")
+	void ChangeMeshMaterial(int MaterialIndex, UMaterialInterface* NewMaterialPtr) const;
 
 protected:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;

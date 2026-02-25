@@ -19,14 +19,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Force à donner vers le haut"))
 	float ForceToGiveInHeight;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Force à donner vers le haut Pour un temps X"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Temps pendant lequel la force à donner vers le haut est appliqué"))
 	float ForceToGiveInHeightDuration;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Force à donner à la vitesse"))
 	float ForceToGiveInVelocity;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Intervalle maximum de temps entre 2 battements d'aile permettant d'obtenir un super battement d'aile (en seconde)"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Temps minimum après lequel on peut déclencher un 2ème battement d'aile pour déclencher un super battement d'aile (en seconde)"))
 	float SuperWingBeatTiming;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Tolérance de temps pour déclencher le super battement d'aile (en seconde)"))
+	float SuperWingBeatTolerance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Multiplicateur à appliquer aux forces du battement d'aile pour le super battement d'aile"))
 	float SuperWingBeatVelocityMultiplier;
