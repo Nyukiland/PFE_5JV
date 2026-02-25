@@ -49,6 +49,7 @@ private:
 	void UpdateCameraShake(float DeltaTime, FRotator& FinalRotation);
 	void UpdateTurningRoll(float DeltaTime);
 	void UpdateCameraDistance(float DeltaTime);
+	static float RemapClamped(float A, float A1, float A2, float B1, float B2);
 
 	// Base rotation
 	float CameraYawOffset_   = 0.f;
