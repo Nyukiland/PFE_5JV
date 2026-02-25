@@ -56,7 +56,6 @@ protected:
 	float SuperWingBeatMinTiming_; 
 	float SuperWingBeatMaxTiming_;
 	bool bIsSuperBeatWingPossible_ = false;
-	bool bIsSuperBeatWingTriggered_ = false;
 
 	// Debug datas :
 	float CurrentHeight_;
@@ -68,6 +67,8 @@ protected:
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 
+	virtual void ComponentEnable_Implementation() override;
+	
 	UFUNCTION(BlueprintCallable, Category="WingBeat")
 	void ReceiveInputLeft(float left);
 

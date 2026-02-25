@@ -5,6 +5,13 @@
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFVisualResource.generated.h"
 
+UENUM(BlueprintType)
+enum class EStateMaterial : uint8
+{
+	ESM_Normal UMETA(DisplayName = "Normal"),
+	ESM_SuperWingBeatPossible UMETA(DisplayName = "SuperWingBeat can be triggered"),
+};
+
 UCLASS(Abstract, Blueprintable)
 class PFE_5JV_API UPFVisualResource : public UPFResource
 {
@@ -16,12 +23,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Visual")
 	TObjectPtr<UPrimitiveComponent> BirdMeshObjectPtr_;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
-	TObjectPtr<UMaterialInterface> NormalMaterialPtr_;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
-	TObjectPtr<UMaterialInterface> BeatWingMaterialPtr_;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
@@ -50,7 +51,10 @@ public:
 	void ProcessRollRotation(float deltaTime);
 
 	UFUNCTION(BlueprintCallable, Category = "Visual")
-	void ChangeMeshMaterial(int MaterialIndex, UMaterialInterface* NewMaterialPtr) const;
+	void ChangeMeshMaterial(int const MaterialIndex, EStateMaterial NewStateMaterial) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Visual")
+	EStateMaterial GetMeshMaterial(int const MaterialIndex) const;
 
 protected:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;

@@ -12,4 +12,11 @@ class PFE_5JV_API UPFVisualResourceData : public UDataAsset
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
 	float LerpWingRotation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+	TObjectPtr<UMaterialInterface> NormalMaterialPtr_;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
+	TObjectPtr<UMaterialInterface> SuperBeatWingMaterialPossiblePtr_;
+
 };
