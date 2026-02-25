@@ -1,11 +1,5 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
 #include "State/PFWingBeatState.h"
 
-#include "Ability/PFWingBeatAbility.h"
-#include "StateMachine/PFPlayerCharacter.h"
-
-void UPFWingBeatState::OnEnter_Implementation()
-{
-	Super::OnEnter_Implementation();
-
-	WingBeatPtr_ = Owner->GetAndActivateComponent<UPFWingBeatAbility>();
-}

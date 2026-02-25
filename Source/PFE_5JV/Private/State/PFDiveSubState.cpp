@@ -1,9 +1,9 @@
-#include "State/PFDiveState.h"
+#include "State/PFDiveSubState.h"
 
 #include "Ability/PFDiveAbility.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
-void UPFDiveState::OnEnter_Implementation()
+void UPFDiveSubState::OnEnter_Implementation()
 {
 	Super::OnEnter_Implementation();
 

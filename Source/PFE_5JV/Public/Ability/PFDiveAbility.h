@@ -12,6 +12,10 @@ class PFE_5JV_API UPFDiveAbility : public UPFAbility
 {
 	GENERATED_BODY()
 
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
+	float CurrentMedianValue_;
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive")
 	TObjectPtr<UPFDiveAbilityData> DataPtr_;
@@ -27,8 +31,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
 	float InputLeft_;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
-	float CurrentMedianValue_;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
 	float HighestInput_;
 

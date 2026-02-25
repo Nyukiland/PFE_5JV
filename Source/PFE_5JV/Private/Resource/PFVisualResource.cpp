@@ -47,6 +47,38 @@ void UPFVisualResource::ProcessRollRotation(float deltaTime)
 
 }
 
+void UPFVisualResource::ChangeMeshMaterial(int const MaterialIndex, EStateMaterial NewStateMaterial) const
+{
+	switch(NewStateMaterial)
+	{
+		case EStateMaterial::ESM_Normal :
+			BirdMeshObjectPtr_->SetMaterial(MaterialIndex, DataPtr_->NormalMaterialPtr_);
+			break;
+		case EStateMaterial::ESM_SuperWingBeatPossible :
+			BirdMeshObjectPtr_->SetMaterial(MaterialIndex, DataPtr_->SuperBeatWingMaterialPossiblePtr_);
+			break;
+		default:
+			BirdMeshObjectPtr_->SetMaterial(MaterialIndex, DataPtr_->NormalMaterialPtr_);
+	}
+	
+}
+
+EStateMaterial UPFVisualResource::GetMeshMaterial(int const MaterialIndex) const
+{
+	UMaterialInterface* MaterialPtr = BirdMeshObjectPtr_->GetMaterial(MaterialIndex);
+	if(MaterialPtr == DataPtr_->NormalMaterialPtr_)
+	{
+		return EStateMaterial::ESM_Normal;
+	}
+	
+	if(MaterialPtr == DataPtr_->SuperBeatWingMaterialPossiblePtr_)
+	{
+		return EStateMaterial::ESM_SuperWingBeatPossible;
+	}
+	
+	return EStateMaterial::ESM_Normal;
+}
+
 void UPFVisualResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 {
 	Super::ComponentInit_Implementation(ownerObj);

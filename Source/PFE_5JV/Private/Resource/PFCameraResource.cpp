@@ -1,9 +1,8 @@
 #include "Resource/PFCameraResource.h"
 
-#include "EnhancedInputComponent.h"
+#include <algorithm>
 #include "Ability/PFTurnAbility.h"
 #include "Camera/CameraComponent.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
 UPFCameraResource::UPFCameraResource()
@@ -139,18 +138,26 @@ void UPFCameraResource::UpdateCameraShake(float DeltaTime, FRotator& FinalRotati
 
 void UPFCameraResource::UpdateCameraDistance(float DeltaTime)
 {
-    float CurrentSpeed = PhysicReferencePtr_->GetCurrentVelocity().Length();
-    float MaxSpeed = PhysicReferencePtr_->GetMaxSpeed();
+    const float CurrentSpeed = PhysicReferencePtr_->GetCurrentVelocity().Length();
+    const float MaxSpeed = PhysicReferencePtr_->GetMaxSpeed();
+    const float MaxDistance = DataPtr_->MaxDistanceToCamera;
+    const float CameraDistance = RemapClamped(CurrentSpeed, 0.0f, MaxSpeed, 0.0f, MaxDistance);
 
-    if (MaxSpeed <= 0.f)
-        return;
-
-    float TargetDistance = PhysicReferencePtr_->GetCurrentSpeedPercentage() * DataPtr_->MaxDistanceToCamera;
-    FVector TargetRelativeLocation = FVector(-TargetDistance, 0.f, 0.f);
-
-    FVector NewLocation = FMath::VInterpTo(CameraPtr_->GetRelativeLocation(), TargetRelativeLocation, DeltaTime, DataPtr_->DistanceInterpSpeed);
-
+    const FVector BaseLocation = FVector::ZeroVector;
+    const FVector TargetLocation = BaseLocation + FVector(-CameraDistance, 0.f, 0.f);
+    const FVector NewLocation = FMath::VInterpTo(CameraPtr_->GetRelativeLocation(),TargetLocation,DeltaTime,DataPtr_->DistanceInterpSpeed);
     CameraPtr_->SetRelativeLocation(NewLocation);
+    
+    GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Speed : %f/%f => Distance : %f/%f"), CurrentSpeed, MaxSpeed, CameraDistance, MaxDistance));
+}
 
-    GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Speed : %f / Distance : %f/%f"), PhysicReferencePtr_->GetCurrentSpeedPercentage(), TargetDistance, DataPtr_->MaxDistanceToCamera));
+float UPFCameraResource::RemapClamped(float A, float A1, float A2, float B1, float B2)
+{
+    if (A2 == A1)
+        return B1;
+
+    float t = (A - A1) / (A2 - A1);
+    t = std::clamp(t, 0.0f, 1.0f);
+
+    return B1 + t * (B2 - B1);
 }

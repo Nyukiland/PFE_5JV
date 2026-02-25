@@ -5,6 +5,7 @@
 #include "StateMachine/StateComponent/PFAbility.h"
 #include "PFWingBeatAbility.generated.h"
 
+class UPFVisualResource;
 class UPFWingBeatAbilityData;
 class UPFPhysicResource;
 
@@ -25,7 +26,10 @@ protected:
 	TObjectPtr<UPFWingBeatAbilityData> DataPtr_;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
-	TObjectPtr<UPFPhysicResource> PhysicResource_;
+	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
+	TObjectPtr<UPFVisualResource> VisualResourcePtr_;
 
 	virtual void ComponentTick_Implementation(float deltaTime) override;
 
@@ -41,24 +45,30 @@ protected:
 	float InputRight_;
 	float InputLeft_;
 
-	// input values for calculation
+	// WingBeat Input datas : 
 	float InputRightRegistered_;
 	float InputLeftRegistered_;
-	
 	float AverageInputValue_;
-	float TimeUntilNextInputRegistration;
-	float TimeLeftToTriggerSuperBeatWing;
+	float InputRegistrationTimer_;
+
+	// SuperWingBeat datas :
+	float SuperBeatWingTimer_ = -1.f;
+	float SuperWingBeatMinTiming_; 
+	float SuperWingBeatMaxTiming_;
+	bool bIsSuperBeatWingPossible_ = false;
 
 	// Debug datas :
-	float CurrentHeight;
-	float HeightAtWingBeatBeginning;
-	float MaxHeightGain;
-	float EffectiveHeightGainAfter3S;
-	float TimeEffectiveHeightCalculus = -1.f;
+	float CurrentHeight_;
+	float HeightAtWingBeatBeginning_;
+	float MaxHeightGain_;
+	float EffectiveHeightGainAfter3S_;
+	float TimeEffectiveHeightCalculus_ = -1.f;
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 
+	virtual void ComponentEnable_Implementation() override;
+	
 	UFUNCTION(BlueprintCallable, Category="WingBeat")
 	void ReceiveInputLeft(float left);
 
