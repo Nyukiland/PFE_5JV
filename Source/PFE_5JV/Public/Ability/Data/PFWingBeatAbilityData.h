@@ -44,5 +44,5 @@ public:
 	float SuperWingBeatHeightMultiplier;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Force maximum qu'on peut atteindre avec un super battement d'aile"))
-	float MaxSuperWingBeatForce = ;
+	float MaxSuperWingBeatForce;
 };
