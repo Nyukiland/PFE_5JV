@@ -8,30 +8,43 @@ UCLASS(Blueprintable, BlueprintType)
 class PFE_5JV_API UPFCameraResourceData : public UDataAsset
 {
 	GENERATED_BODY()
-
 public:
 	
-	/* ===== Rotation Lag Speed ===== */
+	/* ===== Rotation ===== */
 
-	UPROPERTY(EditAnywhere, Category = "Camera Lag", meta=(ToolTip=""))
-	float YawLagSpeed = 2.f;
-
-	UPROPERTY(EditAnywhere, Category = "Camera Lag", meta=(ToolTip=""))
-	float PitchLagSpeed = 2.f;
-
-	UPROPERTY(EditAnywhere, Category = "Camera Lag", meta=(ToolTip=""))
-	float RollLagSpeed = 2.f;
-
-	/* ===== Max Rotation Angle ===== */
-	
-	UPROPERTY(EditAnywhere, Category = "Max Angle", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
 	float MaxYawAngle = 30.f;
 	
-	UPROPERTY(EditAnywhere, Category = "Max Angle", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
 	float MaxPitchAngle = 30.f;
 	
-	UPROPERTY(EditAnywhere, Category = "Max Angle", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
 	float MaxRollAngle = 30.f;
+	
+protected:
+	
+	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
+	float YawLagSpeed = 20.f;
+
+	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
+	float PitchLagSpeed = 20.f;
+
+	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
+	float RollLagSpeed = 20.f;
+
+public:
+
+	float YawLagSpeed_ = YawLagSpeed * 10;
+
+	float PitchLagSpeed_ = PitchLagSpeed * 10;
+
+	float RollLagSpeed_ = RollLagSpeed * 10;
+
+	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
+	float OvershootYawOffset = 5.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
+	float CameraYawInputOffset = 5.0f;
 
 	/* ===== Shake ===== */
 

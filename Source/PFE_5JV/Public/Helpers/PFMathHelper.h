@@ -60,5 +60,8 @@ public:
 	static FVector RandomVector(const float intensity);
 
 	UFUNCTION(BlueprintCallable, Category = "Math Helper")
-	static float Get2dDistance(FVector a, FVector b);	
+	static float Get2dDistance(FVector a, FVector b);
+
+	UFUNCTION(BlueprintCallable, Category = "Math Helper")
+	static float RemapClamped(float A, float A1, float A2, float B1, float B2);	
 };

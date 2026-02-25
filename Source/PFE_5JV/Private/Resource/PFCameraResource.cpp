@@ -3,6 +3,7 @@
 #include <algorithm>
 #include "Ability/PFTurnAbility.h"
 #include "Camera/CameraComponent.h"
+#include "Helpers/PFMathHelper.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
 UPFCameraResource::UPFCameraResource()
@@ -50,56 +51,59 @@ void UPFCameraResource::ComponentTick_Implementation(float deltaTime)
     if (!CameraRootPtr_ || !CameraPtr_ || !DataPtr_ || !PhysicReferencePtr_ || !VisualResourcePtr_ || !TurnAbilityPtr_)
         return;
 
-    FRotator FinalRotation = SmoothedCameraRotation_;
-    
-    UpdateCameraRotation(deltaTime, FinalRotation);
-    // UpdateCameraShake(deltaTime, FinalRotation);
+    FRotator FinalRootRotation = SmoothedCameraRotation_;
 
-    SmoothedCameraRotation_ = FinalRotation;
-    CameraRootPtr_->SetWorldRotation(FinalRotation);
+    // Camera Root movements
+    UpdateCameraRotation(deltaTime, FinalRootRotation);
+    // UpdateCameraShake(deltaTime, FinalRootRotation);
 
+    CameraRootPtr_->SetWorldRotation(FinalRootRotation);
+    SmoothedCameraRotation_ = FinalRootRotation;
+
+    // Camera movements
     UpdateCameraDistance(deltaTime);
-    UpdateTurningRoll(deltaTime);
+    // UpdateTurningRoll(deltaTime);
 }
 
 void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRotation)
 {
-    float YawRotation = Owner->GetActorRotation().Yaw;
+    const float BaseYaw = Owner->GetActorRotation().Yaw;
     float PitchRotation = PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch;
     float RollRotation = VisualResourcePtr_->GetRelativeRotation().Roll;
     FRotator CameraRotation = FinalRotation;
-    
-    float DeltaYaw = FMath::FindDeltaAngleDegrees(YawRotation, CameraRotation.Yaw);
+    float DeltaYaw = FMath::FindDeltaAngleDegrees(BaseYaw, CameraRotation.Yaw);
     float DeltaPitch = FMath::FindDeltaAngleDegrees(PitchRotation, CameraRotation.Pitch);
     float DeltaRoll = FMath::FindDeltaAngleDegrees(RollRotation, CameraRotation.Roll);
     
-    FRotator NewRotation = CameraRotation;
-    // Yaw
-    if (FMath::Abs(DeltaYaw) > DataPtr_->MaxYawAngle) {
-        NewRotation.Yaw = YawRotation + FMath::Clamp(DeltaYaw,-DataPtr_->MaxYawAngle, DataPtr_->MaxYawAngle);
-    } else {
-        FRotator DesiredRotation = NewRotation;
-        DesiredRotation.Yaw = YawRotation + CameraYawOffset_;
-        NewRotation = FMath::RInterpTo(NewRotation, DesiredRotation, DeltaTime, DataPtr_->YawLagSpeed); }
+    // ---- YAW ----
+    // const float BaseYaw = Owner->GetActorRotation().Yaw;
+    float InputYaw = TurnAbilityPtr_->InputRight_ - TurnAbilityPtr_->InputLeft_;
+    float OffsetYaw = InputYaw * DataPtr_->CameraYawInputOffset;
+    float TargetYaw = BaseYaw + CameraYawOffset_ + OffsetYaw;
+    float InterpedYaw = FMath::FInterpTo(FinalRotation.Yaw,TargetYaw,DeltaTime,DataPtr_->YawLagSpeed_);
+    float RelativeYaw = FMath::FindDeltaAngleDegrees(BaseYaw, InterpedYaw);
+    RelativeYaw = FMath::Clamp(RelativeYaw,-DataPtr_->MaxYawAngle ,DataPtr_->MaxYawAngle);
+    float FinalYaw = BaseYaw + RelativeYaw;
 
-    // Pitch
-    if (FMath::Abs(DeltaPitch) > DataPtr_->MaxPitchAngle) {
-        NewRotation.Pitch = PitchRotation + FMath::Clamp(DeltaPitch, -DataPtr_->MaxPitchAngle, DataPtr_->MaxPitchAngle);
-    } else {
-        FRotator DesiredRotation = NewRotation;
-        DesiredRotation.Pitch = PitchRotation + CameraPitchOffset_;
-        NewRotation = FMath::RInterpTo(NewRotation, DesiredRotation, DeltaTime, DataPtr_->PitchLagSpeed); }
+    // ---- PITCH ----
+    float BasePitch = PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch;
+    float TargetPitch = BasePitch + CameraPitchOffset_;
+    float InterpedPitch = FMath::FInterpTo(FinalRotation.Pitch,TargetPitch,DeltaTime,DataPtr_->PitchLagSpeed_);
+    float RelativePitch = FMath::FindDeltaAngleDegrees(BasePitch, InterpedPitch);
+    float ClampedRelativePitch = FMath::Clamp(RelativePitch,-DataPtr_->MaxPitchAngle,DataPtr_->MaxPitchAngle);
+    float FinalPitch = BasePitch + ClampedRelativePitch;
     
-    // Roll
-    if (FMath::Abs(DeltaRoll) > DataPtr_->MaxRollAngle) {
-        NewRotation.Roll = RollRotation + FMath::Clamp(DeltaRoll, -DataPtr_->MaxRollAngle, DataPtr_->MaxRollAngle);
-    } else {
-        FRotator DesiredRotation = NewRotation;
-        DesiredRotation.Roll = RollRotation;
-        NewRotation = FMath::RInterpTo(NewRotation, DesiredRotation, DeltaTime, DataPtr_->RollLagSpeed); }
+    // ---- ROLL ----
+    float BaseRoll = VisualResourcePtr_->GetRelativeRotation().Roll;
+    float InterpedRoll = FMath::FInterpTo(FinalRotation.Roll,BaseRoll,DeltaTime, DataPtr_->RollLagSpeed_);
+    float RelativeRoll = FMath::FindDeltaAngleDegrees(BaseRoll, InterpedRoll);
+    float ClampedRelativeRoll = FMath::Clamp(RelativeRoll,-DataPtr_->MaxRollAngle,DataPtr_->MaxRollAngle);
+    float FinalRoll = BaseRoll + ClampedRelativeRoll;
 
-    //Apply
-    FinalRotation = NewRotation;
+    // ---- APPLY ----
+    FinalRotation = FRotator(FinalPitch, FinalYaw, FinalRoll);
+
+    // ---- DEBUG ----
     GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Caméra: %f/%f/%f"), CameraPtr_->GetComponentRotation().Yaw, CameraPtr_->GetComponentRotation().Pitch, CameraPtr_->GetComponentRotation().Roll));
     GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, FString::Printf(TEXT("Oiseau: %f/%f/%f"), DeltaYaw, DeltaPitch, DeltaRoll));
 }
@@ -141,23 +145,12 @@ void UPFCameraResource::UpdateCameraDistance(float DeltaTime)
     const float CurrentSpeed = PhysicReferencePtr_->GetCurrentVelocity().Length();
     const float MaxSpeed = PhysicReferencePtr_->GetMaxSpeed();
     const float MaxDistance = DataPtr_->MaxDistanceToCamera;
-    const float CameraDistance = RemapClamped(CurrentSpeed, 0.0f, MaxSpeed, 0.0f, MaxDistance);
+    const float CameraDistance = UPFMathHelper::RemapClamped(CurrentSpeed, 0.0f, MaxSpeed, 0.0f, MaxDistance);
 
     const FVector BaseLocation = FVector::ZeroVector;
     const FVector TargetLocation = BaseLocation + FVector(-CameraDistance, 0.f, 0.f);
     const FVector NewLocation = FMath::VInterpTo(CameraPtr_->GetRelativeLocation(),TargetLocation,DeltaTime,DataPtr_->DistanceInterpSpeed);
     CameraPtr_->SetRelativeLocation(NewLocation);
     
-    GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Speed : %f/%f => Distance : %f/%f"), CurrentSpeed, MaxSpeed, CameraDistance, MaxDistance));
-}
-
-float UPFCameraResource::RemapClamped(float A, float A1, float A2, float B1, float B2)
-{
-    if (A2 == A1)
-        return B1;
-
-    float t = (A - A1) / (A2 - A1);
-    t = std::clamp(t, 0.0f, 1.0f);
-
-    return B1 + t * (B2 - B1);
+    // GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Speed : %f/%f => Distance : %f/%f"), CurrentSpeed, MaxSpeed, CameraDistance, MaxDistance));
 }

@@ -142,3 +142,14 @@ float UPFMathHelper::Get2dDistance(FVector a, FVector b)
 
 	return FVector::Dist(a, b);
 }
+
+float UPFMathHelper::RemapClamped(float A, float A1, float A2, float B1, float B2)
+{
+	if (A2 == A1)
+		return B1;
+
+	float t = (A - A1) / (A2 - A1);
+	t = std::clamp(t, 0.0f, 1.0f);
+
+	return B1 + t * (B2 - B1);
+}
