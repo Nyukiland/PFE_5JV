@@ -26,10 +26,10 @@ protected:
 	TObjectPtr<UPFWingBeatAbilityData> DataPtr_;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
-	TObjectPtr<UPFPhysicResource> PhysicResource_;
+	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
-	TObjectPtr<UPFVisualResource> VisualResource_;
+	TObjectPtr<UPFVisualResource> VisualResourcePtr_;
 
 	virtual void ComponentTick_Implementation(float deltaTime) override;
 

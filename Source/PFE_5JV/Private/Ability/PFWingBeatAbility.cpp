@@ -42,23 +42,23 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 	if(SuperBeatWingTimer_ >= SuperWingBeatMinTiming_ && SuperBeatWingTimer_ <= SuperWingBeatMaxTiming_)
 	{
 		bIsSuperBeatWingPossible_ = true;
-		VisualResource_->ChangeMeshMaterial(0, EStateMaterial::ESM_SuperWingBeatPossible);
+		VisualResourcePtr_->ChangeMeshMaterial(0, EStateMaterial::ESM_SuperWingBeatPossible);
 	}
 	// if the right timing is over :  
 	else if(SuperBeatWingTimer_ > SuperWingBeatMaxTiming_)
 	{
 		SuperBeatWingTimer_ = -1.f; // Deactivate timer 
 		bIsSuperBeatWingPossible_ = false; 
-		VisualResource_->ChangeMeshMaterial(0, EStateMaterial::ESM_Normal); 
+		VisualResourcePtr_->ChangeMeshMaterial(0, EStateMaterial::ESM_Normal); 
 	}
 	// if the timer is just launched but not in SuperWingBeatTimer yet : 
 	else if(SuperBeatWingTimer_ >= 0.f && SuperBeatWingTimer_ < SuperWingBeatMinTiming_)
 	{
 		bIsSuperBeatWingPossible_ = false;
-		if(VisualResource_->GetMeshMaterial(0) == EStateMaterial::ESM_SuperWingBeatPossible)
+		if(VisualResourcePtr_->GetMeshMaterial(0) == EStateMaterial::ESM_SuperWingBeatPossible)
 		{
 			// GEngine->AddOnScreenDebugMessage();
-			VisualResource_->ChangeMeshMaterial(0, EStateMaterial::ESM_Normal); 
+			VisualResourcePtr_->ChangeMeshMaterial(0, EStateMaterial::ESM_Normal); 
 		}
 	}
 	
@@ -84,8 +84,8 @@ void UPFWingBeatAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerO
 {
 	Super::ComponentInit_Implementation(ownerObj);
 	
-	PhysicResource_ = ownerObj->GetStateComponent<UPFPhysicResource>();
-	VisualResource_ = ownerObj->GetStateComponent<UPFVisualResource>();
+	PhysicResourcePtr_ = ownerObj->GetStateComponent<UPFPhysicResource>();
+	VisualResourcePtr_ = ownerObj->GetStateComponent<UPFVisualResource>();
 
 	
 	if (!DataPtr_ || !DataPtr_->DelayBetweenInputRegistrations)
@@ -161,18 +161,29 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 	float HeightToGive = DataPtr_->ForceToGiveInHeight *
 		DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve->GetFloatValue(AverageInputValue_);
 	if(bIsSuperBeatWingPossible_ == true) HeightToGive *= DataPtr_->SuperWingBeatHeightMultiplier;
-	PhysicResource_->AddForce(HeightToGive * FVector::UpVector, true, false, DataPtr_->ForceToGiveInHeightDuration);
+	PhysicResourcePtr_->AddForce(HeightToGive * FVector::UpVector, true, false, DataPtr_->ForceToGiveInHeightDuration);
 
 	// Debug data :
 	MaxHeightGain_ = Owner->ForwardRootPtr->GetComponentLocation().Z - HeightAtWingBeatBeginning_;
 	
 	float SpeedToGive = DataPtr_->ForceToGiveInVelocity *
 		DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve->GetFloatValue(AverageInputValue_);
-	if(bIsSuperBeatWingPossible_ == true) SpeedToGive *= DataPtr_->SuperWingBeatVelocityMultiplier;
 
-	PhysicResource_->AddForwardForce(SpeedToGive, false);
+	float maxForce = DataPtr_->MaxWingBeatForce;
+	if(bIsSuperBeatWingPossible_ == true)
+	{
+		maxForce = DataPtr_->MaxSuperWingBeatForce;
+		SpeedToGive *= DataPtr_->SuperWingBeatVelocityMultiplier;
+		
+	}
+	float ForwardVelocity = PhysicResourcePtr_->CurrentForwardVelo_.Length();
+	if(ForwardVelocity <= maxForce)
+	{
+		float toAdd = FMath::Min(0, maxForce - (ForwardVelocity + SpeedToGive));
+		PhysicResourcePtr_->AddForwardForce(toAdd, false);
+	}
 
-	PhysicResource_->ResetPhysicsTimer();
+	PhysicResourcePtr_->ResetPhysicsTimer();
 	
 	// Trigger timer for SuperBeatWing :
 	SuperBeatWingTimer_ = 0.f;
