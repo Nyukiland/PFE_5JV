@@ -61,7 +61,13 @@ void UPFDiveAbility::Dive(float deltaTime)
 	float velocity0to1 = PhysicResourcePtr_->GetForwardSpeedPercentage(true);
 	speedToGive *= DataPtr_->DiveAccelerationBasedOnSpeedCurvePtr->GetFloatValue(velocity0to1);
 
-	PhysicResourcePtr_->AddForwardForce(speedToGive * deltaTime, false);
+	float forwardVelo = PhysicResourcePtr_->CurrentForwardVelo_.Length();
+	if (forwardVelo <= DataPtr_->MaxDiveForce)
+	{
+		float toAdd = speedToGive * deltaTime;
+		toAdd += FMath::Min(0, DataPtr_->MaxDiveForce - (forwardVelo + toAdd));
+		PhysicResourcePtr_->AddForwardForce(toAdd, false);
+	}
 }
 
 void UPFDiveAbility::AfterDiveGoingUp(float deltaTime)
@@ -118,8 +124,8 @@ void UPFDiveAbility::DiveVisual(float deltaTime)
 	float highestValue = FMath::Min(InputLeft_, InputRight_);
 
 	float lerpSpeedToUse = highestValue >= CurrentMedianValue_
-		                       ? DataPtr_->LerpPitchSpeedGoingUp
-		                       : DataPtr_->LerpPitchSpeedGoingDown;
+								? DataPtr_->LerpPitchSpeedGoingUp
+								: DataPtr_->LerpPitchSpeedGoingDown;
 
 	CurrentMedianValue_ = FMath::Lerp(CurrentMedianValue_, highestValue, lerpSpeedToUse * deltaTime);
 
@@ -145,7 +151,7 @@ void UPFDiveAbility::DiveRoll(float deltaTime)
 	}
 
 	TimerWaitToRollDive_ += deltaTime;
-	
+
 	if (TimerWaitToRollDive_ < 0.1f)
 		return;
 
@@ -156,7 +162,7 @@ bool UPFDiveAbility::IsDiving()
 {
 	if (ElapsedTime_ >= DataPtr_->Threshold_ && HighestInput_ != 0)
 		return true;
-	
+
 	return false;
 }
 
@@ -210,7 +216,7 @@ void UPFDiveAbility::DiveRollInputRecording(float deltaTime)
 
 	if (DiveRollDirection != 0)
 		return;
-	
+
 	TimerInputRecording_ += deltaTime;
 
 	if (TimerInputRecording_ > DataPtr_->TimeBeforeInputRegister)
@@ -232,10 +238,10 @@ void UPFDiveAbility::DiveRollCheck()
 
 	float deltaLeft = FMath::Abs(RecordedPreviousInputLeft_ - InputLeft_);
 	bool validDeltaLeft = deltaLeft > DataPtr_->DiveRollInputChangeNeeded;
-	
+
 	float deltaRight = FMath::Abs(RecordedPreviousInputRight_ - InputRight_);
 	bool validDeltaRight = deltaRight > DataPtr_->DiveRollInputChangeNeeded;
-	
+
 	if (validDeltaLeft && !validDeltaRight && InputRight_ == 1)
 	{
 		DiveRollDirection = -1;
