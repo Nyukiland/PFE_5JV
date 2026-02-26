@@ -14,7 +14,7 @@ class PFE_5JV_API UPFRollAbility : public UPFAbility
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Roll")
-	TObjectPtr<UPFRollAbilityData> Data_;
+	TObjectPtr<UPFRollAbilityData> DataPtr_;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Roll")
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
@@ -22,6 +22,9 @@ protected:
 	UPROPERTY(visibleAnywhere, BlueprintReadOnly, Category="Roll")
 	TObjectPtr<UPFVisualResource> VisualResourcePtr_;
 
+	float InputLeft_;
+	float InputRight_;
+	
 	float PressTimeRight_;
 	bool bIsDownRight_;
 	float PressTimeLeft_;

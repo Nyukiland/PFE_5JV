@@ -77,5 +77,22 @@ void UPFCollisionResource::RecordInfoForPlayTest()
 void UPFCollisionResource::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	FVector NormalImpulse, const FHitResult& Hit)
 {
+	if (!DataPtr_ || !PhysicResource_)
+		return;
+
+	FVector normalOfCollider = Hit.ImpactNormal;
+	FVector playerDirection = PhysicResource_->GetCurrentVelocity();
+	float dotCollision = FVector::DotProduct(normalOfCollider, playerDirection.GetSafeNormal());
+	
+	if (dotCollision > 0)
+		return;
+
+	if (FMath::Abs(dotCollision) > DataPtr_->ThresholdCollision)
+	{
+		OnHardCollision.Broadcast();
+		return;
+	}
+
+	OnSoftCollision.Broadcast();
 	
 }

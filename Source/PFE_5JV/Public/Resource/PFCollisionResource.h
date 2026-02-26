@@ -110,7 +110,6 @@ protected:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 
 	void RecordInfoForRollBack(float deltaTime);
-
 	void RecordInfoForPlayTest();
 
 	UFUNCTION()
