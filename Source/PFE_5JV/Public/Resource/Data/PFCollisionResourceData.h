@@ -25,4 +25,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision",
 		meta = (ToolTip = "The amount of speed reduced when the player collides with the wall on the side"))
 	float SlowAfterSideCollision;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision",
+		meta = (ToolTip = "The amount of speed reduced when the player collides with the wall on the side",
+			ClampMax = 1, ClampMin = 0))
+	float ThresholdCollision;
 };

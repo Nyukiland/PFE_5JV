@@ -30,6 +30,7 @@ protected:
 	TObjectPtr<UPFVisualResource> VisualResourcePtr_;
 	
 	float RotationValue_;
+	float SlowForceTimer_;
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;

@@ -10,6 +10,12 @@ void UPFCollisionResource::ComponentInit_Implementation(APFPlayerCharacter* owne
 	DiveAbility_ = Owner->GetStateComponent<UPFDiveAbility>();
 
 	OwnerWorld = Owner->GetWorld();
+
+	PhysicRoot->SetNotifyRigidBodyCollision(true);
+
+	PhysicRoot->OnComponentHit.AddDynamic(
+		this,
+		&UPFCollisionResource::OnHit);
 }
 
 void UPFCollisionResource::RecordInfoForRollBack(float deltaTime)
@@ -66,4 +72,10 @@ void UPFCollisionResource::RecordInfoForPlayTest()
 			position);
 
 	GameInfoList_.Add(PlaytestInfo);
+}
+
+void UPFCollisionResource::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	FVector NormalImpulse, const FHitResult& Hit)
+{
+	
 }

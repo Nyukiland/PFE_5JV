@@ -18,6 +18,7 @@ void UPFTurnAbility::ComponentDisable_Implementation()
 
 	InputLeft_ = 0.0f;
 	InputRight_ = 0.0f;
+	SlowForceTimer_ = 0.0f;
 	GetRotationValue();
 }
 
@@ -75,6 +76,19 @@ void UPFTurnAbility::Turn(float deltaTime)
 	float slowValue = DataPtr_->SlowForce;
 	slowValue *= DataPtr_->SlowForceBasedOnInputPtr->GetFloatValue(valueAbs);
 	slowValue *= DataPtr_->SlowForceBasedOnVelocityPtr->GetFloatValue(velocity0to1);
+
+	// Drift tolerance
+	if (valueAbs > 0.975f)
+	{
+		SlowForceTimer_ += deltaTime;
+		float slowValue01 = FMath::Clamp(SlowForceTimer_/DataPtr_->TimeToGoFullSlowForce, 0.f, 1.f);
+		slowValue *= DataPtr_->SlowForceInProgressCurvePtr->GetFloatValue(slowValue01);
+	}
+	else
+	{
+		SlowForceTimer_ = 0;
+	}
+	
 	PhysicResourcePtr_->AddForwardForce(-slowValue * deltaTime, false);
 }
 

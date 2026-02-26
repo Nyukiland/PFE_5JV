@@ -34,6 +34,14 @@ public:
 		meta = (ToolTip = "The amount of slow used based on the current velocity"))
 	TObjectPtr<UCurveFloat> SlowForceBasedOnVelocityPtr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn/SlowDown",
+		meta = (ToolTip = "The time required to reach the full slowForce", ClampMin = 0))
+	float TimeToGoFullSlowForce;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn/SlowDown",
+		meta = (ToolTip = "The curve of the force based on the timer for slowForce"))
+	TObjectPtr<UCurveFloat> SlowForceInProgressCurvePtr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn", meta = (ClampMin = 0, ClampMax = 1),
 		meta = (ToolTip = "The minimum difference between the two input to consider them as different"))
 	float ToleranceRotBetweenInput;
