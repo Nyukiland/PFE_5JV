@@ -143,6 +143,12 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 		return;
 	}
 
+	if (!DataPtr_ || !DataPtr_->WingBeatHeightGainedBasedOnForceDurationCurve)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[BeatWingAbility] Bad Set up on data WingBeatHeightGainedBasedOnForceDurationCurve"));
+		return;
+	}
+
 	if (!DataPtr_ || !DataPtr_->SuperWingBeatVelocityMultiplier)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[BeatWingAbility] Bad Set up on data 'SuperWingBeatMultiplier'"));
@@ -159,7 +165,7 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 	GetAverageInputValue();
 	
 	float HeightToGive = DataPtr_->ForceToGiveInHeight *
-		DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve->GetFloatValue(AverageInputValue_);
+		DataPtr_->WingBeatHeightGainedBasedOnForceDurationCurve->GetFloatValue(DataPtr_->ForceToGiveInHeightDuration);
 	if(bIsSuperBeatWingPossible_ == true) HeightToGive *= DataPtr_->SuperWingBeatHeightMultiplier;
 	PhysicResourcePtr_->AddForce(HeightToGive * FVector::UpVector, true, false, DataPtr_->ForceToGiveInHeightDuration);
 
