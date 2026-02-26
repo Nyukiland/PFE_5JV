@@ -7,6 +7,7 @@
 #include "InputAction.h"
 #include "PFTriggerSimultaneousTap.generated.h"
 
+class UPFInputFilteringData;
 /**
  * 
  */
@@ -16,7 +17,6 @@ class PFE_5JV_API UPFTriggerSimultaneousTap : public UInputTrigger
 	GENERATED_BODY()
 	
 public:
-
 	/** First input action to monitor */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simultaneous Tap")
 	TObjectPtr<const UInputAction> ActionAPtr;
@@ -25,15 +25,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simultaneous Tap")
 	TObjectPtr<const UInputAction> ActionBPtr;
 
-	/** Max allowed time difference between taps (seconds) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simultaneous Tap", meta = (ClampMin = "0.0"))
-	float TapTolerance = 0.05f;
+	/** Max allowed time difference between taps (seconds) : to add in Input/DA_InputFilteringData in editor */
+	float TapTolerance;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Simultaneous Tap")
 	bool bIsActivatedOnce = false;
 	bool bIsSecondInputTooLate = false;
 
 protected:
+
+	virtual void PostLoad() override;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive")
+	TObjectPtr<UPFInputFilteringData> DataPtr_;
+	
 	void ResetSimultaneousTap();
 	virtual ETriggerState UpdateState_Implementation(
 		const UEnhancedPlayerInput* PlayerInput,

@@ -30,7 +30,7 @@ void UPFRollAbility::ComponentEnable_Implementation()
 
 void UPFRollAbility::TryCallRollRight(float inputValue, int rotationSide)
 {
-	if (!Data_)
+	if (!DataPtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[Roll] Bad Set up on Data"));
 		return;
@@ -39,7 +39,12 @@ void UPFRollAbility::TryCallRollRight(float inputValue, int rotationSide)
 	if (!bIsRollComplete_)
 		return;
 
-	if (inputValue < Data_->ThresholdInput)
+	InputRight_ = inputValue;
+
+	if (InputLeft_ > DataPtr_->ThresholdReleasedInput)
+		return;
+	
+	if (inputValue < DataPtr_->ThresholdInput)
 	{
 		bIsDownRight_ = false;
 		return;
@@ -52,7 +57,7 @@ void UPFRollAbility::TryCallRollRight(float inputValue, int rotationSide)
 	float pressTime = UGameplayStatics::GetRealTimeSeconds(Owner->GetWorld());
 	
 	if (PressTimeRight_ == 0 ||
-		pressTime - PressTimeRight_ > Data_->RollRepetitionTime)
+		pressTime - PressTimeRight_ > DataPtr_->RollRepetitionTime)
 	{
 		PressTimeRight_ = pressTime;
 		return;
@@ -64,7 +69,7 @@ void UPFRollAbility::TryCallRollRight(float inputValue, int rotationSide)
 
 void UPFRollAbility::TryCallRollLeft(float inputValue, int rotationSide)
 {
-	if (!Data_)
+	if (!DataPtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[Roll] Bad Set up on Data"));
 		return;
@@ -72,13 +77,18 @@ void UPFRollAbility::TryCallRollLeft(float inputValue, int rotationSide)
 	
 	if (!bIsRollComplete_)
 		return;
+
+	InputLeft_ = inputValue;
+
+	if (InputRight_ > DataPtr_->ThresholdReleasedInput)
+		return;
 	
-	if (inputValue < Data_->ThresholdInput)
+	if (inputValue < DataPtr_->ThresholdInput)
 	{
 		bIsDownLeft_ = false;
 		return;
 	}
-
+	
 	if (bIsDownLeft_)
 		return;
 
@@ -87,7 +97,7 @@ void UPFRollAbility::TryCallRollLeft(float inputValue, int rotationSide)
 	float pressTime = UGameplayStatics::GetRealTimeSeconds(Owner->GetWorld());
 	
 	if (PressTimeLeft_ == 0 ||
-		pressTime - PressTimeLeft_ > Data_->RollRepetitionTime)
+		pressTime - PressTimeLeft_ > DataPtr_->RollRepetitionTime)
 	{
 		PressTimeLeft_ = pressTime;
 		return;
@@ -99,7 +109,7 @@ void UPFRollAbility::TryCallRollLeft(float inputValue, int rotationSide)
 
 bool UPFRollAbility::PreRollCheck(float deltatTime)
 {
-	if (!Data_)
+	if (!DataPtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[Roll] Bad Set up on Data"));
 		return false;
@@ -110,7 +120,7 @@ bool UPFRollAbility::PreRollCheck(float deltatTime)
 
 	TimerPreRoll_ += deltatTime;
 
-	if (TimerPreRoll_ < Data_->WaitBeforeCallingWhenValid)
+	if (TimerPreRoll_ < DataPtr_->WaitBeforeCallingWhenValid)
 		return false;
 
 	if (RotationDir_ == 0)
@@ -125,13 +135,13 @@ bool UPFRollAbility::PreRollCheck(float deltatTime)
 
 bool UPFRollAbility::Roll(float deltaTime)
 {
-	if (!Data_)
+	if (!DataPtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[Roll] Bad Set up on Data"));
 		return false;
 	}
 
-	if (TimerRoll_ >= Data_->RollDuration)
+	if (TimerRoll_ >= DataPtr_->RollDuration)
 	{
 		if (!bIsRollComplete_)
 		{
@@ -144,12 +154,12 @@ bool UPFRollAbility::Roll(float deltaTime)
 
 	TimerRoll_ += deltaTime;
 
-	float value = FMath::Clamp(TimerRoll_ / Data_->RollDuration, 0, 1);
+	float value = FMath::Clamp(TimerRoll_ / DataPtr_->RollDuration, 0, 1);
 
 	FVector rightVector = ForwardRoot->GetRightVector();
-	PhysicResourcePtr_->AddForce(Data_->RollForce * Data_->RollForceOverTimePtr->GetFloatValue(value) * rightVector * RotationDir_);
+	PhysicResourcePtr_->AddForce(DataPtr_->RollForce * DataPtr_->RollForceOverTimePtr->GetFloatValue(value) * rightVector * RotationDir_);
 
-	float totalDegrees = Data_->RotationCount * 360.f * RotationDir_;
+	float totalDegrees = DataPtr_->RotationCount * 360.f * RotationDir_;
 	float currentDegrees = totalDegrees * value;
 	VisualResourcePtr_->SetRollRotation(currentDegrees, -2);
 

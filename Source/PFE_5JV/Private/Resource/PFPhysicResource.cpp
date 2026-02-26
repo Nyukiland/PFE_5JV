@@ -32,6 +32,11 @@ FString UPFPhysicResource::GetInfo_Implementation()
 	return text;
 }
 
+void UPFPhysicResource::SetKinematic(bool bShouldMove)
+{
+	PhysicRoot->SetSimulatePhysics(bShouldMove);
+}
+
 float UPFPhysicResource::GetMaxSpeed() const
 {
 	if (!DataPtr_)

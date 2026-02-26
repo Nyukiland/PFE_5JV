@@ -42,23 +42,22 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 	if(SuperBeatWingTimer_ >= SuperWingBeatMinTiming_ && SuperBeatWingTimer_ <= SuperWingBeatMaxTiming_)
 	{
 		bIsSuperBeatWingPossible_ = true;
-		VisualResourcePtr_->ChangeMeshMaterial(0, EStateMaterial::ESM_SuperWingBeatPossible);
+		SuperWingBeatDebugSpherePtr_->SetVisibility(true);
 	}
 	// if the right timing is over :  
 	else if(SuperBeatWingTimer_ > SuperWingBeatMaxTiming_)
 	{
 		SuperBeatWingTimer_ = -1.f; // Deactivate timer 
-		bIsSuperBeatWingPossible_ = false; 
-		VisualResourcePtr_->ChangeMeshMaterial(0, EStateMaterial::ESM_Normal); 
+		bIsSuperBeatWingPossible_ = false;
+		SuperWingBeatDebugSpherePtr_->SetVisibility(false);
 	}
 	// if the timer is just launched but not in SuperWingBeatTimer yet : 
 	else if(SuperBeatWingTimer_ >= 0.f && SuperBeatWingTimer_ < SuperWingBeatMinTiming_)
 	{
 		bIsSuperBeatWingPossible_ = false;
-		if(VisualResourcePtr_->GetMeshMaterial(0) == EStateMaterial::ESM_SuperWingBeatPossible)
+		if(SuperWingBeatDebugSpherePtr_->GetVisibleFlag() == true)
 		{
-			// GEngine->AddOnScreenDebugMessage();
-			VisualResourcePtr_->ChangeMeshMaterial(0, EStateMaterial::ESM_Normal); 
+			SuperWingBeatDebugSpherePtr_->SetVisibility(false);
 		}
 	}
 	
@@ -85,8 +84,6 @@ void UPFWingBeatAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerO
 	Super::ComponentInit_Implementation(ownerObj);
 	
 	PhysicResourcePtr_ = ownerObj->GetStateComponent<UPFPhysicResource>();
-	VisualResourcePtr_ = ownerObj->GetStateComponent<UPFVisualResource>();
-
 	
 	if (!DataPtr_ || !DataPtr_->DelayBetweenInputRegistrations)
 	{
@@ -143,6 +140,12 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 		return;
 	}
 
+	if (!DataPtr_ || !DataPtr_->WingBeatHeightGainedBasedOnForceDurationCurve)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[BeatWingAbility] Bad Set up on data WingBeatHeightGainedBasedOnForceDurationCurve"));
+		return;
+	}
+
 	if (!DataPtr_ || !DataPtr_->SuperWingBeatVelocityMultiplier)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[BeatWingAbility] Bad Set up on data 'SuperWingBeatMultiplier'"));
@@ -159,7 +162,7 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 	GetAverageInputValue();
 	
 	float HeightToGive = DataPtr_->ForceToGiveInHeight *
-		DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve->GetFloatValue(AverageInputValue_);
+		DataPtr_->WingBeatHeightGainedBasedOnForceDurationCurve->GetFloatValue(DataPtr_->ForceToGiveInHeightDuration);
 	if(bIsSuperBeatWingPossible_ == true) HeightToGive *= DataPtr_->SuperWingBeatHeightMultiplier;
 	PhysicResourcePtr_->AddForce(HeightToGive * FVector::UpVector, true, false, DataPtr_->ForceToGiveInHeightDuration);
 

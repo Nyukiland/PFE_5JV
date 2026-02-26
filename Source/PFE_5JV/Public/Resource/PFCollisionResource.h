@@ -7,6 +7,8 @@
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFCollisionResource.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerCollision);
+
 USTRUCT()
 struct FStoredCollisionInfo
 {
@@ -72,6 +74,13 @@ class PFE_5JV_API UPFCollisionResource : public UPFResource
 {
 	GENERATED_BODY()
 
+public:
+	UPROPERTY(BlueprintAssignable, Category = "Collision")
+	FOnPlayerCollision OnSoftCollision;
+
+	UPROPERTY(BlueprintAssignable, Category = "Collision")
+	FOnPlayerCollision OnHardCollision;
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
 	TObjectPtr<UPFCollisionResourceData> DataPtr_;
@@ -97,10 +106,19 @@ protected:
 	UPROPERTY()
 	TArray<FStoredPlaytestInfo> GameInfoList_;
 
+	int TimerRewindIncrement_;
+	
+public:
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	void RewindAfterCollision(float deltaTime);
+	
 protected:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 
 	void RecordInfoForRollBack(float deltaTime);
-
 	void RecordInfoForPlayTest();
+
+	UFUNCTION()
+	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,	FVector NormalImpulse, const FHitResult& Hit);
 };
