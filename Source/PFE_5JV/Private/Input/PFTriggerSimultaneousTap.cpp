@@ -2,8 +2,19 @@
 
 
 #include "Input/PFTriggerSimultaneousTap.h"
-
+#include "Input/PFInputFilteringData.h"
 #include "EnhancedPlayerInput.h"
+
+UPFTriggerSimultaneousTap::UPFTriggerSimultaneousTap()
+{
+	if (!DataPtr_ || !DataPtr_->SimultaneousTapTolerance)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[InputFilteringData] Bad Set up on data 'SimultaneousTapTolerance'"));
+		return;
+	}
+	TapTolerance = DataPtr_->SimultaneousTapTolerance;
+	UE_LOG(LogTemp, Error, TEXT("[InputFilteringData] All is good'"));
+}
 
 void UPFTriggerSimultaneousTap::ResetSimultaneousTap()
 {
@@ -90,14 +101,14 @@ ETriggerState UPFTriggerSimultaneousTap::UpdateState_Implementation(const UEnhan
 			const double TimeDiff = FMath::Abs(LastTapTimeA - LastTapTimeB);
 			
 			// if the delay between the two buttons pressed are lower than the tolerance, trigger the effect :  
-			if (TimeDiff <= TapTolerance)
+			if (TimeDiff <= DataPtr_->SimultaneousTapTolerance)
 			{
 				bIsActivatedOnce = true;
 				return ETriggerState::Triggered;
 			}
 
 			// if the delay between the two buttons pressed are upper than the tolerance, do nothing : 
-			if (TimeDiff > TapTolerance)
+			if (TimeDiff > DataPtr_->SimultaneousTapTolerance)
 			{
 				bIsSecondInputTooLate = true;
 				return ETriggerState::None;
