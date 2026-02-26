@@ -20,6 +20,10 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="Dive")
 	FOnWingBeatCalled OnWingBeatCalled;
 	virtual FString GetInfo_Implementation() override;
+
+	// Debug :
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive")
+	TObjectPtr<UPrimitiveComponent> SuperWingBeatDebugSpherePtr_;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive")
@@ -27,10 +31,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
-	TObjectPtr<UPFVisualResource> VisualResourcePtr_;
-
+		
 	virtual void ComponentTick_Implementation(float deltaTime) override;
 
 	// Previous input values 

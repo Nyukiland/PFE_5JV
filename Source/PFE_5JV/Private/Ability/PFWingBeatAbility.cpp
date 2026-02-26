@@ -42,23 +42,22 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 	if(SuperBeatWingTimer_ >= SuperWingBeatMinTiming_ && SuperBeatWingTimer_ <= SuperWingBeatMaxTiming_)
 	{
 		bIsSuperBeatWingPossible_ = true;
-		VisualResourcePtr_->ChangeMeshMaterial(0, EStateMaterial::ESM_SuperWingBeatPossible);
+		SuperWingBeatDebugSpherePtr_->SetVisibility(true);
 	}
 	// if the right timing is over :  
 	else if(SuperBeatWingTimer_ > SuperWingBeatMaxTiming_)
 	{
 		SuperBeatWingTimer_ = -1.f; // Deactivate timer 
-		bIsSuperBeatWingPossible_ = false; 
-		VisualResourcePtr_->ChangeMeshMaterial(0, EStateMaterial::ESM_Normal); 
+		bIsSuperBeatWingPossible_ = false;
+		SuperWingBeatDebugSpherePtr_->SetVisibility(false);
 	}
 	// if the timer is just launched but not in SuperWingBeatTimer yet : 
 	else if(SuperBeatWingTimer_ >= 0.f && SuperBeatWingTimer_ < SuperWingBeatMinTiming_)
 	{
 		bIsSuperBeatWingPossible_ = false;
-		if(VisualResourcePtr_->GetMeshMaterial(0) == EStateMaterial::ESM_SuperWingBeatPossible)
+		if(SuperWingBeatDebugSpherePtr_->GetVisibleFlag() == true)
 		{
-			// GEngine->AddOnScreenDebugMessage();
-			VisualResourcePtr_->ChangeMeshMaterial(0, EStateMaterial::ESM_Normal); 
+			SuperWingBeatDebugSpherePtr_->SetVisibility(false);
 		}
 	}
 	
@@ -85,8 +84,6 @@ void UPFWingBeatAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerO
 	Super::ComponentInit_Implementation(ownerObj);
 	
 	PhysicResourcePtr_ = ownerObj->GetStateComponent<UPFPhysicResource>();
-	VisualResourcePtr_ = ownerObj->GetStateComponent<UPFVisualResource>();
-
 	
 	if (!DataPtr_ || !DataPtr_->DelayBetweenInputRegistrations)
 	{
