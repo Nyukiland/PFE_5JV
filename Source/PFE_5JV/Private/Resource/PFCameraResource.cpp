@@ -66,17 +66,9 @@ void UPFCameraResource::ComponentTick_Implementation(float deltaTime)
 }
 
 void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRotation)
-{
-    const float BaseYaw = Owner->GetActorRotation().Yaw;
-    float PitchRotation = PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch;
-    float RollRotation = VisualResourcePtr_->GetRelativeRotation().Roll;
-    FRotator CameraRotation = FinalRotation;
-    float DeltaYaw = FMath::FindDeltaAngleDegrees(BaseYaw, CameraRotation.Yaw);
-    float DeltaPitch = FMath::FindDeltaAngleDegrees(PitchRotation, CameraRotation.Pitch);
-    float DeltaRoll = FMath::FindDeltaAngleDegrees(RollRotation, CameraRotation.Roll);
-    
+{    
     // ---- YAW ----
-    // const float BaseYaw = Owner->GetActorRotation().Yaw;
+    const float BaseYaw = Owner->GetActorRotation().Yaw;
     float InputYaw = TurnAbilityPtr_->InputRight_ - TurnAbilityPtr_->InputLeft_;
     float OffsetYaw = InputYaw * DataPtr_->CameraYawInputOffset;
     float TargetYaw = BaseYaw + CameraYawOffset_ + OffsetYaw;
@@ -104,6 +96,9 @@ void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRot
     FinalRotation = FRotator(FinalPitch, FinalYaw, FinalRoll);
 
     // ---- DEBUG ----
+    float DeltaYaw = FMath::FindDeltaAngleDegrees(Owner->GetActorRotation().Yaw, FinalRotation.Yaw);
+    float DeltaPitch = FMath::FindDeltaAngleDegrees(PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch, FinalRotation.Pitch);
+    float DeltaRoll = FMath::FindDeltaAngleDegrees(VisualResourcePtr_->GetRelativeRotation().Roll, FinalRotation.Roll);
     GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Caméra: %f/%f/%f"), CameraPtr_->GetComponentRotation().Yaw, CameraPtr_->GetComponentRotation().Pitch, CameraPtr_->GetComponentRotation().Roll));
     GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, FString::Printf(TEXT("Oiseau: %f/%f/%f"), DeltaYaw, DeltaPitch, DeltaRoll));
 }
