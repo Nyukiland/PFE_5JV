@@ -5,15 +5,15 @@
 #include "Input/PFInputFilteringData.h"
 #include "EnhancedPlayerInput.h"
 
-UPFTriggerSimultaneousTap::UPFTriggerSimultaneousTap()
+void UPFTriggerSimultaneousTap::PostLoad()
 {
+	Super::PostLoad();
 	if (!DataPtr_ || !DataPtr_->SimultaneousTapTolerance)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[InputFilteringData] Bad Set up on data 'SimultaneousTapTolerance'"));
 		return;
 	}
 	TapTolerance = DataPtr_->SimultaneousTapTolerance;
-	UE_LOG(LogTemp, Error, TEXT("[InputFilteringData] All is good'"));
 }
 
 void UPFTriggerSimultaneousTap::ResetSimultaneousTap()

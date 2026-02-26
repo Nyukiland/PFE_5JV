@@ -17,8 +17,6 @@ class PFE_5JV_API UPFTriggerSimultaneousTap : public UInputTrigger
 	GENERATED_BODY()
 	
 public:
-	UPFTriggerSimultaneousTap();
-	
 	/** First input action to monitor */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simultaneous Tap")
 	TObjectPtr<const UInputAction> ActionAPtr;
@@ -35,6 +33,8 @@ public:
 	bool bIsSecondInputTooLate = false;
 
 protected:
+
+	virtual void PostLoad() override;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive")
 	TObjectPtr<UPFInputFilteringData> DataPtr_;
 	
