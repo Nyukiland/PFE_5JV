@@ -106,6 +106,12 @@ protected:
 	UPROPERTY()
 	TArray<FStoredPlaytestInfo> GameInfoList_;
 
+	int TimerRewindIncrement_;
+	
+public:
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	void RewindAfterCollision(float deltaTime);
+	
 protected:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 

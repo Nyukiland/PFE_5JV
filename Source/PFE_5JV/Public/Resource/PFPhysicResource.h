@@ -92,6 +92,9 @@ public:
 	virtual FString GetInfo_Implementation() override;
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	void SetKinematic(bool bShouldMove);
+	
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	float GetMaxSpeed() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
