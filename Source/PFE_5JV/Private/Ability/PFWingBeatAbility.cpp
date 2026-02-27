@@ -169,20 +169,21 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 	// Debug data :
 	MaxHeightGain_ = Owner->ForwardRootPtr->GetComponentLocation().Z - HeightAtWingBeatBeginning_;
 	
-	float SpeedToGive = DataPtr_->VelocityToGiveInForward *
+	float VelocityToGive = DataPtr_->VelocityToGiveInForward *
 		DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve->GetFloatValue(AverageInputValue_);
 
-	float maxForce = DataPtr_->MaxWingBeatForwardVelocity;
+	float maxVelocity = DataPtr_->MaxWingBeatForwardVelocity;
 	if(bIsSuperBeatWingPossible_ == true)
 	{
-		maxForce = DataPtr_->MaxSuperWingBeatVelocity;
-		SpeedToGive *= DataPtr_->SuperWingBeatForwardMultiplier;
+		maxVelocity = DataPtr_->MaxSuperWingBeatVelocity;
+		VelocityToGive *= DataPtr_->SuperWingBeatForwardMultiplier;
 		
 	}
 	float ForwardVelocity = PhysicResourcePtr_->CurrentForwardVelocity_.Length();
-	if(ForwardVelocity <= maxForce)
+	if(ForwardVelocity <= maxVelocity)
 	{
-		float toAdd = FMath::Min(0, maxForce - (ForwardVelocity + SpeedToGive));
+		float MaxVelocityCanGive = maxVelocity - ForwardVelocity;
+		float toAdd = VelocityToGive < MaxVelocityCanGive ? VelocityToGive : MaxVelocityCanGive;
 		PhysicResourcePtr_->AddForwardVelocity(toAdd, false);
 	}
 
