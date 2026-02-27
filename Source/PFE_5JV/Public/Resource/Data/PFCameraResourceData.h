@@ -12,29 +12,35 @@ public:
 	
 	/* ===== Rotation ===== */
 
-	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Base Rotatio", meta=(ToolTip=""))
 	float MaxYawAngle = 30.f;
 	
-	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
 	float MaxPitchAngle = 30.f;
 	
-	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Base Rotatio", meta=(ToolTip=""))
 	float MaxRollAngle = 30.f;
 	
-	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Base Rotatio", meta=(ToolTip=""))
 	float YawLagSpeed = 20.f;
 
-	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Base Rotatio", meta=(ToolTip=""))
 	float PitchLagSpeed = 20.f;
 
-	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Base Rotatio", meta=(ToolTip=""))
 	float RollLagSpeed = 20.f;
 
-	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Rotation Settings", meta=(ToolTip=""))
 	float OvershootYawOffset = 5.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Rotation Settings", meta=(ToolTip=""))
 	float CameraYawInputOffset = 5.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Rotation Settings", meta=(ToolTip=""))
+	float LookAtHeightOffset = 5.0f;
+	
+	UPROPERTY(EditAnywhere, Category = "Rotation Settings", meta=(ToolTip=""))
+	float LookAtInterpSpeed = 5.0f;
 
 	/* ===== Shake ===== */
 
@@ -46,22 +52,15 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category = "Shake", meta=(ToolTip=""))
 	float PitchAmplitude = 10.f;
-	
+
+	UPROPERTY(EditAnywhere, Category = "Shake", meta=(ToolTip=""))
 	float YawAmplitude = 8.f;
-
-	/* ===== Roll ===== */
-
-	UPROPERTY(EditAnywhere, Category = "Roll", meta=(ToolTip="Inclinaison maximum"))
-	float MaxTurnRoll = 30.f;
-
-	UPROPERTY(EditAnywhere, Category = "Roll", meta=(ToolTip="Vitesse de retour"))
-	float TurnRollSpeed = 0.08f;
-
-	UPROPERTY(EditAnywhere, Category = "Roll", meta=(ToolTip="Conversion de la vitesse vers le roll"))
-	float TurnSensitivity = 6.f;
 
 	/* ===== Distance ===== */
 
+	UPROPERTY(EditAnywhere, Category = "Distance", meta = (ToolTip = ""))
+	float MinDistanceToCamera = 0.f;
+	
 	UPROPERTY(EditAnywhere, Category = "Distance", meta = (ToolTip = ""))
 	float MaxDistanceToCamera = 20.f;
 

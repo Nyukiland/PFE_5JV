@@ -3,7 +3,9 @@
 #include "CoreMinimal.h"
 #include "PFPhysicResource.h"
 #include "Ability/PFDiveAbility.h"
+#include "Ability/Data/PFGlideAbilityData.h"
 #include "Data/PFCameraResourceData.h"
+#include "State/PFAutoDiveState.h"
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFCameraResource.generated.h"
 
@@ -24,6 +26,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
 	TObjectPtr<UPFCameraResourceData> DataPtr_;
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
+	TObjectPtr<UPFGlideAbilityData> GlideAbilityDataPtr_;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
 	TObjectPtr<UCameraComponent> CameraPtr_;
@@ -48,8 +53,7 @@ private:
 	bool CheckValidity() const;
 	
 	void UpdateCameraRotation(float DeltaTime, FRotator& FinalRotation);
-	void UpdateCameraShake(float DeltaTime, FRotator& FinalRotation);
-	void UpdateTurningRoll(float DeltaTime);
+	void UpdateCameraShake(float DeltaTime);
 	void UpdateCameraDistance(float DeltaTime);
 
 	// Base rotation
