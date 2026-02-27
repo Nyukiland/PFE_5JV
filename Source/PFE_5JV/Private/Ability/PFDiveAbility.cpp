@@ -68,7 +68,9 @@ void UPFDiveAbility::Dive(float deltaTime)
 	if (forwardVelo <= DataPtr_->MaxDiveVelocity)
 	{
 		float toAdd = speedToGive * deltaTime;
-		toAdd += FMath::Min(0, DataPtr_->MaxDiveVelocity - (forwardVelo + toAdd));
+		float veloWithAdded = forwardVelo + toAdd;
+		float veloDiff = DataPtr_->MaxDiveVelocity - forwardVelo;
+		toAdd = DataPtr_->MaxDiveVelocity > veloWithAdded ? toAdd : veloDiff;
 		PhysicResourcePtr_->AddForwardVelocity(toAdd, false);
 	}
 }
