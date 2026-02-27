@@ -45,6 +45,8 @@ public:
 
 private:
 
+	bool CheckValidity() const;
+	
 	void UpdateCameraRotation(float DeltaTime, FRotator& FinalRotation);
 	void UpdateCameraShake(float DeltaTime, FRotator& FinalRotation);
 	void UpdateTurningRoll(float DeltaTime);

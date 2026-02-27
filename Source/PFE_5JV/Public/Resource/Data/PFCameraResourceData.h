@@ -21,8 +21,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
 	float MaxRollAngle = 30.f;
 	
-protected:
-	
 	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
 	float YawLagSpeed = 20.f;
 
@@ -31,14 +29,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
 	float RollLagSpeed = 20.f;
-
-public:
-
-	float YawLagSpeed_ = YawLagSpeed * 10;
-
-	float PitchLagSpeed_ = PitchLagSpeed * 10;
-
-	float RollLagSpeed_ = RollLagSpeed * 10;
 
 	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
 	float OvershootYawOffset = 5.0f;

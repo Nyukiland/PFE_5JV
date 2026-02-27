@@ -19,28 +19,14 @@ void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
     TurnAbilityPtr_ = Owner->GetStateComponent<UPFTurnAbility>();
     DiveAbilityPtr_ = Owner->GetStateComponent<UPFDiveAbility>();
 
-    if(!CameraPtr_)
-        UE_LOG(LogTemp, Error, TEXT("The Camera referenced in PlayerCharacter blueprint is NULL"))
-
-    if(!CameraRootPtr_)
-        UE_LOG(LogTemp, Error, TEXT("The CameraRoot referenced in PlayerCharacter blueprint is NULL"))
-
-    if(!DataPtr_)
-        UE_LOG(LogTemp, Error, TEXT("The Data referenced in PlayerCharacter blueprint is NULL"))
-
-    if(!PhysicReferencePtr_)
-        UE_LOG(LogTemp, Error, TEXT("The PhysicResource referenced in PlayerCharacter blueprint is NULL"))
-
-    if(!VisualResourcePtr_)
-        UE_LOG(LogTemp, Error, TEXT("The VisualResource referenced in PlayerCharacter blueprint is NULL"))
-
-    if(!TurnAbilityPtr_)
-        UE_LOG(LogTemp, Error, TEXT("The TurnAbility referenced in PlayerCharacter blueprint is NULL"))
+    if (!CheckValidity())
+        return;
 
     CameraRootPtr_->SetUsingAbsoluteRotation(true);
     PreviousYaw_ = Owner->GetActorRotation().Yaw;
-    SmoothedCameraRotation_ = Owner->GetActorRotation();
     BaseCameraRoll_ = CameraPtr_->GetRelativeRotation().Roll;
+    SmoothedCameraRotation_ = FRotator(PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch,
+        Owner->GetActorRotation().Yaw, VisualResourcePtr_->GetRelativeRotation().Roll);
     CurrentTurnRoll_ = 0.f;
 }
 
@@ -48,21 +34,61 @@ void UPFCameraResource::ComponentTick_Implementation(float deltaTime)
 {
     Super::ComponentTick_Implementation(deltaTime);
 
-    if (!CameraRootPtr_ || !CameraPtr_ || !DataPtr_ || !PhysicReferencePtr_ || !VisualResourcePtr_ || !TurnAbilityPtr_)
+    if (!CheckValidity())
         return;
 
-    FRotator FinalRootRotation = SmoothedCameraRotation_;
+    FRotator FinalRootRotation;
 
     // Camera Root movements
     UpdateCameraRotation(deltaTime, FinalRootRotation);
     // UpdateCameraShake(deltaTime, FinalRootRotation);
 
     CameraRootPtr_->SetWorldRotation(FinalRootRotation);
-    SmoothedCameraRotation_ = FinalRootRotation;
 
     // Camera movements
     UpdateCameraDistance(deltaTime);
     // UpdateTurningRoll(deltaTime);
+}
+
+bool UPFCameraResource::CheckValidity() const
+{
+    if(!CameraPtr_)
+    {
+        UE_LOG(LogTemp, Error, TEXT("The Camera referenced in PlayerCharacter blueprint is NULL"))
+        return false;
+    }
+
+    if(!CameraRootPtr_)
+    {
+        UE_LOG(LogTemp, Error, TEXT("The CameraRoot referenced in PlayerCharacter blueprint is NULL"))
+        return false;
+    }
+
+    if(!DataPtr_)
+    {
+        UE_LOG(LogTemp, Error, TEXT("The Data referenced in PlayerCharacter blueprint is NULL"))
+        return false;
+    }
+
+    if(!PhysicReferencePtr_)
+    {
+        UE_LOG(LogTemp, Error, TEXT("The PhysicResource referenced in PlayerCharacter blueprint is NULL"))
+        return false;
+    }
+
+    if(!VisualResourcePtr_)
+    {
+        UE_LOG(LogTemp, Error, TEXT("The VisualResource referenced in PlayerCharacter blueprint is NULL"))
+        return false;
+    }
+
+    if(!TurnAbilityPtr_)
+    {
+        UE_LOG(LogTemp, Error, TEXT("The TurnAbility referenced in PlayerCharacter blueprint is NULL"))
+        return false; 
+    }
+
+    return true;
 }
 
 void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRotation)
@@ -71,30 +97,38 @@ void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRot
     const float BaseYaw = Owner->GetActorRotation().Yaw;
     float InputYaw = TurnAbilityPtr_->InputRight_ - TurnAbilityPtr_->InputLeft_;
     float OffsetYaw = InputYaw * DataPtr_->CameraYawInputOffset;
-    float TargetRelativeYaw = CameraYawOffset_ + OffsetYaw;
-    float CurrentRelativeYaw = FMath::FindDeltaAngleDegrees(BaseYaw, FinalRotation.Yaw);
-    float InterpedRelativeYaw = FMath::FInterpTo(CurrentRelativeYaw,TargetRelativeYaw,DeltaTime,DataPtr_->YawLagSpeed_);
-    float ClampedRelativeYaw = FMath::Clamp(InterpedRelativeYaw,-DataPtr_->MaxYawAngle,DataPtr_->MaxYawAngle);
-    float FinalYaw = BaseYaw + ClampedRelativeYaw;
-
+    float TargetWorldYaw = BaseYaw + CameraYawOffset_ + OffsetYaw;
+    FRotator CurrentRotYaw(0.f, SmoothedCameraRotation_.Yaw, 0.f);
+    FRotator TargetRotYaw(0.f, TargetWorldYaw, 0.f);
+    SmoothedCameraRotation_.Yaw = FMath::RInterpTo(CurrentRotYaw, TargetRotYaw,
+        DeltaTime, DataPtr_->YawLagSpeed).Yaw;
+    float LagDeltaYaw = FMath::FindDeltaAngleDegrees(BaseYaw, SmoothedCameraRotation_.Yaw);
+    LagDeltaYaw = FMath::Clamp(LagDeltaYaw,-DataPtr_->MaxYawAngle, DataPtr_->MaxYawAngle);
+    SmoothedCameraRotation_.Yaw = BaseYaw + LagDeltaYaw;
+    FinalRotation.Yaw = SmoothedCameraRotation_.Yaw;
+    
     // ---- PITCH ----
-    float BasePitch = PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch;
-    float CurrentRelativePitch =FMath::FindDeltaAngleDegrees(BasePitch, FinalRotation.Pitch);
-    float TargetRelativePitch = CameraPitchOffset_;
-    float InterpedRelativePitch =FMath::FInterpTo(CurrentRelativePitch,TargetRelativePitch,DeltaTime,DataPtr_->PitchLagSpeed_);
-    float ClampedRelativePitch =FMath::Clamp(InterpedRelativePitch,-DataPtr_->MaxPitchAngle,DataPtr_->MaxPitchAngle);
-    float FinalPitch = BasePitch + ClampedRelativePitch;
+    const float BasePitch = PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch;
+    float TargetWorldPitch = CameraPitchOffset_;
+    FRotator CurrentRotPitch(SmoothedCameraRotation_.Pitch, 0.f, 0.f);
+    FRotator TargetRotPitch(TargetWorldPitch, 0.f, 0.f);
+    SmoothedCameraRotation_.Pitch = FMath::RInterpTo(CurrentRotPitch, TargetRotPitch,
+        DeltaTime, DataPtr_->PitchLagSpeed).Pitch;
+    float LagDeltaPitch = FMath::FindDeltaAngleDegrees(BasePitch, SmoothedCameraRotation_.Pitch);
+    LagDeltaPitch = FMath::Clamp(LagDeltaPitch,-DataPtr_->MaxPitchAngle, DataPtr_->MaxPitchAngle);
+    SmoothedCameraRotation_.Pitch = BasePitch + LagDeltaPitch;
+    FinalRotation.Pitch = SmoothedCameraRotation_.Pitch;
     
     // ---- ROLL ----
-    float BaseRoll = VisualResourcePtr_->GetRelativeRotation().Roll;
-    float CurrentRelativeRoll = FMath::FindDeltaAngleDegrees(BaseRoll, FinalRotation.Roll);
-    float TargetRelativeRoll = 0.f;
-    float InterpedRelativeRoll =FMath::FInterpTo(CurrentRelativeRoll,TargetRelativeRoll,DeltaTime,DataPtr_->RollLagSpeed_);
-    float ClampedRelativeRoll =FMath::Clamp(InterpedRelativeRoll,-DataPtr_->MaxRollAngle,DataPtr_->MaxRollAngle);
-    float FinalRoll = BaseRoll + ClampedRelativeRoll;
+    // float BaseRoll = VisualResourcePtr_->GetRelativeRotation().Roll;
+    // float CurrentRelativeRoll = FMath::FindDeltaAngleDegrees(BaseRoll, FinalRotation.Roll);
+    // float TargetRelativeRoll = 0.f;
+    // float InterpedRelativeRoll =FMath::FInterpTo(CurrentRelativeRoll,TargetRelativeRoll,DeltaTime,DataPtr_->RollLagSpeed);
+    // float ClampedRelativeRoll =FMath::Clamp(InterpedRelativeRoll,-DataPtr_->MaxRollAngle,DataPtr_->MaxRollAngle);
+    // float FinalRoll = BaseRoll + ClampedRelativeRoll;
 
     // ---- APPLY ----
-    FinalRotation = FRotator(FinalPitch, FinalYaw, FinalRoll);
+    //FinalRotation = FRotator(FinalPitch, FinalYaw, FinalRoll);
 
     // ---- DEBUG ----
     float DeltaYaw = FMath::FindDeltaAngleDegrees(Owner->GetActorRotation().Yaw, FinalRotation.Yaw);
