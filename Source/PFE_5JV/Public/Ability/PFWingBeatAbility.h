@@ -17,8 +17,21 @@ class PFE_5JV_API UPFWingBeatAbility : public UPFAbility
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(BlueprintAssignable, Category="Dive")
+	UPROPERTY(BlueprintAssignable, Category="WingBeat")
 	FOnWingBeatCalled OnWingBeatCalled;
+
+	UPROPERTY(BlueprintAssignable, Category="SuperWingBeat")
+	FOnWingBeatCalled OnSuperWingBeatTimerLaunch;
+
+	UPROPERTY(BlueprintAssignable, Category="SuperWingBeat")
+	FOnWingBeatCalled OnSuperWingBeatPossible;
+	
+	UPROPERTY(BlueprintAssignable, Category="SuperWingBeat")
+	FOnWingBeatCalled OnSuperWingBeatPossibilityOver;
+	
+	UPROPERTY(BlueprintAssignable, Category="SuperWingBeat")
+	FOnWingBeatCalled OnSuperWingBeatSucceeded;
+	
 	virtual FString GetInfo_Implementation() override;
 
 	// Debug :

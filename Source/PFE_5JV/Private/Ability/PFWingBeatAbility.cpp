@@ -38,25 +38,33 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 	// if the timer is initialized, we increase it :
 	if(SuperBeatWingTimer_ >= 0.f) SuperBeatWingTimer_ += deltaTime;
 
-	// if the timer is in timing range for trigger the SuperWingBeat :
-	if(SuperBeatWingTimer_ >= SuperWingBeatMinTiming_ && SuperBeatWingTimer_ <= SuperWingBeatMaxTiming_)
-	{
-		bIsSuperBeatWingPossible_ = true;
-		SuperWingBeatDebugSpherePtr_->SetVisibility(true);
-	}
-	// if the right timing is over :  
-	else if(SuperBeatWingTimer_ > SuperWingBeatMaxTiming_)
-	{
-		SuperBeatWingTimer_ = -1.f; // Deactivate timer 
-		bIsSuperBeatWingPossible_ = false;
-		SuperWingBeatDebugSpherePtr_->SetVisibility(false);
-	}
 	// if the timer is just launched but not in SuperWingBeatTimer yet : 
-	else if(SuperBeatWingTimer_ >= 0.f && SuperBeatWingTimer_ < SuperWingBeatMinTiming_)
+	if(SuperBeatWingTimer_ >= 0.f && SuperBeatWingTimer_ < SuperWingBeatMinTiming_)
 	{
 		bIsSuperBeatWingPossible_ = false;
 		if(SuperWingBeatDebugSpherePtr_->GetVisibleFlag() == true)
 		{
+			SuperWingBeatDebugSpherePtr_->SetVisibility(false);
+		}
+	}
+	// if the timer is in timing range for trigger the SuperWingBeat :
+	else if(SuperBeatWingTimer_ >= SuperWingBeatMinTiming_ && SuperBeatWingTimer_ <= SuperWingBeatMaxTiming_)
+	{
+		if(bIsSuperBeatWingPossible_ == false)
+		{
+			OnSuperWingBeatPossible.Broadcast();
+			bIsSuperBeatWingPossible_ = true;
+			SuperWingBeatDebugSpherePtr_->SetVisibility(true);
+		}
+	}
+	// if the right timing is over :  
+	else if(SuperBeatWingTimer_ > SuperWingBeatMaxTiming_)
+	{
+		if(SuperBeatWingTimer_ != -1.f)
+		{
+			OnSuperWingBeatPossibilityOver.Broadcast();
+			SuperBeatWingTimer_ = -1.f; // Deactivate timer
+			bIsSuperBeatWingPossible_ = false;
 			SuperWingBeatDebugSpherePtr_->SetVisibility(false);
 		}
 	}
@@ -129,11 +137,6 @@ void UPFWingBeatAbility::ReceiveInputRight(float right)
 
 void UPFWingBeatAbility::WingBeat(float deltaTime)
 {
-	// Debug Data :
-	HeightAtWingBeatBeginning_ = Owner->ForwardRootPtr->GetComponentLocation().Z;;
-	TimeEffectiveHeightCalculus_ = 3.f;
-	if(bIsSuperBeatWingPossible_) GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("SuperBeatWing Triggered")));
-	
 	if (!DataPtr_ || !DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[BeatWingAbility] Bad Set up on data WingBeatAccelerationBasedOnAverageInputValueCurve"));
@@ -157,6 +160,18 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 		UE_LOG(LogTemp, Error, TEXT("[BeatWingAbility] Bad Set up on data 'SuperWingBeatHeightMultiplier'"));
 		return;
 	}
+
+	// Debug Data :
+	HeightAtWingBeatBeginning_ = Owner->ForwardRootPtr->GetComponentLocation().Z;;
+	TimeEffectiveHeightCalculus_ = 3.f;
+	if(bIsSuperBeatWingPossible_)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("SuperBeatWing Triggered")));
+		OnSuperWingBeatSucceeded.Broadcast();
+	} else
+	{
+		OnWingBeatCalled.Broadcast();
+	} 
 		
 	// Give the average input value to calculate the wingbeat power : 
 	GetAverageInputValue();
@@ -191,8 +206,7 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 	
 	// Trigger timer for SuperBeatWing :
 	SuperBeatWingTimer_ = 0.f;
-
-	OnWingBeatCalled.Broadcast();
+	OnSuperWingBeatTimerLaunch.Broadcast();
 }
 
 void UPFWingBeatAbility::GetAverageInputValue()
