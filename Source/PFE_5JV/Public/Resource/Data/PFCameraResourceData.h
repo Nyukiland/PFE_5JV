@@ -31,12 +31,6 @@ public:
 	float RollLagSpeed = 20.f;
 
 	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
-	float CameraYawInputOffset = 5.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
-	float LookAtHeightOffset = 5.0f;
-	
-	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
 	float LookAtInterpSpeed = 5.0f;
 	
 	/* ===== Overshoot ===== */

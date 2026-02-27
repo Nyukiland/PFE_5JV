@@ -96,14 +96,13 @@ void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRot
     // ---- YAW ----
     const float BaseYaw = Owner->GetActorRotation().Yaw;
     float InputYaw = TurnAbilityPtr_->InputRight_ - TurnAbilityPtr_->InputLeft_;
-    float OffsetYaw = InputYaw * DataPtr_->CameraYawInputOffset;
     float TargetOvershootYaw = InputYaw * DataPtr_->OvershootYawOffset;
     SmoothedOvershootYaw_ = FMath::FInterpTo(SmoothedOvershootYaw_, TargetOvershootYaw, DeltaTime, DataPtr_->OvershootInterpSpeed);
-    float TargetWorldYaw = BaseYaw + CameraYawOffset_ + OffsetYaw + SmoothedOvershootYaw_;
+    float TargetWorldYaw = BaseYaw + CameraYawOffset_ + InputYaw + SmoothedOvershootYaw_;
     FRotator CurrentRotYaw(0.f, SmoothedCameraRotation_.Yaw, 0.f);
     FRotator TargetRotYaw(0.f, TargetWorldYaw, 0.f);
     SmoothedCameraRotation_.Yaw = FMath::RInterpTo(CurrentRotYaw, TargetRotYaw, DeltaTime, DataPtr_->YawLagSpeed).Yaw;
-    float NormalOffset = BaseYaw + OffsetYaw + CameraYawOffset_ - BaseYaw;
+    float NormalOffset = BaseYaw + InputYaw + CameraYawOffset_ - BaseYaw;
     NormalOffset = FMath::Clamp(NormalOffset, -DataPtr_->MaxYawAngle, DataPtr_->MaxYawAngle);
     SmoothedCameraRotation_.Yaw = BaseYaw + NormalOffset + SmoothedOvershootYaw_;
     FinalRotation.Yaw = SmoothedCameraRotation_.Yaw;
@@ -168,7 +167,7 @@ void UPFCameraResource::UpdateCameraDistance(float DeltaTime)
             DataPtr_->MinDistanceToCamera,
             DataPtr_->MaxDistanceToCamera);
 
-    FVector PlayerCenter = Owner->GetActorLocation() + FVector(0.f, 0.f, DataPtr_->LookAtHeightOffset);
+    FVector PlayerCenter = Owner->GetActorLocation();
     FVector Direction = CameraPtr_->GetForwardVector();
     Direction.Normalize();
     FVector TargetLocation = PlayerCenter - Direction * CameraDistance;
