@@ -57,7 +57,7 @@ void UPFTurnAbility::Turn(float deltaTime)
 
 	if (RotationValue_ == 0)
 	{
-		PhysicResourcePtr_->SetYawRotationForce(0);
+		PhysicResourcePtr_->SetYawRotationVelocity(0);
 		TimerStartTurn_ = 0;
 		return;
 	}
@@ -67,7 +67,7 @@ void UPFTurnAbility::Turn(float deltaTime)
 	if (!IsTurning())
 		return;
 	
-	float velocity0to1 = PhysicResourcePtr_->GetForwardSpeedPercentage();
+	float velocity0to1 = PhysicResourcePtr_->GetForwardVelocityPercentage();
 	float valueAbs = FMath::Abs(RotationValue_);
 	
 	// Rotation
@@ -76,7 +76,7 @@ void UPFTurnAbility::Turn(float deltaTime)
 	rotValue *= DataPtr_->RotationForceBasedOnInputPtr->GetFloatValue(valueAbs);
 	rotValue *= DataPtr_->RotationForceBasedOnVelocityPtr->GetFloatValue(velocity0to1);
 	
-	PhysicResourcePtr_->SetYawRotationForce(rotValue);
+	PhysicResourcePtr_->SetYawRotationVelocity(rotValue);
 
 	// Slow Down
 	float slowValue = DataPtr_->SlowForce;
@@ -94,8 +94,8 @@ void UPFTurnAbility::Turn(float deltaTime)
 	{
 		SlowForceTimer_ = 0;
 	}
-
-	PhysicResourcePtr_->AddForwardForce(-slowValue * deltaTime, false);
+	
+	PhysicResourcePtr_->AddForwardVelocity(-slowValue * deltaTime, false);
 }
 
 void UPFTurnAbility::TurnVisual()

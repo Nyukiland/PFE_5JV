@@ -163,7 +163,7 @@ void UPFCameraResource::UpdateCameraDistance(float DeltaTime)
     const float CameraDistance = UPFMathHelper::RemapClamped(
             CurrentSpeed,
             GlideAbilityDataPtr_->AutoDiveSpeedLimit,
-            PhysicReferencePtr_->GetMaxSpeed(),
+            PhysicReferencePtr_->GetMaxBoostVelocity(),
             DataPtr_->MinDistanceToCamera,
             DataPtr_->MaxDistanceToCamera);
 

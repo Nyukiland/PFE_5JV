@@ -27,7 +27,7 @@ void UPFGlideAbility::MovementBasedJoystick()
 		return;
 
 	FVector rightVector = ForwardRoot->GetRightVector();
-	PhysicResourcePtr_->AddForce(Input_.X * DataPtr_->RightForce * rightVector);
+	PhysicResourcePtr_->AddVelocity(Input_.X * DataPtr_->RightForce * rightVector);
 
 	float pitchValue = Input_.Y * DataPtr_->PitchForce;
 	pitchValue *= DataPtr_->bUseInvertedPitch ? -1.0f : 1.0f;
@@ -42,7 +42,7 @@ void UPFGlideAbility::ConstantMovement(float deltaTime)
 		return;
 	}
 
-	PhysicResourcePtr_->AddForwardForce(DataPtr_->BaseForwardMovement);
+	PhysicResourcePtr_->AddForwardVelocity(DataPtr_->BaseForwardMovement);
 }
 
 bool UPFGlideAbility::ShouldGoInAutoDive()
@@ -53,5 +53,5 @@ bool UPFGlideAbility::ShouldGoInAutoDive()
 		return false;
 	}
 
-	return PhysicResourcePtr_->CurrentForwardVelo_.Length() < DataPtr_->AutoDiveSpeedLimit;
+	return PhysicResourcePtr_->CurrentForwardVelocity_.Length() < DataPtr_->AutoDiveSpeedLimit;
 }

@@ -6,13 +6,16 @@
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFPhysicResource.generated.h"
 
+class UPFDiveAbilityData;
+class UPFWingBeatAbilityData;
+
 USTRUCT(Blueprintable, BlueprintType)
-struct FForceToAdd
+struct FVelocityToAdd
 {
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector Force;
+	FVector Velocity;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bShouldReset;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -24,9 +27,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UCurveFloat> CurvePtr;
 
-	FForceToAdd()
+	FVelocityToAdd()
 	{
-		Force = FVector::ZeroVector;
+		Velocity = FVector::ZeroVector;
 		bShouldReset = false;
 		bShoudEndAdded = false;
 		Duration = 0;
@@ -34,9 +37,9 @@ public:
 		CurvePtr = nullptr;
 	}
 
-	FForceToAdd(const FVector& force)
+	FVelocityToAdd(const FVector& force)
 	{
-		Force = force;
+		Velocity = force;
 		bShouldReset = true;
 		bShoudEndAdded = false;
 		Duration = 0;
@@ -44,9 +47,9 @@ public:
 		CurvePtr = nullptr;
 	}
 	
-	FForceToAdd(const FVector& force, const bool bShouldResetForce, const bool bShouldAddAtTheEnd, const float& duration, UCurveFloat* curvePtr)
+	FVelocityToAdd(const FVector& force, const bool bShouldResetForce, const bool bShouldAddAtTheEnd, const float& duration, UCurveFloat* curvePtr)
 	{
-		Force = force;
+		Velocity = force;
 		bShouldReset = bShouldResetForce;
 		bShoudEndAdded = bShouldAddAtTheEnd;
 		Duration = duration;
@@ -62,30 +65,37 @@ class PFE_5JV_API UPFPhysicResource : public UPFResource
 
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
-	FVector CurrentForwardVelo_;
+	FVector CurrentForwardVelocity_;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
-	FVector CurrentGlobalVelo_;	
+	FVector CurrentGlobalVelocity_;	
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PhysicResource")
 	TObjectPtr<UPFPhysicResourceData> DataPtr_;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WingBeatResource")
+	TObjectPtr<UPFWingBeatAbilityData> DataWingBeatPtr_;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DiveResource")
+	TObjectPtr<UPFDiveAbilityData> DataDivePtr_;
+	
+	float MaxAbsoluteVelocity;
 	float GravityTimer_ = 0;
 	float FrictionTimer_ = 0;
 	FVector GlobalVelocity_;
-	FVector ForwardVelo_;
+	FVector ForwardVelocity_;
 	FVector AngularVelocity_;
 	UPROPERTY()
-	TArray<FForceToAdd> GlobalForces_;
+	TArray<FVelocityToAdd> GlobalVelocities_;
 	UPROPERTY()
-	TArray<FForceToAdd> ForwardForces_;
+	TArray<FVelocityToAdd> ForwardVelocities_;
 	UPROPERTY()
-	TArray<FForceToAdd> AngularForces_;
+	TArray<FVelocityToAdd> AngularVelocities_;
 
 	float PitchRotation_;
 	int PitchPriority_;
 
-	float CurrentOverrideForwardVelo_;
+	float CurrentOverrideForwardVelocity_;
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
@@ -95,19 +105,16 @@ public:
 	void SetKinematic(bool bShouldMove);
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	float GetMaxSpeed() const;
-	
-	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	float GetCurrentSpeedPercentage();
+	float GetMaxBoostVelocity() const;
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	float GetForwardSpeedPercentage(bool bUseMaxAboveSpeed = false);
+	float GetForwardVelocityPercentage() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bShouldResetForce, bShouldAddAtTheEnd, duration, curve"))
-	void AddForce(FVector force, bool bShouldResetForce = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);
+	void AddVelocity(FVector velocity, bool bShouldResetVelocity = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bShouldResetForce, bShouldAddAtTheEnd, duration, curve"))
-	void AddForwardForce(float force, bool bShouldResetForce = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);
+	void AddForwardVelocity(float velocity, bool bShouldResetVelocity = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	FVector GetCurrentVelocity() const;
@@ -125,13 +132,13 @@ public:
 	void ProcessVelocity(const float deltaTime);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	void ProcessMaxSpeed(const float deltaTime);
+	void ProcessBaseMaxVelocity(const float deltaTime);
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	void ProcessOverrideSpeed();
+	void ProcessOverrideVelocity();
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bShouldResetForce, bShouldAddAtTheEnd, duration, curve"))
-	void SetYawRotationForce(float rotation, bool bShouldResetForce = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);
+	void SetYawRotationVelocity(float rotation, bool bShouldResetVelocity = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void ProcessAngularVelocity(const float deltaTime);
@@ -152,26 +159,26 @@ public:
 	float FrictionPercentValue() const;
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource/Debug")
-	void OverrideForwardVelocity(float force);
+	void OverrideForwardVelocity(float velocity);
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource/Debug")
-	void RemoveGlobalForces();
+	void RemoveGlobalVelocities();
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource/Debug")
-	void RemoveForwardForces();
+	void RemoveForwardVelocities();
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource/Debug")
-	void RemoveAngularForces();
+	void RemoveAngularVelocities();
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource/Debug")
-	void RemoveVelocityForces();
+	void RemoveVelocities();
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource/Debug")
-	void RemoveAllForces();
+	void RemoveAllVelocities();
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource/Debug")
 	void StopAllMotion();
 	
 private:
-	FVector CalculateForce(FForceToAdd* force, float deltaTime, FVector& VelocityGlobal);
+	FVector CalculateVelocity(FVelocityToAdd* velocity, float deltaTime, FVector& VelocityGlobal) const;
 };

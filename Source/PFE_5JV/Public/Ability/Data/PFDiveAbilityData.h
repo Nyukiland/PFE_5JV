@@ -23,8 +23,8 @@ public:
 	float ForceToGive;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive",
-		meta = (ToolTip = "The base force given to the player (will be multiplied by the curve)"))
-	float MaxDiveForce;
+		meta = (ToolTip = "The max speed that you can reach with the dive"))
+	float MaxDiveVelocity;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dive/PitchRotation",
 	meta = (ToolTip = "Max rotation down when diving"))

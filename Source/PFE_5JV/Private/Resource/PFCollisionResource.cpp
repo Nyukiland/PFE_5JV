@@ -47,13 +47,13 @@ void UPFCollisionResource::RecordInfoForRollBack(float deltaTime)
 	if (!bCanRecord_)
 		return;
 
-	float forwardVelo = PhysicResource_->CurrentForwardVelo_.Length();
+	float forwardVelo = PhysicResource_->CurrentForwardVelocity_.Length();
 	FVector position = PhysicRoot->GetComponentLocation();
 
 	// Store info for the collision
 	FStoredCollisionInfo CollisionInfo =
 		FStoredCollisionInfo(forwardVelo,
-							PhysicResource_->CurrentGlobalVelo_,
+							PhysicResource_->CurrentGlobalVelocity_,
 							position, PhysicRoot->GetComponentRotation(),
 							DiveAbility_->CurrentMedianValue_);
 
@@ -79,7 +79,7 @@ void UPFCollisionResource::RecordInfoForPlayTest()
 	if (!bCanRecord_)
 		return;
 
-	float forwardVelo = PhysicResource_->CurrentForwardVelo_.Length();
+	float forwardVelo = PhysicResource_->CurrentForwardVelocity_.Length();
 	FVector position = PhysicRoot->GetComponentLocation();
 
 	FStoredPlaytestInfo PlaytestInfo =
@@ -116,5 +116,5 @@ void UPFCollisionResource::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActo
 	FRotator YawOnlyRotation(0.f, LookAtRotation.Yaw, 0.f);
 	PhysicRoot->SetWorldRotation(YawOnlyRotation);
 
-	PhysicResource_->CurrentForwardVelo_ *= DataPtr_->SlowPercentageAfterSideCollision;
+	PhysicResource_->CurrentForwardVelocity_ *= DataPtr_->SlowPercentageAfterSideCollision;
 }

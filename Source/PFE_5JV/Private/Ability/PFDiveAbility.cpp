@@ -61,15 +61,15 @@ void UPFDiveAbility::Dive(float deltaTime)
 	float speedToGive = DataPtr_->ForceToGive *
 		DataPtr_->DiveAccelerationBasedOnRotationCurvePtr->GetFloatValue(HighestInput_);
 
-	float velocity0to1 = PhysicResourcePtr_->GetForwardSpeedPercentage(true);
+	float velocity0to1 = PhysicResourcePtr_->GetForwardVelocityPercentage();
 	speedToGive *= DataPtr_->DiveAccelerationBasedOnSpeedCurvePtr->GetFloatValue(velocity0to1);
 
-	float forwardVelo = PhysicResourcePtr_->CurrentForwardVelo_.Length();
-	if (forwardVelo <= DataPtr_->MaxDiveForce)
+	float forwardVelo = PhysicResourcePtr_->CurrentForwardVelocity_.Length();
+	if (forwardVelo <= DataPtr_->MaxDiveVelocity)
 	{
 		float toAdd = speedToGive * deltaTime;
-		toAdd += FMath::Min(0, DataPtr_->MaxDiveForce - (forwardVelo + toAdd));
-		PhysicResourcePtr_->AddForwardForce(toAdd, false);
+		toAdd += FMath::Min(0, DataPtr_->MaxDiveVelocity - (forwardVelo + toAdd));
+		PhysicResourcePtr_->AddForwardVelocity(toAdd, false);
 	}
 }
 
@@ -98,7 +98,7 @@ void UPFDiveAbility::AfterDiveGoingUp(float deltaTime)
 		bIsDivingStateGoingUp_ = false;
 
 		float value01 = PhysicResourcePtr_->GetCurrentVelocity().Length() - SpeedBeforeDive_;
-		value01 /= DataPtr_->MaxDiveForce;
+		value01 /= DataPtr_->MaxDiveVelocity;
 		value01 = FMath::Clamp(value01, 0.0f, 1.0f);
 		MaxTimeGoingUp_ = DataPtr_->MaxTimeForGoingUpAfterDive;
 		MaxTimeGoingUp_ *= DataPtr_->GoingUpDurationCurve->GetFloatValue(value01);

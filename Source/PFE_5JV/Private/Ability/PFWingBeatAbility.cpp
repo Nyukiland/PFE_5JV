@@ -146,7 +146,7 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 		return;
 	}
 
-	if (!DataPtr_ || !DataPtr_->SuperWingBeatVelocityMultiplier)
+	if (!DataPtr_ || !DataPtr_->SuperWingBeatForwardMultiplier)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[BeatWingAbility] Bad Set up on data 'SuperWingBeatMultiplier'"));
 		return;
@@ -161,29 +161,29 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 	// Give the average input value to calculate the wingbeat power : 
 	GetAverageInputValue();
 	
-	float HeightToGive = DataPtr_->ForceToGiveInHeight *
-		DataPtr_->WingBeatHeightGainedBasedOnForceDurationCurve->GetFloatValue(DataPtr_->ForceToGiveInHeightDuration);
+	float HeightToGive = DataPtr_->VelocityToGiveInHeight *
+		DataPtr_->WingBeatHeightGainedBasedOnForceDurationCurve->GetFloatValue(DataPtr_->VelocityToGiveInHeightDuration);
 	if(bIsSuperBeatWingPossible_ == true) HeightToGive *= DataPtr_->SuperWingBeatHeightMultiplier;
-	PhysicResourcePtr_->AddForce(HeightToGive * FVector::UpVector, true, false, DataPtr_->ForceToGiveInHeightDuration);
+	PhysicResourcePtr_->AddVelocity(HeightToGive * FVector::UpVector, true, false, DataPtr_->VelocityToGiveInHeightDuration);
 
 	// Debug data :
 	MaxHeightGain_ = Owner->ForwardRootPtr->GetComponentLocation().Z - HeightAtWingBeatBeginning_;
 	
-	float SpeedToGive = DataPtr_->ForceToGiveInVelocity *
+	float SpeedToGive = DataPtr_->VelocityToGiveInForward *
 		DataPtr_->WingBeatAccelerationBasedOnAverageInputValueCurve->GetFloatValue(AverageInputValue_);
 
-	float maxForce = DataPtr_->MaxWingBeatForce;
+	float maxForce = DataPtr_->MaxWingBeatForwardVelocity;
 	if(bIsSuperBeatWingPossible_ == true)
 	{
-		maxForce = DataPtr_->MaxSuperWingBeatForce;
-		SpeedToGive *= DataPtr_->SuperWingBeatVelocityMultiplier;
+		maxForce = DataPtr_->MaxSuperWingBeatVelocity;
+		SpeedToGive *= DataPtr_->SuperWingBeatForwardMultiplier;
 		
 	}
-	float ForwardVelocity = PhysicResourcePtr_->CurrentForwardVelo_.Length();
+	float ForwardVelocity = PhysicResourcePtr_->CurrentForwardVelocity_.Length();
 	if(ForwardVelocity <= maxForce)
 	{
 		float toAdd = FMath::Min(0, maxForce - (ForwardVelocity + SpeedToGive));
-		PhysicResourcePtr_->AddForwardForce(toAdd, false);
+		PhysicResourcePtr_->AddForwardVelocity(toAdd, false);
 	}
 
 	PhysicResourcePtr_->ResetPhysicsTimer();

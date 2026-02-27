@@ -1,5 +1,7 @@
 #include "Resource/PFPhysicResource.h"
 
+#include "Ability/Data/PFDiveAbilityData.h"
+#include "Ability/Data/PFWingBeatAbilityData.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
 void UPFPhysicResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
@@ -12,19 +14,20 @@ void UPFPhysicResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 		return;
 	}
 
-	ForwardVelo_ = FVector::ForwardVector * DataPtr_->InitialSpeed;
-	CurrentForwardVelo_ = ForwardVelo_;
+	ForwardVelocity_ = FVector::ForwardVector * DataPtr_->InitialVelocity;
+	CurrentForwardVelocity_ = ForwardVelocity_;
+	MaxAbsoluteVelocity = GetMaxBoostVelocity();
 }
 
 FString UPFPhysicResource::GetInfo_Implementation()
 {
 	FString text = TEXT("<hb>Physic:</>");
-	text += TEXT("\n <y.b> Forward Magnitude: ") + FString::Printf(TEXT("%f"), CurrentForwardVelo_.Length()) +
+	text += TEXT("\n <y.b> Forward Magnitude: ") + FString::Printf(TEXT("%f"), CurrentForwardVelocity_.Length()) +
 		TEXT("</>");
-	text += TEXT("\n <b>GlobalVelocity: </>") + FString::Printf(TEXT("%s"), *CurrentGlobalVelo_.ToString());
+	text += TEXT("\n <b>GlobalVelocity: </>") + FString::Printf(TEXT("%s"), *CurrentGlobalVelocity_.ToString());
 	text += TEXT("\n");
-	text += TEXT("\n <b>Forward Force Count: </>") + FString::Printf(TEXT("%i"), ForwardForces_.Num());
-	text += TEXT("\n <b>Global Force Count: </>") + FString::Printf(TEXT("%i"), GlobalForces_.Num());
+	text += TEXT("\n <b>Forward Velocity Count: </>") + FString::Printf(TEXT("%i"), ForwardVelocities_.Num());
+	text += TEXT("\n <b>Global Velocity Count: </>") + FString::Printf(TEXT("%i"), GlobalVelocities_.Num());
 	text += TEXT("\n");
 	text += TEXT("\n <b>Friction percent: </>") + FString::Printf(TEXT("%f"), FrictionPercentValue());
 	text += TEXT("\n");
@@ -37,18 +40,28 @@ void UPFPhysicResource::SetKinematic(bool bShouldMove)
 	PhysicRoot->SetSimulatePhysics(bShouldMove);
 }
 
-float UPFPhysicResource::GetMaxSpeed() const
+/* return the max velocity of the most effective method to gain a huge one (Dive or SuperWingBeat)
+* (depends on the GD metrics)
+*/
+float UPFPhysicResource::GetMaxBoostVelocity() const
 {
-	if (!DataPtr_)
+	if (!DataDivePtr_)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[PhysicResource] No Data available"))
+		UE_LOG(LogTemp, Error, TEXT("[DiveResource] No Data available"))
+		return 0;
+	}
+	
+	if (!DataWingBeatPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[WingBeatResource] No Data available"))
 		return 0;
 	}
 
-	return DataPtr_->MaxSpeed;
+	const float maxBoostVelocity = FMath::Max(DataDivePtr_->MaxDiveVelocity, DataWingBeatPtr_->MaxSuperWingBeatVelocity);
+	return maxBoostVelocity;
 }
 
-float UPFPhysicResource::GetCurrentSpeedPercentage()
+float UPFPhysicResource::GetForwardVelocityPercentage() const
 {
 	if (!DataPtr_)
 	{
@@ -56,33 +69,21 @@ float UPFPhysicResource::GetCurrentSpeedPercentage()
 		return 0.0f;
 	}
 
-	return FMath::Clamp(GetCurrentVelocity().Length() / DataPtr_->MaxSpeed, 0, 1);
+	return FMath::Clamp(CurrentForwardVelocity_.Length() / DataDivePtr_->MaxDiveVelocity, 0, 1);
 }
 
-float UPFPhysicResource::GetForwardSpeedPercentage(bool bUseMaxAboveSpeed)
-{
-	if (!DataPtr_)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[PhysicResource] No Data available"))
-		return 0.0f;
-	}
-
-	float max = bUseMaxAboveSpeed ? DataPtr_->MaxAboveSpeed : DataPtr_->MaxSpeed;
-	return FMath::Clamp(CurrentForwardVelo_.Length() / max, 0, 1);
-}
-
-void UPFPhysicResource::AddForce(FVector force, bool bShouldResetForce, bool bShouldAddAtTheEnd, float duration,
+void UPFPhysicResource::AddVelocity(FVector velocity, bool bShouldResetVelocity, bool bShouldAddAtTheEnd, float duration,
 								UCurveFloat* curve)
 {
-	FForceToAdd forceToAdd(force, bShouldResetForce, bShouldAddAtTheEnd, duration, curve);
-	GlobalForces_.Add(forceToAdd);
+	FVelocityToAdd velocityToAdd(velocity, bShouldResetVelocity, bShouldAddAtTheEnd, duration, curve);
+	GlobalVelocities_.Add(velocityToAdd);
 }
 
-void UPFPhysicResource::AddForwardForce(float force, bool bShouldResetForce, bool bShouldAddAtTheEnd, float duration,
+void UPFPhysicResource::AddForwardVelocity(float velocity, bool bShouldResetVelocity, bool bShouldAddAtTheEnd, float duration,
 										UCurveFloat* curve)
 {
-	FForceToAdd forceToAdd(FVector::ForwardVector * force, bShouldResetForce, bShouldAddAtTheEnd, duration, curve);
-	ForwardForces_.Add(forceToAdd);
+	FVelocityToAdd velocityToAdd(FVector::ForwardVector * velocity, bShouldResetVelocity, bShouldAddAtTheEnd, duration, curve);
+	ForwardVelocities_.Add(velocityToAdd);
 }
 
 FVector UPFPhysicResource::GetCurrentVelocity() const
@@ -145,69 +146,70 @@ void UPFPhysicResource::ProcessAirFriction(const float deltaTime)
 	FVector dir = GlobalVelocity_.Length() > 1 ? GlobalVelocity_.GetSafeNormal() : GlobalVelocity_;
 	GlobalVelocity_ -= friction * dir;
 
-	dir = ForwardVelo_.Length() > 1 ? ForwardVelo_.GetSafeNormal() : ForwardVelo_;
-	ForwardVelo_ -= friction * dir;
+	dir = ForwardVelocity_.Length() > 1 ? ForwardVelocity_.GetSafeNormal() : ForwardVelocity_;
+	ForwardVelocity_ -= friction * dir;
 
-	ForwardVelo_ = ForwardVelo_.GetClampedToSize(0, DataPtr_->MaxAboveSpeed);
-	GlobalVelocity_ = GlobalVelocity_.GetClampedToSize(0, DataPtr_->MaxAboveSpeed);
+	ForwardVelocity_ = ForwardVelocity_.GetClampedToSize(0, MaxAbsoluteVelocity);
+	GlobalVelocity_ = GlobalVelocity_.GetClampedToSize(0, MaxAbsoluteVelocity);
 }
 
 void UPFPhysicResource::ProcessVelocity(const float deltaTime)
 {
 	FVector velocity = GlobalVelocity_;
 
-	for (int i = GlobalForces_.Num() - 1; i >= 0; i--)
+	for (int i = GlobalVelocities_.Num() - 1; i >= 0; i--)
 	{
-		FForceToAdd* forceToAdd = &GlobalForces_[i];
+		FVelocityToAdd* velocityToAdd = &GlobalVelocities_[i];
 
-		if (!forceToAdd)
+		if (!velocityToAdd)
 		{
-			GlobalForces_.RemoveAt(i);
+			GlobalVelocities_.RemoveAt(i);
 			continue;
 		}
 
-		FVector toAdd = CalculateForce(forceToAdd, deltaTime, GlobalVelocity_);
+		FVector toAdd = CalculateVelocity(velocityToAdd, deltaTime, GlobalVelocity_);
 
-		if (forceToAdd->Timer <= 0)
+		if (velocityToAdd->Timer <= 0)
 		{
-			GlobalForces_.RemoveAt(i);
+			GlobalVelocities_.RemoveAt(i);
 		}
 
 		velocity += toAdd;
 	}
 
-	CurrentGlobalVelo_ = velocity;
+	CurrentGlobalVelocity_ = velocity;
 
-	FVector velocityForward = ForwardVelo_;
+	FVector velocityForward = ForwardVelocity_;
 
-	for (int i = ForwardForces_.Num() - 1; i >= 0; i--)
+	for (int i = ForwardVelocities_.Num() - 1; i >= 0; i--)
 	{
-		FForceToAdd* forceToAdd = &ForwardForces_[i];
+		FVelocityToAdd* velocityToAdd = &ForwardVelocities_[i];
 
-		if (!forceToAdd)
+		if (!velocityToAdd)
 		{
-			ForwardForces_.RemoveAt(i);
+			ForwardVelocities_.RemoveAt(i);
 			continue;
 		}
 
-		FVector toAdd = CalculateForce(forceToAdd, deltaTime, ForwardVelo_);
+		FVector toAdd = CalculateVelocity(velocityToAdd, deltaTime, ForwardVelocity_);
 
-		if (forceToAdd->Timer <= 0)
+		if (velocityToAdd->Timer <= 0)
 		{
-			ForwardForces_.RemoveAt(i);
+			ForwardVelocities_.RemoveAt(i);
 		}
 
 		velocityForward += toAdd;
 	}
 
-	CurrentForwardVelo_ = velocityForward;
+	CurrentForwardVelocity_ = velocityForward;
 
 	velocity += ForwardRoot->GetForwardVector() * velocityForward.Length();
 
 	PhysicRoot->SetPhysicsLinearVelocity(velocity);
 }
 
-void UPFPhysicResource::ProcessMaxSpeed(const float deltaTime)
+// assure that if we are above the base max velocity, we slow down
+void UPFPhysicResource::ProcessBaseMaxVelocity(const float deltaTime)
 {
 	if (!DataPtr_)
 	{
@@ -216,57 +218,65 @@ void UPFPhysicResource::ProcessMaxSpeed(const float deltaTime)
 	}
 
 	FVector velocity = GetCurrentVelocity();
-	velocity = velocity.GetClampedToMaxSize(DataPtr_->MaxAboveSpeed);
 
-	if (velocity.Length() < DataPtr_->MaxSpeed)
+	// control that we don't exceed system max velocity
+	velocity = velocity.GetClampedToMaxSize(MaxAbsoluteVelocity);
+
+	// control that we don't exceed base velocity
+	if (velocity.Length() < DataWingBeatPtr_->MaxWingBeatForwardVelocity)
 		return;
 
+	// If we exceed base velocity, we need to slow down :
+
+	// - take the direction
 	FVector dir = velocity.GetSafeNormal();
-
-	float speedScaled = velocity.Length() - DataPtr_->MaxSpeed;
-	float maxSpeedScaled = velocity.Length() - DataPtr_->MaxSpeed;
-	float value01 = FMath::Clamp(speedScaled / maxSpeedScaled, 0.f, 1.f);
-
-	velocity -= DataPtr_->AboveSpeedFrictionCurvePtr->GetFloatValue(value01) * deltaTime * dir;
+	// - get how much we exceed base velocity : 
+	float velocityScaled = velocity.Length() - DataWingBeatPtr_->MaxWingBeatForwardVelocity;
+	// - get how much boost velocity is above base velocity :
+	float maxVelocityScaled = GetMaxBoostVelocity() - DataWingBeatPtr_->MaxWingBeatForwardVelocity;
+	// - get the ratio :
+	float ratio = FMath::Clamp(velocityScaled / maxVelocityScaled, 0.f, 1.f);
+	// - remove velocity from the friction effect
+	velocity -= DataPtr_->AboveBaseMaxVelocityFrictionCurvePtr->GetFloatValue(ratio) * DataPtr_->AboveVelocityFriction * deltaTime * dir;
 
 	PhysicRoot->SetPhysicsLinearVelocity(velocity);
 }
 
-void UPFPhysicResource::ProcessOverrideSpeed()
+void UPFPhysicResource::ProcessOverrideVelocity()
 {
-	if (FMath::Abs(CurrentOverrideForwardVelo_) > 0.1f)
+	if (FMath::Abs(CurrentOverrideForwardVelocity_) > 0.1f)
 	{
-		PhysicRoot->SetPhysicsLinearVelocity(ForwardRoot->GetForwardVector() * CurrentOverrideForwardVelo_);
-		CurrentOverrideForwardVelo_ = 0;
+		PhysicRoot->SetPhysicsLinearVelocity(ForwardRoot->GetForwardVector() * CurrentOverrideForwardVelocity_);
+		CurrentOverrideForwardVelocity_ = 0;
 	}
 }
 
-void UPFPhysicResource::SetYawRotationForce(float rotation, bool bShouldResetForce, bool bShouldAddAtTheEnd,
+void UPFPhysicResource::SetYawRotationVelocity(float rotation, bool bShouldResetVelocity, bool bShouldAddAtTheEnd,
 											float duration, UCurveFloat* curve)
 {
-	FForceToAdd forceToAdd(FVector(0, 0, rotation), bShouldResetForce, bShouldAddAtTheEnd, duration, curve);
-	AngularForces_.Add(forceToAdd);
+	const FVelocityToAdd velocityToAdd(FVector(0, 0, rotation), bShouldResetVelocity, bShouldAddAtTheEnd, duration, curve);
+	AngularVelocities_.Add(velocityToAdd);
 }
 
 void UPFPhysicResource::ProcessAngularVelocity(const float deltaTime)
 {
 	FVector velocity = AngularVelocity_;
 
-	for (int i = AngularForces_.Num() - 1; i >= 0; i--)
+	for (int i = AngularVelocities_.Num() - 1; i >= 0; i--)
 	{
-		FForceToAdd* forceToAdd = &AngularForces_[i];
+		FVelocityToAdd* velocityToAdd = &AngularVelocities_[i];
 
-		if (!forceToAdd)
+		if (!velocityToAdd)
 		{
-			AngularForces_.RemoveAt(i);
+			AngularVelocities_.RemoveAt(i);
 			continue;
 		}
 
-		FVector toAdd = CalculateForce(forceToAdd, deltaTime, AngularVelocity_);
+		FVector toAdd = CalculateVelocity(velocityToAdd, deltaTime, AngularVelocity_);
 
-		if (forceToAdd->Timer <= 0)
+		if (velocityToAdd->Timer <= 0)
 		{
-			AngularForces_.RemoveAt(i);
+			AngularVelocities_.RemoveAt(i);
 		}
 
 		velocity += toAdd;
@@ -293,7 +303,7 @@ void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
 	}
 
 	FRotator rotation = ForwardRoot->GetRelativeRotation();
-	rotation.Pitch = FMath::Lerp(rotation.Pitch, PitchRotation_, deltaTime * DataPtr_->PitchRotationLerpSpeed);
+	rotation.Pitch = FMath::Lerp(rotation.Pitch, PitchRotation_, deltaTime * DataPtr_->PitchRotationLerpVelocity);
 	ForwardRoot->SetRelativeRotation(rotation);
 
 	PitchRotation_ = 0;
@@ -312,7 +322,7 @@ void UPFPhysicResource::DoGravity(const float deltaTime)
 	float timeValue = FMath::Clamp((GravityTimer_ - DataPtr_->TimerMaxGravity) / DataPtr_->GravityLerpTime, 0, 1);
 	float gravity = FMath::Lerp(0, DataPtr_->Gravity, timeValue);
 
-	GlobalForces_.Add(FForceToAdd(gravity * FVector::UpVector));
+	GlobalVelocities_.Add(FVelocityToAdd(gravity * FVector::UpVector));
 }
 
 void UPFPhysicResource::ResetPhysicsTimer()
@@ -327,68 +337,68 @@ float UPFPhysicResource::FrictionPercentValue() const
 		FMath::Clamp(FrictionTimer_ / DataPtr_->TimerMaxFriction, 0, 1));
 }
 
-void UPFPhysicResource::OverrideForwardVelocity(float force)
+void UPFPhysicResource::OverrideForwardVelocity(float velocity)
 {
-	CurrentOverrideForwardVelo_ = force;
+	CurrentOverrideForwardVelocity_ = velocity;
 }
 
-void UPFPhysicResource::RemoveGlobalForces()
+void UPFPhysicResource::RemoveGlobalVelocities()
 {
-	GlobalForces_.Empty();
+	GlobalVelocities_.Empty();
 }
 
-void UPFPhysicResource::RemoveForwardForces()
+void UPFPhysicResource::RemoveForwardVelocities()
 {
-	ForwardForces_.Empty();
+	ForwardVelocities_.Empty();
 }
 
-void UPFPhysicResource::RemoveAngularForces()
+void UPFPhysicResource::RemoveAngularVelocities()
 {
-	AngularForces_.Empty();
+	AngularVelocities_.Empty();
 }
 
-void UPFPhysicResource::RemoveVelocityForces()
+void UPFPhysicResource::RemoveVelocities()
 {
-	RemoveGlobalForces();
-	RemoveForwardForces();
+	RemoveGlobalVelocities();
+	RemoveForwardVelocities();
 }
 
-void UPFPhysicResource::RemoveAllForces()
+void UPFPhysicResource::RemoveAllVelocities()
 {
-	RemoveVelocityForces();
-	RemoveAngularForces();
+	RemoveVelocities();
+	RemoveAngularVelocities();
 }
 
 void UPFPhysicResource::StopAllMotion()
 {
-	RemoveAllForces();
-	ForwardVelo_ = FVector::ZeroVector;
+	RemoveAllVelocities();
+	ForwardVelocity_ = FVector::ZeroVector;
 	GlobalVelocity_ = FVector::ZeroVector;
 }
 
-FVector UPFPhysicResource::CalculateForce(FForceToAdd* force, float deltaTime, FVector& VelocityGlobal)
+FVector UPFPhysicResource::CalculateVelocity(FVelocityToAdd* velocity, float deltaTime, FVector& VelocityGlobal) const
 {
-	FVector toAdd = force->Force;
+	FVector toAdd = velocity->Velocity;
 
-	if (force->CurvePtr)
+	if (velocity->CurvePtr)
 	{
-		toAdd = force->Force * force->CurvePtr->GetFloatValue((force->Duration - force->Timer) / force->Duration);
+		toAdd = velocity->Velocity * velocity->CurvePtr->GetFloatValue((velocity->Duration - velocity->Timer) / velocity->Duration);
 	}
 
-	force->Timer -= deltaTime;
+	velocity->Timer -= deltaTime;
 
-	if (!force->bShouldReset)
+	if (!velocity->bShouldReset)
 	{
 		VelocityGlobal += toAdd;
-		VelocityGlobal = VelocityGlobal.GetClampedToMaxSize(DataPtr_->MaxAboveSpeed);
+		VelocityGlobal = VelocityGlobal.GetClampedToMaxSize(MaxAbsoluteVelocity);
 	}
 
-	if (force->Timer <= 0)
+	if (velocity->Timer <= 0)
 	{
-		if (force->bShoudEndAdded)
+		if (velocity->bShoudEndAdded)
 		{
 			VelocityGlobal += toAdd;
-			VelocityGlobal = VelocityGlobal.GetClampedToMaxSize(DataPtr_->MaxAboveSpeed);
+			VelocityGlobal = VelocityGlobal.GetClampedToMaxSize(MaxAbsoluteVelocity);
 		}
 	}
 
