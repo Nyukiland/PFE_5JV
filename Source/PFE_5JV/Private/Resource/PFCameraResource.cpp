@@ -97,13 +97,15 @@ void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRot
     const float BaseYaw = Owner->GetActorRotation().Yaw;
     float InputYaw = TurnAbilityPtr_->InputRight_ - TurnAbilityPtr_->InputLeft_;
     float OffsetYaw = InputYaw * DataPtr_->CameraYawInputOffset;
-    float TargetWorldYaw = BaseYaw + CameraYawOffset_ + OffsetYaw;
+    float TargetOvershootYaw = InputYaw * DataPtr_->OvershootYawOffset;
+    SmoothedOvershootYaw_ = FMath::FInterpTo(SmoothedOvershootYaw_, TargetOvershootYaw, DeltaTime, DataPtr_->OvershootInterpSpeed);
+    float TargetWorldYaw = BaseYaw + CameraYawOffset_ + OffsetYaw + SmoothedOvershootYaw_;
     FRotator CurrentRotYaw(0.f, SmoothedCameraRotation_.Yaw, 0.f);
     FRotator TargetRotYaw(0.f, TargetWorldYaw, 0.f);
     SmoothedCameraRotation_.Yaw = FMath::RInterpTo(CurrentRotYaw, TargetRotYaw, DeltaTime, DataPtr_->YawLagSpeed).Yaw;
-    float LagDeltaYaw = FMath::FindDeltaAngleDegrees(BaseYaw, SmoothedCameraRotation_.Yaw);
-    LagDeltaYaw = FMath::Clamp(LagDeltaYaw,-DataPtr_->MaxYawAngle, DataPtr_->MaxYawAngle);
-    SmoothedCameraRotation_.Yaw = BaseYaw + LagDeltaYaw;
+    float NormalOffset = BaseYaw + OffsetYaw + CameraYawOffset_ - BaseYaw;
+    NormalOffset = FMath::Clamp(NormalOffset, -DataPtr_->MaxYawAngle, DataPtr_->MaxYawAngle);
+    SmoothedCameraRotation_.Yaw = BaseYaw + NormalOffset + SmoothedOvershootYaw_;
     FinalRotation.Yaw = SmoothedCameraRotation_.Yaw;
     
     // ---- PITCH ----
@@ -116,7 +118,6 @@ void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRot
     LagDeltaPitch = FMath::Clamp(LagDeltaPitch,-DataPtr_->MaxPitchAngle, DataPtr_->MaxPitchAngle);
     SmoothedCameraRotation_.Pitch = BasePitch + LagDeltaPitch;
     FinalRotation.Pitch = SmoothedCameraRotation_.Pitch;
-    
     
     // ---- ROLL ----
     const float BaseRoll = VisualResourcePtr_->GetRelativeRotation().Roll;

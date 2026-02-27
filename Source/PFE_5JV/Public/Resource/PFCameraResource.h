@@ -63,6 +63,7 @@ private:
 	float LastActorYaw_   = 0.f;
 	float LastActorPitch_ = 0.f;
 	float LastActorRoll_  = 0.f;
+	float SmoothedOvershootYaw_  = 0.f;
 
 	//Shake
 	float ShakeTime_ = 0.f;

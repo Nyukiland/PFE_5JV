@@ -12,35 +12,40 @@ public:
 	
 	/* ===== Rotation ===== */
 
-	UPROPERTY(EditAnywhere, Category = "Base Rotatio", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
 	float MaxYawAngle = 30.f;
 	
 	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
 	float MaxPitchAngle = 30.f;
 	
-	UPROPERTY(EditAnywhere, Category = "Base Rotatio", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
 	float MaxRollAngle = 30.f;
 	
-	UPROPERTY(EditAnywhere, Category = "Base Rotatio", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
 	float YawLagSpeed = 20.f;
 
-	UPROPERTY(EditAnywhere, Category = "Base Rotatio", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
 	float PitchLagSpeed = 20.f;
 
-	UPROPERTY(EditAnywhere, Category = "Base Rotatio", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
 	float RollLagSpeed = 20.f;
 
-	UPROPERTY(EditAnywhere, Category = "Rotation Settings", meta=(ToolTip=""))
-	float OvershootYawOffset = 5.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Rotation Settings", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
 	float CameraYawInputOffset = 5.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Rotation Settings", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
 	float LookAtHeightOffset = 5.0f;
 	
-	UPROPERTY(EditAnywhere, Category = "Rotation Settings", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
 	float LookAtInterpSpeed = 5.0f;
+	
+	/* ===== Overshoot ===== */
+	
+	UPROPERTY(EditAnywhere, Category = "Overshoot", meta=(ToolTip=""))
+	float OvershootYawOffset = 5.0f;
+	
+	UPROPERTY(EditAnywhere, Category = "Overshoot", meta=(ToolTip=""))
+	float OvershootInterpSpeed = 5.0f;
 
 	/* ===== Shake ===== */
 
