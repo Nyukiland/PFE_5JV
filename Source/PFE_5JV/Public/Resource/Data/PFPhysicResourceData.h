@@ -10,6 +10,8 @@ class PFE_5JV_API UPFPhysicResourceData : public UDataAsset
     GENERATED_BODY()
 
 public:
+    const float MaxAboveSpeed = 10000;
+    
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Speed",
        meta = (ToolTip = "Speed at which the player start when the game start"))
     float InitialSpeed = 100;
@@ -17,10 +19,6 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Speed",
         meta = (ToolTip = "Maximum speed of the player"))
     float MaxSpeed = 10;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Speed",
-        meta = (ToolTip = "Maximum speed even with boost"))
-    float MaxAboveSpeed = 10;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Turn",
         meta = (ToolTip = "The rotation speed of the pitch"))
