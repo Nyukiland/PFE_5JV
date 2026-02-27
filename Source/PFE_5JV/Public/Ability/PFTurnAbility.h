@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Data/PFTurnAbilityData.h"
+#include "Input/PFInputFilteringData.h"
 #include "Resource/PFVisualResource.h"
 #include "StateMachine/StateComponent/PFAbility.h"
 #include "PFTurnAbility.generated.h"
@@ -23,6 +24,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn")
 	TObjectPtr<UPFTurnAbilityData> DataPtr_;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn")
+	TObjectPtr<UPFInputFilteringData> DataInputPtr_;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Turn")
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
 
@@ -31,6 +35,8 @@ protected:
 	
 	float RotationValue_;
 	float SlowForceTimer_;
+
+	float TimerStartTurn_;
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
@@ -48,6 +54,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Turn")
 	void TurnVisual();
+
+	UFUNCTION(BlueprintCallable, Category="Turn")
+	bool IsTurning() const;
 
 private:
 	void GetRotationValue();

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Data/PFRollAbilityData.h"
+#include "Input/PFInputFilteringData.h"
 #include "Resource/PFPhysicResource.h"
 #include "Resource/PFVisualResource.h"
 #include "StateMachine/StateComponent/PFAbility.h"
@@ -15,6 +16,9 @@ class PFE_5JV_API UPFRollAbility : public UPFAbility
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Roll")
 	TObjectPtr<UPFRollAbilityData> DataPtr_;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Roll")
+	TObjectPtr<UPFInputFilteringData> DataInputPtr_;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Roll")
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;

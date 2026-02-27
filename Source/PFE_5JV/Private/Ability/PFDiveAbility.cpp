@@ -18,7 +18,7 @@ void UPFDiveAbility::ComponentDisable_Implementation()
 	InputLeft_ = 0.0f;
 	InputRight_ = 0.0f;
 	GetHighestValue();
-	TimerAutoDive_ = 0.0f;
+	TimerAutoDive_ = 0;
 
 	bIsDivingStateGoingUp_ = false;
 	SpeedBeforeDive_ = 0.0f;
@@ -55,6 +55,9 @@ void UPFDiveAbility::Dive(float deltaTime)
 		return;
 	}
 
+	if (!IsDiving())
+		return;
+	
 	float speedToGive = DataPtr_->ForceToGive *
 		DataPtr_->DiveAccelerationBasedOnRotationCurvePtr->GetFloatValue(HighestInput_);
 
@@ -95,7 +98,7 @@ void UPFDiveAbility::AfterDiveGoingUp(float deltaTime)
 		bIsDivingStateGoingUp_ = false;
 
 		float value01 = PhysicResourcePtr_->GetCurrentVelocity().Length() - SpeedBeforeDive_;
-		value01 /= PhysicResourcePtr_->GetMaxSpeed();
+		value01 /= DataPtr_->MaxDiveForce;
 		value01 = FMath::Clamp(value01, 0.0f, 1.0f);
 		MaxTimeGoingUp_ = DataPtr_->MaxTimeForGoingUpAfterDive;
 		MaxTimeGoingUp_ *= DataPtr_->GoingUpDurationCurve->GetFloatValue(value01);
@@ -121,6 +124,9 @@ void UPFDiveAbility::DiveVisual(float deltaTime)
 		return;
 	}
 
+	if (!IsDiving())
+		return;
+	
 	float highestValue = FMath::Min(InputLeft_, InputRight_);
 
 	float lerpSpeedToUse = highestValue >= CurrentMedianValue_
@@ -160,7 +166,10 @@ void UPFDiveAbility::DiveRoll(float deltaTime)
 
 bool UPFDiveAbility::IsDiving()
 {
-	if (ElapsedTime_ >= DataPtr_->Threshold_ && HighestInput_ != 0)
+	if (!DataInputPtr_)
+		return false;
+	
+	if (ElapsedTime_ >= DataInputPtr_->DelayBeforeGoingInDive && HighestInput_ != 0)
 		return true;
 
 	return false;
@@ -192,7 +201,7 @@ bool UPFDiveAbility::AutoDiveComplete() const
 		return true;
 	}
 
-	return TimerAutoDive_ > DataPtr_->AutoDiveRotationTime;
+	return TimerAutoDive_ == 0 || TimerAutoDive_ > DataPtr_->AutoDiveRotationTime;
 }
 
 void UPFDiveAbility::GetHighestValue()
@@ -202,7 +211,7 @@ void UPFDiveAbility::GetHighestValue()
 
 void UPFDiveAbility::DiveRollInputRecording(float deltaTime)
 {
-	if (!DataPtr_)
+	if (!DataPtr_ || !DataInputPtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[DiveAbility] Bad set up on Data"))
 		return;
@@ -219,7 +228,7 @@ void UPFDiveAbility::DiveRollInputRecording(float deltaTime)
 
 	TimerInputRecording_ += deltaTime;
 
-	if (TimerInputRecording_ > DataPtr_->TimeBeforeInputRegister)
+	if (TimerInputRecording_ > DataInputPtr_->DelayInputRegisterDiveRoll)
 	{
 		TimerInputRecording_ = 0;
 
@@ -230,6 +239,12 @@ void UPFDiveAbility::DiveRollInputRecording(float deltaTime)
 
 void UPFDiveAbility::DiveRollCheck()
 {
+	if (!DataInputPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[DiveAbility] Bad set up on Data"))
+		return;
+	}
+	
 	if (!IsDiving())
 	{
 		DiveRollDirection = 0;
@@ -237,10 +252,10 @@ void UPFDiveAbility::DiveRollCheck()
 	}
 
 	float deltaLeft = FMath::Abs(RecordedPreviousInputLeft_ - InputLeft_);
-	bool validDeltaLeft = deltaLeft > DataPtr_->DiveRollInputChangeNeeded;
+	bool validDeltaLeft = deltaLeft > DataInputPtr_->InputChangeRequiredDiveRoll;
 
 	float deltaRight = FMath::Abs(RecordedPreviousInputRight_ - InputRight_);
-	bool validDeltaRight = deltaRight > DataPtr_->DiveRollInputChangeNeeded;
+	bool validDeltaRight = deltaRight > DataInputPtr_->InputChangeRequiredDiveRoll;
 
 	if (validDeltaLeft && !validDeltaRight && InputRight_ == 1)
 	{

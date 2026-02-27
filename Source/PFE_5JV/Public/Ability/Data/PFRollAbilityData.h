@@ -11,24 +11,6 @@ class PFE_5JV_API UPFRollAbilityData : public UDataAsset
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Roll",
-		meta = (ToolTip = "Max time between each input in order to roll"))
-	float RollRepetitionTime = 0.25f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Roll",
-		meta = (ToolTip = "When the double tap is valid how long it will wait before calling the roll \n used to prevent input collision"))
-	float WaitBeforeCallingWhenValid = 0.1f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Roll",
-		meta = (ToolTip = "How much the input should be pressed to be considered pressed",
-			ClampMin = 0, ClampMax = 1))
-	float ThresholdInput = 0.9f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Roll",
-		meta = (ToolTip = "How much the input should be released to be considered not touch",
-			ClampMin = 0, ClampMax = 1))
-	float ThresholdReleasedInput = 0.05f;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Roll",
 		meta = (ToolTip = "How long will the player stay in roll"))
 	float RollDuration;
 

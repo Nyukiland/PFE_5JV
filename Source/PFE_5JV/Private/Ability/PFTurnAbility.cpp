@@ -45,7 +45,7 @@ void UPFTurnAbility::ReceiveInputRight(float right)
 
 void UPFTurnAbility::Turn(float deltaTime)
 {
-	if (!DataPtr_ || !PhysicResourcePtr_
+	if (!DataPtr_ || !DataInputPtr_ || !PhysicResourcePtr_
 		|| !DataPtr_->RotationForceBasedOnInputPtr
 		|| !DataPtr_->RotationForceBasedOnVelocityPtr
 		|| !DataPtr_->SlowForceBasedOnInputPtr
@@ -58,8 +58,14 @@ void UPFTurnAbility::Turn(float deltaTime)
 	if (RotationValue_ == 0)
 	{
 		PhysicResourcePtr_->SetYawRotationForce(0);
+		TimerStartTurn_ = 0;
 		return;
 	}
+
+	TimerStartTurn_ += deltaTime;
+
+	if (!IsTurning())
+		return;
 	
 	float velocity0to1 = PhysicResourcePtr_->GetForwardSpeedPercentage();
 	float valueAbs = FMath::Abs(RotationValue_);
@@ -78,7 +84,7 @@ void UPFTurnAbility::Turn(float deltaTime)
 	slowValue *= DataPtr_->SlowForceBasedOnVelocityPtr->GetFloatValue(velocity0to1);
 
 	// Drift tolerance
-	if (valueAbs > 0.975f)
+	if (valueAbs > DataInputPtr_->InputPressedValueThreshold)
 	{
 		SlowForceTimer_ += deltaTime;
 		float slowValue01 = FMath::Clamp(SlowForceTimer_/DataPtr_->TimeToGoFullSlowForce, 0.f, 1.f);
@@ -88,7 +94,7 @@ void UPFTurnAbility::Turn(float deltaTime)
 	{
 		SlowForceTimer_ = 0;
 	}
-	
+
 	PhysicResourcePtr_->AddForwardForce(-slowValue * deltaTime, false);
 }
 
@@ -103,12 +109,21 @@ void UPFTurnAbility::TurnVisual()
 	VisualResourcePtr_->SetRollRotation(DataPtr_->MaxWingRotation * RotationValue_, 0);
 }
 
+bool UPFTurnAbility::IsTurning() const
+{
+	if (!DataInputPtr_)
+		return false;
+	
+	return RotationValue_ != 0 && TimerStartTurn_ >= DataInputPtr_->SimultaneousTapTolerance; 
+}
+
 void UPFTurnAbility::GetRotationValue()
 {
 	float rotValue = FMath::Max(InputLeft_, InputRight_) - FMath::Min(InputLeft_, InputRight_);
 	rotValue *= InputLeft_ > InputRight_ ? -1 : 1;
 	
-	if (DataPtr_ && FMath::Abs(rotValue) > DataPtr_->ToleranceRotBetweenInput)
+	if (DataPtr_ && DataInputPtr_ &&
+		FMath::Abs(rotValue) > DataInputPtr_->ToleranceRotBetweenInput)
 	{
 		RotationValue_ = rotValue;
 		return;

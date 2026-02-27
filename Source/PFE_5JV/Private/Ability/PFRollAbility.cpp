@@ -30,7 +30,7 @@ void UPFRollAbility::ComponentEnable_Implementation()
 
 void UPFRollAbility::TryCallRollRight(float inputValue, int rotationSide)
 {
-	if (!DataPtr_)
+	if (!DataPtr_ || !DataInputPtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[Roll] Bad Set up on Data"));
 		return;
@@ -41,10 +41,10 @@ void UPFRollAbility::TryCallRollRight(float inputValue, int rotationSide)
 
 	InputRight_ = inputValue;
 
-	if (InputLeft_ > DataPtr_->ThresholdReleasedInput)
+	if (InputLeft_ > DataInputPtr_->InputReleaseValueThreshold)
 		return;
 	
-	if (inputValue < DataPtr_->ThresholdInput)
+	if (inputValue < DataInputPtr_->InputPressedValueThreshold)
 	{
 		bIsDownRight_ = false;
 		return;
@@ -57,7 +57,7 @@ void UPFRollAbility::TryCallRollRight(float inputValue, int rotationSide)
 	float pressTime = UGameplayStatics::GetRealTimeSeconds(Owner->GetWorld());
 	
 	if (PressTimeRight_ == 0 ||
-		pressTime - PressTimeRight_ > DataPtr_->RollRepetitionTime)
+		pressTime - PressTimeRight_ > DataInputPtr_->RollMaxBetweenInputTime)
 	{
 		PressTimeRight_ = pressTime;
 		return;
@@ -69,7 +69,7 @@ void UPFRollAbility::TryCallRollRight(float inputValue, int rotationSide)
 
 void UPFRollAbility::TryCallRollLeft(float inputValue, int rotationSide)
 {
-	if (!DataPtr_)
+	if (!DataPtr_ || !DataInputPtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[Roll] Bad Set up on Data"));
 		return;
@@ -80,10 +80,10 @@ void UPFRollAbility::TryCallRollLeft(float inputValue, int rotationSide)
 
 	InputLeft_ = inputValue;
 
-	if (InputRight_ > DataPtr_->ThresholdReleasedInput)
+	if (InputRight_ > DataInputPtr_->InputReleaseValueThreshold)
 		return;
 	
-	if (inputValue < DataPtr_->ThresholdInput)
+	if (inputValue < DataInputPtr_->InputPressedValueThreshold)
 	{
 		bIsDownLeft_ = false;
 		return;
@@ -97,7 +97,7 @@ void UPFRollAbility::TryCallRollLeft(float inputValue, int rotationSide)
 	float pressTime = UGameplayStatics::GetRealTimeSeconds(Owner->GetWorld());
 	
 	if (PressTimeLeft_ == 0 ||
-		pressTime - PressTimeLeft_ > DataPtr_->RollRepetitionTime)
+		pressTime - PressTimeLeft_ > DataInputPtr_->RollMaxBetweenInputTime)
 	{
 		PressTimeLeft_ = pressTime;
 		return;
@@ -109,7 +109,7 @@ void UPFRollAbility::TryCallRollLeft(float inputValue, int rotationSide)
 
 bool UPFRollAbility::PreRollCheck(float deltatTime)
 {
-	if (!DataPtr_)
+	if (!DataPtr_ || !DataInputPtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[Roll] Bad Set up on Data"));
 		return false;
@@ -120,7 +120,7 @@ bool UPFRollAbility::PreRollCheck(float deltatTime)
 
 	TimerPreRoll_ += deltatTime;
 
-	if (TimerPreRoll_ < DataPtr_->WaitBeforeCallingWhenValid)
+	if (TimerPreRoll_ < DataInputPtr_->RollDelayCall)
 		return false;
 
 	if (RotationDir_ == 0)

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Data/PFDiveAbilityData.h"
+#include "Input/PFInputFilteringData.h"
 #include "Resource/PFPhysicResource.h"
 #include "Resource/PFVisualResource.h"
 #include "StateMachine/StateComponent/PFAbility.h"
@@ -20,6 +21,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive")
 	TObjectPtr<UPFDiveAbilityData> DataPtr_;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive")
+	TObjectPtr<UPFInputFilteringData> DataInputPtr_;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
 
@@ -34,7 +38,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
 	float HighestInput_;
 
-	float TimerAutoDive_;
+	float TimerAutoDive_ = -1;
 	
 	bool bIsDivingStateGoingUp_;
 	float SpeedBeforeDive_;
