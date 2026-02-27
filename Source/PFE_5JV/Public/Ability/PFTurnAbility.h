@@ -19,6 +19,9 @@ public:
 	float InputRight_;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Turn")
 	float InputLeft_;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Turn")
+	bool bIsDrifting;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn")
