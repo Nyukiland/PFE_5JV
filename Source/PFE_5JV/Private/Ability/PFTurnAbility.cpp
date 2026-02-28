@@ -117,7 +117,7 @@ bool UPFTurnAbility::IsTurning() const
 	if (!DataInputPtr_)
 		return false;
 	
-	return RotationValue_ != 0 && TimerStartTurn_ >= DataInputPtr_->SimultaneousTapTolerance; 
+	return RotationValue_ != 0 && TimerStartTurn_ >= DataInputPtr_->TurnDelay; 
 }
 
 void UPFTurnAbility::GetRotationValue()

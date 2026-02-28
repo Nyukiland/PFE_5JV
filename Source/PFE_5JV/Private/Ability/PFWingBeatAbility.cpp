@@ -176,10 +176,10 @@ void UPFWingBeatAbility::WingBeat(float deltaTime)
 	// Give the average input value to calculate the wingbeat power : 
 	GetAverageInputValue();
 	
-	float HeightToGive = DataPtr_->VelocityToGiveInHeight *
-		DataPtr_->WingBeatHeightGainedBasedOnForceDurationCurve->GetFloatValue(DataPtr_->VelocityToGiveInHeightDuration);
+	float HeightToGive = DataPtr_->VelocityToGiveInHeight;
 	if(bIsSuperBeatWingPossible_ == true) HeightToGive *= DataPtr_->SuperWingBeatHeightMultiplier;
-	PhysicResourcePtr_->AddVelocity(HeightToGive * FVector::UpVector, true, false, DataPtr_->VelocityToGiveInHeightDuration);
+	PhysicResourcePtr_->AddVelocity(HeightToGive * FVector::UpVector, true, false,
+		DataPtr_->VelocityToGiveInHeightDuration, DataPtr_->WingBeatHeightGainedBasedOnForceDurationCurve);
 
 	// Debug data :
 	MaxHeightGain_ = Owner->ForwardRootPtr->GetComponentLocation().Z - HeightAtWingBeatBeginning_;

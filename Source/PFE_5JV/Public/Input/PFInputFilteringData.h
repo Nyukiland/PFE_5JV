@@ -43,6 +43,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn",
 		meta=(ToolTip="La difference entre les deux input pour commencer a turn", ClampMin = 0))
 	float ToleranceRotBetweenInput;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn",
+		meta=(ToolTip="The time between it start turning"))
+	float TurnDelay;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Roll",
 		meta=(ToolTip="Le temps Max entre deux appuies sur l'input de roll", ClampMin = 0))
