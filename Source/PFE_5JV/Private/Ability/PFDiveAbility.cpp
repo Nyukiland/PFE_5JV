@@ -126,9 +126,6 @@ void UPFDiveAbility::DiveVisual(float deltaTime)
 		return;
 	}
 
-	if (!IsDiving())
-		return;
-	
 	float highestValue = FMath::Min(InputLeft_, InputRight_);
 
 	float lerpSpeedToUse = highestValue >= CurrentMedianValue_
@@ -136,6 +133,9 @@ void UPFDiveAbility::DiveVisual(float deltaTime)
 								: DataPtr_->LerpPitchSpeedGoingDown;
 
 	CurrentMedianValue_ = FMath::Lerp(CurrentMedianValue_, highestValue, lerpSpeedToUse * deltaTime);
+	
+	if (!IsDiving())
+		return;
 
 	float value = FMath::Lerp(0, DataPtr_->MaxRotationPitch, CurrentMedianValue_);
 	PhysicResourcePtr_->SetPitchRotationVisual(value, -1);
