@@ -65,13 +65,18 @@ private:
 	float LastActorRoll_  = 0.f;
 	float SmoothedOvershootYaw_  = 0.f;
 
-	//Shake
+	// Shake
 	float ShakeTime_ = 0.f;
 
-	//Roll
+	// Roll
 	float PreviousYaw_ = 0.f;
 	float BaseCameraRoll_ = 0.f;
 	float CurrentTurnRoll_ = 0.f;
 	FRotator FinalBaseRotation_;
 	FRotator SmoothedCameraRotation_;
+
+	// Dive
+	bool HasStartedDive_ = false;
+	float SmoothedPitchDelta_ = 0.0f;
+	float SmoothedRollDelta_ = 0.0f;
 };

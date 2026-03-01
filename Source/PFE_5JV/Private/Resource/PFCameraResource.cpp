@@ -25,9 +25,9 @@ void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 
     CameraRootPtr_->SetUsingAbsoluteRotation(true);
     PreviousYaw_ = Owner->GetActorRotation().Yaw;
-    BaseCameraRoll_ = CameraPtr_->GetRelativeRotation().Roll;
+    // BaseCameraRoll_ = CameraPtr_->GetRelativeRotation().Roll;
     SmoothedCameraRotation_ = FRotator(PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch,
-        Owner->GetActorRotation().Yaw, VisualResourcePtr_->GetRelativeRotation().Roll);
+        Owner->GetActorRotation().Yaw, 0);//VisualResourcePtr_->GetRelativeRotation().Roll);
     CurrentTurnRoll_ = 0.f;
 }
 
@@ -92,7 +92,18 @@ bool UPFCameraResource::CheckValidity() const
 }
 
 void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRotation)
-{    
+{
+    if (DiveAbilityPtr_ && DiveAbilityPtr_->IsDiving() && !HasStartedDive_)
+    {
+        SmoothedPitchDelta_ = 0.f;
+        SmoothedRollDelta_  = 0.f;
+        HasStartedDive_ = true;
+    }
+    else if (!DiveAbilityPtr_ || !DiveAbilityPtr_->IsDiving())
+    {
+        HasStartedDive_ = false;
+    }
+    
     // ---- YAW ----
     const float BaseYaw = Owner->GetActorRotation().Yaw;
     float InputYaw = TurnAbilityPtr_->InputRight_ - TurnAbilityPtr_->InputLeft_;
@@ -109,32 +120,25 @@ void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRot
     
     // ---- PITCH ----
     const float BasePitch = PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch;
-    float TargetWorldPitch = CameraPitchOffset_;
-    FRotator CurrentRotPitch(SmoothedCameraRotation_.Pitch, 0.f, 0.f);
-    FRotator TargetRotPitch(TargetWorldPitch, 0.f, 0.f);
-    SmoothedCameraRotation_.Pitch = FMath::RInterpTo(CurrentRotPitch, TargetRotPitch, DeltaTime, DataPtr_->PitchLagSpeed).Pitch;
-    float LagDeltaPitch = FMath::FindDeltaAngleDegrees(BasePitch, SmoothedCameraRotation_.Pitch);
-    LagDeltaPitch = FMath::Clamp(LagDeltaPitch,-DataPtr_->MaxPitchAngle, DataPtr_->MaxPitchAngle);
-    SmoothedCameraRotation_.Pitch = BasePitch + LagDeltaPitch;
-    FinalRotation.Pitch = SmoothedCameraRotation_.Pitch;
+    float TargetDeltaPitch = CameraPitchOffset_;
+    TargetDeltaPitch = FMath::Clamp(TargetDeltaPitch,-DataPtr_->MaxPitchAngle,DataPtr_->MaxPitchAngle);
+    SmoothedPitchDelta_ = FMath::FInterpTo(SmoothedPitchDelta_,TargetDeltaPitch,DeltaTime,DataPtr_->PitchLagSpeed);
+    FinalRotation.Pitch = BasePitch + SmoothedPitchDelta_;
     
     // ---- ROLL ----
-    const float BaseRoll = VisualResourcePtr_->GetRelativeRotation().Roll;
-    float TargetWorldRoll = CameraRollOffset_;
-    FRotator CurrentRotRoll(0.0f, 0.f, SmoothedCameraRotation_.Roll);
-    FRotator TargetRotRoll(0.0f, 0.f, TargetWorldRoll);
-    SmoothedCameraRotation_.Roll = FMath::RInterpTo(CurrentRotRoll, TargetRotRoll, DeltaTime, DataPtr_->RollLagSpeed).Roll;
-    float LagDeltaRoll = FMath::FindDeltaAngleDegrees(BaseRoll, SmoothedCameraRotation_.Roll);
-    LagDeltaRoll = FMath::Clamp(LagDeltaRoll,-DataPtr_->MaxRollAngle, DataPtr_->MaxRollAngle);
-    SmoothedCameraRotation_.Roll = BaseRoll + LagDeltaRoll;
-    FinalRotation.Roll = SmoothedCameraRotation_.Roll;
+    // const float BaseRoll = VisualResourcePtr_->GetRelativeRotation().Roll;
+    // float TargetWorldRoll = BaseRoll + CameraRollOffset_;
+    // float TargetDeltaRoll = CameraRollOffset_;
+    // TargetDeltaRoll = FMath::Clamp(TargetDeltaRoll,-DataPtr_->MaxRollAngle,DataPtr_->MaxRollAngle);
+    // SmoothedRollDelta_ = FMath::FInterpTo(SmoothedRollDelta_,TargetDeltaRoll,DeltaTime,DataPtr_->RollLagSpeed);
+    // FinalRotation.Roll = BaseRoll + SmoothedRollDelta_;
 
     // ---- DEBUG ----
-    float DeltaYaw = FMath::FindDeltaAngleDegrees(Owner->GetActorRotation().Yaw, FinalRotation.Yaw);
-    float DeltaPitch = FMath::FindDeltaAngleDegrees(PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch, FinalRotation.Pitch);
-    float DeltaRoll = FMath::FindDeltaAngleDegrees(VisualResourcePtr_->GetRelativeRotation().Roll, FinalRotation.Roll);
-    GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Caméra: %f/%f/%f"), CameraPtr_->GetComponentRotation().Yaw, CameraPtr_->GetComponentRotation().Pitch, CameraPtr_->GetComponentRotation().Roll));
-    GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, FString::Printf(TEXT("Oiseau: %f/%f/%f"), DeltaYaw, DeltaPitch, DeltaRoll));
+    // float DeltaYaw = FMath::FindDeltaAngleDegrees(Owner->GetActorRotation().Yaw, FinalRotation.Yaw);
+    // float DeltaPitch = FMath::FindDeltaAngleDegrees(PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch, FinalRotation.Pitch);
+    // float DeltaRoll = FMath::FindDeltaAngleDegrees(VisualResourcePtr_->GetRelativeRotation().Roll, FinalRotation.Roll);
+    // GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Caméra: %f/%f/%f"), CameraPtr_->GetComponentRotation().Yaw, CameraPtr_->GetComponentRotation().Pitch, CameraPtr_->GetComponentRotation().Roll));
+    // GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, FString::Printf(TEXT("Oiseau: %f/%f/%f"), DeltaYaw, DeltaPitch, DeltaRoll));
 }
 
 void UPFCameraResource::UpdateCameraShake(float DeltaTime)
