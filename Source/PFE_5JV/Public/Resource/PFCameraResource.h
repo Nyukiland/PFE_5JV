@@ -53,7 +53,7 @@ private:
 	bool CheckValidity() const;
 	
 	void UpdateCameraRotation(float DeltaTime, FRotator& FinalRotation);
-	void UpdateCameraShake(float DeltaTime);
+	void UpdateCameraDive(float DeltaTime);
 	void UpdateCameraDistance(float DeltaTime);
 
 	// Base rotation
@@ -77,6 +77,9 @@ private:
 
 	// Dive
 	bool HasStartedDive_ = false;
+	bool WasDiving_ = true;
 	float SmoothedPitchDelta_ = 0.0f;
 	float SmoothedRollDelta_ = 0.0f;
+	FRotator BaseCameraRotation_;
+	FRotator TargetCameraRotation_;
 };

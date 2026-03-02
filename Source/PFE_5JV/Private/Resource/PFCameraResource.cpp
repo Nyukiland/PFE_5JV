@@ -29,6 +29,7 @@ void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
     SmoothedCameraRotation_ = FRotator(PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch,
         Owner->GetActorRotation().Yaw, 0);//VisualResourcePtr_->GetRelativeRotation().Roll);
     CurrentTurnRoll_ = 0.f;
+    BaseCameraRotation_ = CameraPtr_->GetRelativeRotation();
 }
 
 void UPFCameraResource::ComponentTick_Implementation(float deltaTime)
@@ -42,7 +43,7 @@ void UPFCameraResource::ComponentTick_Implementation(float deltaTime)
 
     // Camera Root movements
     UpdateCameraRotation(deltaTime, FinalRootRotation);
-    UpdateCameraShake(deltaTime);
+    UpdateCameraDive(deltaTime);
 
     CameraRootPtr_->SetWorldRotation(FinalRootRotation);
 
@@ -141,24 +142,53 @@ void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRot
     // GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, FString::Printf(TEXT("Oiseau: %f/%f/%f"), DeltaYaw, DeltaPitch, DeltaRoll));
 }
 
-void UPFCameraResource::UpdateCameraShake(float DeltaTime)
+void UPFCameraResource::UpdateCameraDive(float DeltaTime)
 {
+    // GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, FString::Printf(TEXT("[Blanco] %hhd"), DiveAbilityPtr_->AutoDiveComplete()));
+    // any dive => change camera
     if (!DiveAbilityPtr_->IsDiving())
-        return;
+    {
+        if (WasDiving_)
+        {
+            // UE_LOG(LogTemp, Warning, TEXT("[Blanco] ON ARRETE DE DIVE"));
+            // Rotation normale
+            TargetCameraRotation_ = BaseCameraRotation_;
+            ShakeTime_ = 0.f;
+            WasDiving_ = false;
+        }
+    }
+    else
+    {
+        if (!WasDiving_)
+        {
+            // UE_LOG(LogTemp, Warning, TEXT("[Blanco] ON DIIIIIIIVE"));
+            // Rotation de dive
+            TargetCameraRotation_ = FRotator(0, 0, 0);
+            WasDiving_ = true;
+        }
+    
+        // Involuntary dive => shake
+        if (DiveAbilityPtr_->AutoDiveComplete())
+        {
+            // UE_LOG(LogTemp, Warning, TEXT("[Blanco] CECI EST UNE CHUTE INCONTROLEE AHHHHHHHHHH"));
+            ShakeTime_ += DeltaTime;
 
-    ShakeTime_ += DeltaTime;
+            float NoiseRoll  = FMath::PerlinNoise1D(ShakeTime_ * DataPtr_->ShakeFrequency);
+            float NoisePitch = FMath::PerlinNoise1D((ShakeTime_ + 100.f) * DataPtr_->ShakeFrequency);
+            float NoiseYaw   = FMath::PerlinNoise1D((ShakeTime_ + 200.f) * DataPtr_->ShakeFrequency);
 
-    float NoiseRoll  = FMath::PerlinNoise1D(ShakeTime_ * DataPtr_->ShakeFrequency);
-    float NoisePitch = FMath::PerlinNoise1D((ShakeTime_ + 100.f) * DataPtr_->ShakeFrequency);
-    float NoiseYaw   = FMath::PerlinNoise1D((ShakeTime_ + 200.f) * DataPtr_->ShakeFrequency);
+            FRotator ShakeOffset;
+            ShakeOffset.Roll  = NoiseRoll  * DataPtr_->RollAmplitude;
+            ShakeOffset.Pitch = NoisePitch * DataPtr_->PitchAmplitude;
+            ShakeOffset.Yaw   = NoiseYaw   * DataPtr_->YawAmplitude;
+            FRotator DiveBase = FRotator(0,0,0);
+            TargetCameraRotation_ = DiveBase + ShakeOffset;
+        }
+    }
 
-    FRotator ShakeOffset;
-    ShakeOffset.Roll  = NoiseRoll  * DataPtr_->RollAmplitude;
-    ShakeOffset.Pitch = NoisePitch * DataPtr_->PitchAmplitude;
-    ShakeOffset.Yaw   = NoiseYaw   * DataPtr_->YawAmplitude;
-
-    FRotator RelativeRotation = CameraPtr_->GetRelativeRotation();
-    CameraPtr_->SetRelativeRotation(RelativeRotation + ShakeOffset);
+    FRotator Current = CameraPtr_->GetRelativeRotation();
+    FRotator NewRotation = FMath::RInterpTo(Current, TargetCameraRotation_, DeltaTime, DataPtr_->LookAtInterpSpeed);
+    CameraPtr_->SetRelativeRotation(NewRotation);
 }
 
 void UPFCameraResource::UpdateCameraDistance(float DeltaTime)
