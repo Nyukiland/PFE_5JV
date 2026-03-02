@@ -38,7 +38,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
 	float HighestInput_;
 
-	float TimerAutoDive_ = -1;
+	float TimerAutoDive_ = 0;
 	
 	bool bIsDivingStateGoingUp_;
 	float SpeedBeforeDive_;
@@ -57,6 +57,7 @@ protected:
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 	virtual void ComponentTick_Implementation(float DeltaTime) override;
+	virtual FString GetInfo_Implementation() override;
 
 	virtual void ComponentDisable_Implementation() override;
 
@@ -86,6 +87,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="AutoDive")
 	bool AutoDiveComplete() const;
+
+	UFUNCTION(BlueprintCallable, Category="AutoDive")
+	bool AutoDiveRotationComplete() const;
 	
 private:
 	void GetHighestValue();

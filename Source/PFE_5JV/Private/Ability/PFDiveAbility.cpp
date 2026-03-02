@@ -34,6 +34,17 @@ void UPFDiveAbility::ComponentTick_Implementation(float DeltaTime)
 		ElapsedTime_ = 0;
 }
 
+FString UPFDiveAbility::GetInfo_Implementation()
+{
+	FString text = TEXT("<hb>Dive:</>");
+	text += TEXT("\n <b>Auto Dive Value: </>") + FString::Printf(TEXT("%f"), TimerAutoDive_);
+	text += TEXT("\n <b>Is Auto Dive Complete: </>") + FString::Printf(TEXT("%s"), (AutoDiveComplete()? TEXT("true") : TEXT("false")));
+	text += TEXT("\n");
+	text += TEXT("\n <b>Dive Value: </>") + FString::Printf(TEXT("%f"), CurrentMedianValue_);
+
+	return text;
+}
+
 void UPFDiveAbility::ReceiveInputLeft(float left)
 {
 	InputLeft_ = left;
@@ -185,7 +196,7 @@ void UPFDiveAbility::AutoDive(float deltaTime)
 		return;
 	}
 
-	TimerAutoDive_ += deltaTime;
+ 	TimerAutoDive_ += deltaTime;
 
 	float value = TimerAutoDive_ / DataPtr_->AutoDiveRotationTime;
 	value = FMath::Clamp(value, 0.0f, 1.0f);
@@ -203,7 +214,18 @@ bool UPFDiveAbility::AutoDiveComplete() const
 		return true;
 	}
 
-	return TimerAutoDive_ == 0 || TimerAutoDive_ > DataPtr_->AutoDiveRotationTime;
+	return TimerAutoDive_ == 0;
+}
+
+bool UPFDiveAbility::AutoDiveRotationComplete() const
+{
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[DiveAbility] Bad set up on Data"))
+		return true;
+	}
+
+	return TimerAutoDive_ > DataPtr_->AutoDiveRotationTime;
 }
 
 void UPFDiveAbility::GetHighestValue()
