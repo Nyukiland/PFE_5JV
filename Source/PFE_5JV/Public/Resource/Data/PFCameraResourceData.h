@@ -65,4 +65,15 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Distance", meta = (ToolTip = ""))
 	float DistanceInterpSpeed = 5.f;
+
+	/* ===== Dive ===== */
+	
+	UPROPERTY(EditAnywhere, Category = "Dive", meta = (ToolTip = ""))
+	float BasePitchRotation = 0.f;
+	
+	UPROPERTY(EditAnywhere, Category = "Dive", meta = (ToolTip = ""))
+	float DivePitchRotation = 0.f;
+	
+	UPROPERTY(EditAnywhere, Category = "Dive", meta = (ToolTip = ""))
+	float DiveHeightOffset = 0.f;
 };

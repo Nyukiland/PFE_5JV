@@ -80,6 +80,6 @@ private:
 	bool WasDiving_ = true;
 	float SmoothedPitchDelta_ = 0.0f;
 	float SmoothedRollDelta_ = 0.0f;
-	FRotator BaseCameraRotation_;
 	FRotator TargetCameraRotation_;
+	FVector TargetCameraLocation_;
 };

@@ -29,7 +29,6 @@ void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
     SmoothedCameraRotation_ = FRotator(PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch,
         Owner->GetActorRotation().Yaw, 0);//VisualResourcePtr_->GetRelativeRotation().Roll);
     CurrentTurnRoll_ = 0.f;
-    BaseCameraRotation_ = CameraPtr_->GetRelativeRotation();
 }
 
 void UPFCameraResource::ComponentTick_Implementation(float deltaTime)
@@ -144,6 +143,11 @@ void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRot
 
 void UPFCameraResource::UpdateCameraDive(float DeltaTime)
 {
+    FRotator BaseLocalRotation(DataPtr_->BasePitchRotation, 0.f, 0.f);
+    FRotator DiveLocalRotation(DataPtr_->DivePitchRotation, 0.f, 0.f);
+    FVector  BaseLocalLocation(0.f, 0.f, 0.f);
+    FVector  DiveLocalLocation(0.f, 0.f, DataPtr_->DiveHeightOffset);
+    
     // GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, FString::Printf(TEXT("[Blanco] %hhd"), DiveAbilityPtr_->AutoDiveComplete()));
     // any dive => change camera
     if (!DiveAbilityPtr_->IsDiving())
@@ -152,7 +156,8 @@ void UPFCameraResource::UpdateCameraDive(float DeltaTime)
         {
             // UE_LOG(LogTemp, Warning, TEXT("[Blanco] ON ARRETE DE DIVE"));
             // Rotation normale
-            TargetCameraRotation_ = BaseCameraRotation_;
+            TargetCameraRotation_ = BaseLocalRotation;
+            TargetCameraLocation_ = BaseLocalLocation;
             ShakeTime_ = 0.f;
             WasDiving_ = false;
         }
@@ -163,7 +168,8 @@ void UPFCameraResource::UpdateCameraDive(float DeltaTime)
         {
             // UE_LOG(LogTemp, Warning, TEXT("[Blanco] ON DIIIIIIIVE"));
             // Rotation de dive
-            TargetCameraRotation_ = FRotator(0, 0, 0);
+            TargetCameraRotation_ = DiveLocalRotation;
+            TargetCameraLocation_ = DiveLocalLocation;
             WasDiving_ = true;
         }
     
@@ -181,7 +187,7 @@ void UPFCameraResource::UpdateCameraDive(float DeltaTime)
             ShakeOffset.Roll  = NoiseRoll  * DataPtr_->RollAmplitude;
             ShakeOffset.Pitch = NoisePitch * DataPtr_->PitchAmplitude;
             ShakeOffset.Yaw   = NoiseYaw   * DataPtr_->YawAmplitude;
-            FRotator DiveBase = FRotator(0,0,0);
+            FRotator DiveBase = FRotator(DataPtr_->DivePitchRotation,0,0);
             TargetCameraRotation_ = DiveBase + ShakeOffset;
         }
     }
@@ -189,22 +195,28 @@ void UPFCameraResource::UpdateCameraDive(float DeltaTime)
     FRotator Current = CameraPtr_->GetRelativeRotation();
     FRotator NewRotation = FMath::RInterpTo(Current, TargetCameraRotation_, DeltaTime, DataPtr_->LookAtInterpSpeed);
     CameraPtr_->SetRelativeRotation(NewRotation);
+    
+    FVector CurrentLocation = CameraPtr_->GetRelativeLocation();
+    FVector NewLocation = FMath::VInterpTo(CurrentLocation, TargetCameraLocation_, DeltaTime, DataPtr_->LookAtInterpSpeed);
+    CameraPtr_->SetRelativeLocation(NewLocation);
 }
 
 void UPFCameraResource::UpdateCameraDistance(float DeltaTime)
 {
     const float CurrentSpeed = PhysicReferencePtr_->GetCurrentVelocity().Length();
     const float CameraDistance = UPFMathHelper::RemapClamped(
-            CurrentSpeed,
-            GlideAbilityDataPtr_->AutoDiveSpeedLimit,
-            PhysicReferencePtr_->GetMaxBoostVelocity(),
-            DataPtr_->MinDistanceToCamera,
-            DataPtr_->MaxDistanceToCamera);
+        CurrentSpeed,
+        GlideAbilityDataPtr_->AutoDiveSpeedLimit,
+        PhysicReferencePtr_->GetMaxBoostVelocity(),
+        DataPtr_->MinDistanceToCamera * 100,
+        DataPtr_->MaxDistanceToCamera * 100);
 
     FVector PlayerCenter = Owner->GetActorLocation();
-    FVector Direction = CameraPtr_->GetForwardVector();
-    Direction.Normalize();
-    FVector TargetLocation = PlayerCenter - Direction * CameraDistance;
+    FVector Backward = -CameraPtr_->GetForwardVector();
+    Backward.Normalize();
+    FVector TargetLocation = PlayerCenter + Backward * CameraDistance;
+    TargetLocation.Z += DataPtr_->DiveHeightOffset;
     FVector NewLocation = FMath::VInterpTo(CameraPtr_->GetComponentLocation(), TargetLocation, DeltaTime, DataPtr_->DistanceInterpSpeed);
+
     CameraPtr_->SetWorldLocation(NewLocation);
 }
