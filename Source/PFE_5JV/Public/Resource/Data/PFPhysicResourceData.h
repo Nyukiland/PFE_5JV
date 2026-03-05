@@ -15,8 +15,12 @@ public:
     float InitialVelocity = 100;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Turn",
-        meta = (ToolTip = "The rotation speed of the pitch"))
-    float PitchRotationLerpVelocity = 10;
+        meta = (ToolTip = "The rotation speed of the pitch when going up"))
+    float PitchRotationLerpVelocityUp = 10;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Turn",
+        meta = (ToolTip = "The rotation speed of the pitch when going down"))
+    float PitchRotationLerpVelocityDown = 10;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Gravity",
         meta = (ToolTip = "Downward force applied to the player"))

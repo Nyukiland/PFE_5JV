@@ -50,8 +50,8 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 		value01 = FMath::Clamp(value01, 0.0f, 1.0f);
 
 		float veloToGive = DataPtr_->MaxVelocityWingBeatVelocity;
-		veloToGive *= DataPtr_->VelocityToGiveCurvePtr->GetFloatValue(value01);
-		PhysicResourcePtr_->AddForwardVelocity(veloToGive);
+		veloToGive *= DataPtr_->VelocityToGiveCurvePtr->GetFloatValue(value01) * deltaTime;
+		PhysicResourcePtr_->AddForwardVelocity(veloToGive, false);
 
 		float rotationToGive = DataPtr_->MaxRotationValue;
 		rotationToGive *= DataPtr_->RotationCurvePtr->GetFloatValue(value01);
