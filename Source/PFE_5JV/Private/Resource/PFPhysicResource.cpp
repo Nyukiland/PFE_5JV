@@ -304,7 +304,18 @@ void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
 
 	FRotator rotation = ForwardRoot->GetRelativeRotation();
 
-	float lerpToUse = rotation.Pitch > PitchRotation_ ? DataPtr_->PitchRotationLerpVelocityDown : DataPtr_->PitchRotationLerpVelocityUp;
+	float lerpToUse = 1;
+	if (rotation.Pitch > PitchRotation_)
+	{
+		lerpToUse = PitchRotation_ == 0 ?
+			DataPtr_->PitchRotationLerpVelocityDownGoingToBase : DataPtr_->PitchRotationLerpVelocityDown;
+	}
+	else
+	{
+		lerpToUse = PitchRotation_ == 0 ?
+			DataPtr_->PitchRotationLerpVelocityUpGoingToBase : DataPtr_->PitchRotationLerpVelocityUp;
+	}
+	
 	rotation.Pitch = FMath::Lerp(rotation.Pitch, PitchRotation_, deltaTime * lerpToUse);
 	ForwardRoot->SetRelativeRotation(rotation);
 
