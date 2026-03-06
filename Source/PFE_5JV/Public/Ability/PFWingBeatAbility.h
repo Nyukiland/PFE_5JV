@@ -9,7 +9,7 @@ class UPFVisualResource;
 class UPFWingBeatAbilityData;
 class UPFPhysicResource;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWingBeatCalled);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWingBeatCalled, int, wingBeatCount);
 
 UCLASS(Abstract, Blueprintable)
 class PFE_5JV_API UPFWingBeatAbility : public UPFAbility
@@ -19,24 +19,8 @@ class PFE_5JV_API UPFWingBeatAbility : public UPFAbility
 public:
 	UPROPERTY(BlueprintAssignable, Category="WingBeat")
 	FOnWingBeatCalled OnWingBeatCalled;
-
-	UPROPERTY(BlueprintAssignable, Category="SuperWingBeat")
-	FOnWingBeatCalled OnSuperWingBeatTimerLaunch;
-
-	UPROPERTY(BlueprintAssignable, Category="SuperWingBeat")
-	FOnWingBeatCalled OnSuperWingBeatPossible;
-	
-	UPROPERTY(BlueprintAssignable, Category="SuperWingBeat")
-	FOnWingBeatCalled OnSuperWingBeatPossibilityOver;
-	
-	UPROPERTY(BlueprintAssignable, Category="SuperWingBeat")
-	FOnWingBeatCalled OnSuperWingBeatSucceeded;
 	
 	virtual FString GetInfo_Implementation() override;
-
-	// Debug :
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive")
-	TObjectPtr<UPrimitiveComponent> SuperWingBeatDebugSpherePtr_;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive")
@@ -45,53 +29,22 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
 		
+	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
+	virtual void ComponentEnable_Implementation() override;
 	virtual void ComponentTick_Implementation(float deltaTime) override;
 
-	// Previous input values 
-	float PreviousInputRight_;
-	float PreviousInputLeft_;
-
-	// previous input values for calculation
-	float PreviousInputRightRegistered_;
-	float PreviousInputLeftRegistered_;
-
-	// Current input values 
-	float InputRight_;
-	float InputLeft_;
-
-	// WingBeat Input datas : 
-	float InputRightRegistered_;
-	float InputLeftRegistered_;
-	float AverageInputValue_;
-	float InputRegistrationTimer_;
-
-	// SuperWingBeat datas :
-	float SuperBeatWingTimer_ = -1.f;
-	float SuperWingBeatMinTiming_; 
-	float SuperWingBeatMaxTiming_;
-	bool bIsSuperBeatWingPossible_ = false;
-
+	float WingBeatInARowTimer;
+	int WingBeatInARowCount;
+	
 	// Debug datas :
 	float CurrentHeight_;
 	float HeightAtWingBeatBeginning_;
 	float MaxHeightGain_;
-	float EffectiveHeightGainAfter3S_;
-	float TimeEffectiveHeightCalculus_ = -1.f;
 	
 public:
-	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
-
-	virtual void ComponentEnable_Implementation() override;
-	
 	UFUNCTION(BlueprintCallable, Category="WingBeat")
-	void ReceiveInputLeft(float left);
+	void WingBeat();
 
-	UFUNCTION(BlueprintCallable, Category="WingBeat")
-	void ReceiveInputRight(float right);
-
-	UFUNCTION(BlueprintCallable, Category="WingBeat")
-	void WingBeat(float deltaTime);
-	
 private:
-	void GetAverageInputValue();
+	void DebugHeight();
 };

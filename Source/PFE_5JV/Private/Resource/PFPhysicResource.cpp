@@ -57,7 +57,7 @@ float UPFPhysicResource::GetMaxBoostVelocity() const
 		return 0;
 	}
 
-	const float maxBoostVelocity = FMath::Max(DataDivePtr_->MaxDiveVelocity, DataWingBeatPtr_->MaxSuperWingBeatVelocity);
+	const float maxBoostVelocity = DataDivePtr_->MaxDiveVelocity;
 	return maxBoostVelocity;
 }
 
@@ -223,7 +223,7 @@ void UPFPhysicResource::ProcessBaseMaxVelocity(const float deltaTime)
 	velocity = velocity.GetClampedToMaxSize(MaxAbsoluteVelocity);
 
 	// control that we don't exceed base velocity
-	if (velocity.Length() < DataWingBeatPtr_->MaxWingBeatForwardVelocity)
+	if (velocity.Length() < DataWingBeatPtr_->MaxVelocityWingBeatVelocity)
 		return;
 
 	// If we exceed base velocity, we need to slow down :
@@ -231,9 +231,9 @@ void UPFPhysicResource::ProcessBaseMaxVelocity(const float deltaTime)
 	// - take the direction
 	FVector dir = velocity.GetSafeNormal();
 	// - get how much we exceed base velocity : 
-	float velocityScaled = velocity.Length() - DataWingBeatPtr_->MaxWingBeatForwardVelocity;
+	float velocityScaled = velocity.Length() - DataWingBeatPtr_->MaxVelocityWingBeatVelocity;
 	// - get how much boost velocity is above base velocity :
-	float maxVelocityScaled = GetMaxBoostVelocity() - DataWingBeatPtr_->MaxWingBeatForwardVelocity;
+	float maxVelocityScaled = GetMaxBoostVelocity() - DataWingBeatPtr_->MaxVelocityWingBeatVelocity;
 	// - get the ratio :
 	float ratio = FMath::Clamp(velocityScaled / maxVelocityScaled, 0.f, 1.f);
 	// - remove velocity from the friction effect
@@ -303,7 +303,20 @@ void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
 	}
 
 	FRotator rotation = ForwardRoot->GetRelativeRotation();
-	rotation.Pitch = FMath::Lerp(rotation.Pitch, PitchRotation_, deltaTime * DataPtr_->PitchRotationLerpVelocity);
+
+	float lerpToUse = 1;
+	if (rotation.Pitch > PitchRotation_)
+	{
+		lerpToUse = PitchRotation_ == 0 ?
+			DataPtr_->PitchRotationLerpVelocityDownGoingToBase : DataPtr_->PitchRotationLerpVelocityDown;
+	}
+	else
+	{
+		lerpToUse = PitchRotation_ == 0 ?
+			DataPtr_->PitchRotationLerpVelocityUpGoingToBase : DataPtr_->PitchRotationLerpVelocityUp;
+	}
+	
+	rotation.Pitch = FMath::Lerp(rotation.Pitch, PitchRotation_, deltaTime * lerpToUse);
 	ForwardRoot->SetRelativeRotation(rotation);
 
 	PitchRotation_ = 0;
