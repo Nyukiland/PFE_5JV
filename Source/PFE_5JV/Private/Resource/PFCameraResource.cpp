@@ -108,14 +108,13 @@ void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRot
     const float BaseYaw = Owner->GetActorRotation().Yaw;
     float InputYaw = TurnAbilityPtr_->InputRight_ - TurnAbilityPtr_->InputLeft_;
     float TargetOvershootYaw = InputYaw * DataPtr_->OvershootYawOffset;
-    SmoothedOvershootYaw_ = FMath::FInterpTo(SmoothedOvershootYaw_, TargetOvershootYaw, DeltaTime, DataPtr_->OvershootInterpSpeed);
-    float TargetWorldYaw = BaseYaw + CameraYawOffset_ + InputYaw + SmoothedOvershootYaw_;
+    SmoothedOvershootYaw_ = FMath::FInterpTo(SmoothedOvershootYaw_,TargetOvershootYaw,DeltaTime,DataPtr_->OvershootInterpSpeed);
+    float NormalOffset = CameraYawOffset_ + InputYaw;
+    NormalOffset = FMath::Clamp(NormalOffset,-DataPtr_->MaxYawAngle,DataPtr_->MaxYawAngle);
+    float TargetWorldYaw = BaseYaw + NormalOffset + SmoothedOvershootYaw_;
     FRotator CurrentRotYaw(0.f, SmoothedCameraRotation_.Yaw, 0.f);
     FRotator TargetRotYaw(0.f, TargetWorldYaw, 0.f);
-    SmoothedCameraRotation_.Yaw = FMath::RInterpTo(CurrentRotYaw, TargetRotYaw, DeltaTime, DataPtr_->YawLagSpeed).Yaw;
-    float NormalOffset = BaseYaw + InputYaw + CameraYawOffset_ - BaseYaw;
-    NormalOffset = FMath::Clamp(NormalOffset, -DataPtr_->MaxYawAngle, DataPtr_->MaxYawAngle);
-    SmoothedCameraRotation_.Yaw = BaseYaw + NormalOffset + SmoothedOvershootYaw_;
+    SmoothedCameraRotation_.Yaw =FMath::RInterpTo(CurrentRotYaw,TargetRotYaw,DeltaTime,DataPtr_->YawLagSpeed).Yaw;
     FinalRotation.Yaw = SmoothedCameraRotation_.Yaw;
     
     // ---- PITCH ----
@@ -193,11 +192,11 @@ void UPFCameraResource::UpdateCameraDive(float DeltaTime)
     }
 
     FRotator Current = CameraPtr_->GetRelativeRotation();
-    FRotator NewRotation = FMath::RInterpTo(Current, TargetCameraRotation_, DeltaTime, DataPtr_->LookAtInterpSpeed);
+    FRotator NewRotation = FMath::RInterpTo(Current, TargetCameraRotation_, DeltaTime, DataPtr_->DiveInterpSpeed);
     CameraPtr_->SetRelativeRotation(NewRotation);
     
     FVector CurrentLocation = CameraPtr_->GetRelativeLocation();
-    FVector NewLocation = FMath::VInterpTo(CurrentLocation, TargetCameraLocation_, DeltaTime, DataPtr_->LookAtInterpSpeed);
+    FVector NewLocation = FMath::VInterpTo(CurrentLocation, TargetCameraLocation_, DeltaTime, DataPtr_->DiveInterpSpeed);
     CameraPtr_->SetRelativeLocation(NewLocation);
 }
 
