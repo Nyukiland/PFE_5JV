@@ -146,36 +146,43 @@ void UPFCameraResource::UpdateCameraDive(float DeltaTime)
     FRotator DiveLocalRotation(DataPtr_->DivePitchRotation, 0.f, 0.f);
     FVector  BaseLocalLocation(0.f, 0.f, 0.f);
     FVector  DiveLocalLocation(0.f, 0.f, DataPtr_->DiveHeightOffset);
+
+    ElapsedDiveTime += DeltaTime;
+    // GEngine->AddOnScreenDebugMessage(-1,0.f,FColor::Red,FString::Printf(TEXT("DiveInterpSpeed = %f | DistanceInterpSpeed = %f"), DataPtr_->DiveInterpSpeed, DataPtr_->DistanceInterpSpeed));
+    // GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, FString::Printf(TEXT("Was diving %hhd | HasStartedDiveTransition %hhd | ElasedDiveTime %f"), WasDiving_, HasStartedDiveTransition, ElapsedDiveTime));
     
-    GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, FString::Printf(TEXT("[Blanco] dive : %hhd ||| auto : %hhd"), DiveAbilityPtr_->IsDiving(), DiveAbilityPtr_->AutoDiveComplete()));
     // any dive => change camera
     if (!DiveAbilityPtr_->IsDiving())
     {
         if (WasDiving_)
         {
-            UE_LOG(LogTemp, Warning, TEXT("[Blanco] ON ARRETE DE DIVE"));
             // Rotation normale
             TargetCameraRotation_ = BaseLocalRotation;
             TargetCameraLocation_ = BaseLocalLocation;
             ShakeTime_ = 0.f;
             WasDiving_ = false;
+            HasStartedDiveTransition = false;
         }
     }
     else
     {
         if (!WasDiving_)
         {
-            UE_LOG(LogTemp, Warning, TEXT("[Blanco] ON DIIIIIIIVE"));
+            ElapsedDiveTime = 0.f;
+            WasDiving_ = true;
+        }
+        
+        if (!HasStartedDiveTransition && ElapsedDiveTime > DataPtr_->DurationBeforeDive)
+        {
             // Rotation de dive
             TargetCameraRotation_ = DiveLocalRotation;
             TargetCameraLocation_ = DiveLocalLocation;
-            WasDiving_ = true;
+            HasStartedDiveTransition = true;
         }
 
         // Involuntary dive => shake
         if (!DiveAbilityPtr_->AutoDiveComplete())
         {
-            UE_LOG(LogTemp, Warning, TEXT("[Blanco] CECI EST UNE CHUTE INCONTROLEE AHHHHHHHHHH"));
             ShakeTime_ += DeltaTime;
         
             float NoiseRoll  = FMath::PerlinNoise1D(ShakeTime_ * DataPtr_->ShakeFrequency);

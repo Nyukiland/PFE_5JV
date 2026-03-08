@@ -78,8 +78,10 @@ private:
 	// Dive
 	bool HasStartedDive_ = false;
 	bool WasDiving_ = true;
+	bool HasStartedDiveTransition = false;
 	float SmoothedPitchDelta_ = 0.0f;
 	float SmoothedRollDelta_ = 0.0f;
 	FRotator TargetCameraRotation_;
 	FVector TargetCameraLocation_;
+	float ElapsedDiveTime = 0.f;
 };

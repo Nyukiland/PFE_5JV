@@ -79,4 +79,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Dive", meta=(ToolTip=""))
 	float DiveInterpSpeed = 5.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Dive", meta=(ToolTip=""))
+	float DurationBeforeDive = 3.0f;
 };
