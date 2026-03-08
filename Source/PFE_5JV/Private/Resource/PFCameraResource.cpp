@@ -147,13 +147,13 @@ void UPFCameraResource::UpdateCameraDive(float DeltaTime)
     FVector  BaseLocalLocation(0.f, 0.f, 0.f);
     FVector  DiveLocalLocation(0.f, 0.f, DataPtr_->DiveHeightOffset);
     
-    // GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, FString::Printf(TEXT("[Blanco] %hhd"), DiveAbilityPtr_->AutoDiveComplete()));
+    GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, FString::Printf(TEXT("[Blanco] dive : %hhd ||| auto : %hhd"), DiveAbilityPtr_->IsDiving(), DiveAbilityPtr_->AutoDiveComplete()));
     // any dive => change camera
     if (!DiveAbilityPtr_->IsDiving())
     {
         if (WasDiving_)
         {
-            // UE_LOG(LogTemp, Warning, TEXT("[Blanco] ON ARRETE DE DIVE"));
+            UE_LOG(LogTemp, Warning, TEXT("[Blanco] ON ARRETE DE DIVE"));
             // Rotation normale
             TargetCameraRotation_ = BaseLocalRotation;
             TargetCameraLocation_ = BaseLocalLocation;
@@ -165,23 +165,23 @@ void UPFCameraResource::UpdateCameraDive(float DeltaTime)
     {
         if (!WasDiving_)
         {
-            // UE_LOG(LogTemp, Warning, TEXT("[Blanco] ON DIIIIIIIVE"));
+            UE_LOG(LogTemp, Warning, TEXT("[Blanco] ON DIIIIIIIVE"));
             // Rotation de dive
             TargetCameraRotation_ = DiveLocalRotation;
             TargetCameraLocation_ = DiveLocalLocation;
             WasDiving_ = true;
         }
-    
-        // Involuntary dive => shake
-        if (DiveAbilityPtr_->AutoDiveComplete())
-        {
-            // UE_LOG(LogTemp, Warning, TEXT("[Blanco] CECI EST UNE CHUTE INCONTROLEE AHHHHHHHHHH"));
-            ShakeTime_ += DeltaTime;
 
+        // Involuntary dive => shake
+        if (!DiveAbilityPtr_->AutoDiveComplete())
+        {
+            UE_LOG(LogTemp, Warning, TEXT("[Blanco] CECI EST UNE CHUTE INCONTROLEE AHHHHHHHHHH"));
+            ShakeTime_ += DeltaTime;
+        
             float NoiseRoll  = FMath::PerlinNoise1D(ShakeTime_ * DataPtr_->ShakeFrequency);
             float NoisePitch = FMath::PerlinNoise1D((ShakeTime_ + 100.f) * DataPtr_->ShakeFrequency);
             float NoiseYaw   = FMath::PerlinNoise1D((ShakeTime_ + 200.f) * DataPtr_->ShakeFrequency);
-
+        
             FRotator ShakeOffset;
             ShakeOffset.Roll  = NoiseRoll  * DataPtr_->RollAmplitude;
             ShakeOffset.Pitch = NoisePitch * DataPtr_->PitchAmplitude;
