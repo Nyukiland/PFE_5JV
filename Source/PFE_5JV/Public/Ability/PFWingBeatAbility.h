@@ -5,6 +5,7 @@
 #include "StateMachine/StateComponent/PFAbility.h"
 #include "PFWingBeatAbility.generated.h"
 
+class UPFDiveAbility;
 class UPFVisualResource;
 class UPFWingBeatAbilityData;
 class UPFPhysicResource;
@@ -23,11 +24,14 @@ public:
 	virtual FString GetInfo_Implementation() override;
 	
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat")
 	TObjectPtr<UPFWingBeatAbilityData> DataPtr_;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="WingBeat")
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="WingBeat")
+	TObjectPtr<UPFDiveAbility> DiveAbilityPtr_;
 		
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 	virtual void ComponentEnable_Implementation() override;

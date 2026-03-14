@@ -1,6 +1,7 @@
 #include "Ability/PFWingBeatAbility.h"
 
 #include "MathUtil.h"
+#include "Ability/PFDiveAbility.h"
 #include "Resource/PFPhysicResource.h"
 #include "Resource/PFVisualResource.h"
 #include "StateMachine/PFPlayerCharacter.h"
@@ -23,6 +24,7 @@ void UPFWingBeatAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerO
 	Super::ComponentInit_Implementation(ownerObj);
 
 	PhysicResourcePtr_ = ownerObj->GetStateComponent<UPFPhysicResource>();
+	DiveAbilityPtr_ = ownerObj->GetStateComponent<UPFDiveAbility>();
 }
 
 void UPFWingBeatAbility::ComponentEnable_Implementation()
@@ -36,12 +38,25 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 {
 	Super::ComponentTick_Implementation(deltaTime);
 
+	if (!PhysicResourcePtr_ && !DiveAbilityPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[WingBeatAbility] missing component"));
+		return;
+	}
+	
 	if (!DataPtr_ || !DataPtr_->RotationCurvePtr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[WingBeatAbility] Bad set up on data"));
 		return;
 	}
 
+	if (DiveAbilityPtr_->IsDiving())
+	{
+		WingBeatInARowCount = 0;
+		WingBeatInARowTimer = 100;
+		return;
+	}
+	
 	if (WingBeatInARowCount > 0)
 	{
 		WingBeatInARowTimer += deltaTime;
@@ -66,6 +81,12 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 
 void UPFWingBeatAbility::WingBeat()
 {
+	if (!PhysicResourcePtr_ && !DiveAbilityPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[WingBeatAbility] missing component"));
+		return;
+	}
+	
 	if (!DataPtr_ || !DataPtr_->WingBeatAddForceBasedOnTimeCurvePtr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[WingBeatAbility] Bad set up on data"));
