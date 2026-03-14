@@ -148,7 +148,8 @@ void UPFDiveAbility::DiveVisual(float deltaTime)
 	if (!IsDiving())
 		return;
 
-	float value = FMath::Lerp(0, DataPtr_->MaxRotationPitch, CurrentMedianValue_);
+	float rotAlphaBasedOnCurve = DataPtr_->RotationPitchBasedOnInputCurvePtr->GetFloatValue(CurrentMedianValue_);
+	float value = FMath::Lerp(0, DataPtr_->MaxRotationPitch, rotAlphaBasedOnCurve);
 	PhysicResourcePtr_->SetPitchRotationVisual(value, -4);
 }
 

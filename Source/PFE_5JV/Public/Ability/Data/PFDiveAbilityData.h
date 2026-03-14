@@ -31,6 +31,10 @@ public:
 	float MaxRotationPitch;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dive/PitchRotation",
+	meta = (ToolTip = "Dive value based on the input"))
+	TObjectPtr<UCurveFloat> RotationPitchBasedOnInputCurvePtr;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dive/PitchRotation",
 		meta = (ToolTip = "Speed at which the bird rotate up"))
 	float LerpPitchSpeedGoingUp;
 

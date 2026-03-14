@@ -33,7 +33,7 @@ public:
 	float WingBeatForce;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat/Force", meta=(ToolTip="Velocité donné par rapport à l'input"))
-	TObjectPtr<UCurveFloat> WingBeatAddForceBasedOnTimeCurve;
+	TObjectPtr<UCurveFloat> WingBeatAddForceBasedOnTimeCurvePtr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat/Force", meta=(ToolTip="Le temps pour donné la force"))
 	float WingBeatTimeForceGiven;

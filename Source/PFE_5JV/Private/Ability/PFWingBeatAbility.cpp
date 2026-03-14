@@ -66,7 +66,7 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 
 void UPFWingBeatAbility::WingBeat()
 {
-	if (!DataPtr_ || !DataPtr_->WingBeatAddForceBasedOnTimeCurve)
+	if (!DataPtr_ || !DataPtr_->WingBeatAddForceBasedOnTimeCurvePtr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[WingBeatAbility] Bad set up on data"));
 		return;
@@ -81,7 +81,7 @@ void UPFWingBeatAbility::WingBeat()
 		toAdd = DataPtr_->MaxVelocityWingBeatVelocity > veloWithAdded ? toAdd : veloDiff;
 		PhysicResourcePtr_->AddForwardVelocity(toAdd, true, true,
 												DataPtr_->WingBeatTimeForceGiven,
-												DataPtr_->WingBeatAddForceBasedOnTimeCurve);
+												DataPtr_->WingBeatAddForceBasedOnTimeCurvePtr);
 	}
 
 	WingBeatInARowTimer = 0;
