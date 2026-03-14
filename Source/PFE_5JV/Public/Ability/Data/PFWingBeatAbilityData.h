@@ -22,6 +22,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Le nombre de clap pour atteindre la rotation maximale"))
 	float MaxClapCount;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Le nombre de clap pour atteindre la rotation maximale"))
+	float RotationAddedIfUnclamped = 20;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Le temps avant le début du reset de la rotation"))
 	float TimerReset;
 

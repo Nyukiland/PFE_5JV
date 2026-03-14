@@ -36,6 +36,7 @@ protected:
 	float WingBeatInARowTimer;
 	int WingBeatInARowCount;
 	float WingBeatValue01;
+	float TargetPitchAccumulator_;
 	
 	// Debug datas :
 	float CurrentHeight_;

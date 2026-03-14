@@ -44,11 +44,18 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 	if (WingBeatInARowCount > 0)
 	{
 		WingBeatInARowTimer += deltaTime;
-		
-		float rotationToGive = DataPtr_->MaxRotationValue;
-		rotationToGive *= DataPtr_->RotationCurvePtr->GetFloatValue(WingBeatValue01);
-		PhysicResourcePtr_->SetPitchRotationVisual(rotationToGive, -3);
 
+		if (DataPtr_->MaxRotationValue < 360)
+		{
+			float rotationToGive = DataPtr_->MaxRotationValue;
+			rotationToGive *= DataPtr_->RotationCurvePtr->GetFloatValue(WingBeatValue01);
+			PhysicResourcePtr_->SetPitchRotationVisual(rotationToGive, -3);
+		}
+		else
+		{
+			PhysicResourcePtr_->SetPitchRotationVisual(TargetPitchAccumulator_, -3);
+		}
+		
 		if (WingBeatInARowTimer > DataPtr_->TimerReset)
 		{
 			WingBeatInARowCount = -1;
@@ -72,23 +79,36 @@ void UPFWingBeatAbility::WingBeat()
 		float veloDiff = DataPtr_->MaxVelocityWingBeatVelocity - forwardVelo;
 		toAdd = DataPtr_->MaxVelocityWingBeatVelocity > veloWithAdded ? toAdd : veloDiff;
 		PhysicResourcePtr_->AddForwardVelocity(toAdd, true, true,
-												DataPtr_->WingBeatTimeForceGiven, DataPtr_->WingBeatAddForceBasedOnTimeCurve);
+												DataPtr_->WingBeatTimeForceGiven,
+												DataPtr_->WingBeatAddForceBasedOnTimeCurve);
 	}
 
 	WingBeatInARowTimer = 0;
 
-	if (FMath::Abs(PhysicResourcePtr_->CurrentPitchValue_) < 1 || WingBeatInARowCount != -1)
+	if (DataPtr_->MaxRotationValue < 360)
 	{
-		WingBeatInARowCount++;
+		if (FMath::Abs(PhysicResourcePtr_->CurrentPitchValue_) < 1 || WingBeatInARowCount != -1)
+		{
+			WingBeatInARowCount++;
+		}
+		else
+		{
+			float pitchRatio = FMath::Abs(PhysicResourcePtr_->CurrentPitchValue_) / DataPtr_->MaxRotationValue;
+			pitchRatio = FMath::Clamp(pitchRatio, 0.0f, 1.0f);
+
+			WingBeatInARowCount = FMath::RoundToInt(pitchRatio * DataPtr_->MaxClapCount);
+		}
 	}
 	else
 	{
-		float pitchRatio = FMath::Abs(PhysicResourcePtr_->CurrentPitchValue_) / DataPtr_->MaxRotationValue;
-		pitchRatio = FMath::Clamp(pitchRatio, 0.0f, 1.0f);
-        
-		WingBeatInARowCount = FMath::RoundToInt(pitchRatio * DataPtr_->MaxClapCount);
+		if (WingBeatInARowCount == -1)
+			TargetPitchAccumulator_ = PhysicResourcePtr_->CurrentPitchValue_;
+		WingBeatInARowTimer = 0.0f;
+		WingBeatInARowCount++;
+
+		TargetPitchAccumulator_ += DataPtr_->RotationAddedIfUnclamped;
 	}
-	
+
 	RecalculateWingBeat01();
 	OnWingBeatCalled.Broadcast(WingBeatInARowCount);
 }

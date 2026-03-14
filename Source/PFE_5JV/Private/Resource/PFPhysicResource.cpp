@@ -301,9 +301,11 @@ void UPFPhysicResource::SetPitchRotationVisual(float rotation, int priority)
 	if (priority > PitchPriority_ || FMath::Abs(rotation) < 1)
 		return;
 
+	float normalizedRot = FRotator::NormalizeAxis(rotation);
+	
 	PitchResetRot_ = false;
 	PitchPriority_ = priority;
-	PitchRotation_ = rotation;
+	PitchRotation_ = normalizedRot;
 }
 
 void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
@@ -324,11 +326,9 @@ void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
 	
 	CurrentPitchValue_ += delta * FMath::Clamp(speed * deltaTime, 0.f, 1.f);
 
-	CurrentPitchValue_ = FRotator::NormalizeAxis(CurrentPitchValue_);
-
-	FRotator birdRot = ForwardRootPtr_->GetRelativeRotation();
-	birdRot.Pitch = CurrentPitchValue_;
-	ForwardRootPtr_->SetRelativeRotation(birdRot);
+	FRotator newRot = FRotator::ZeroRotator;
+	newRot.Pitch = CurrentPitchValue_;
+	ForwardRootPtr_->SetRelativeRotation(newRot);
 
 	bIsFlipped = FMath::FindDeltaAngleDegrees(CurrentPitchValue_, 180) < 90;
 	PitchResetRot_ = true;
