@@ -128,7 +128,7 @@ float UPFPhysicResource::GetCurrentAirFriction() const
 
 void UPFPhysicResource::ProcessAirFriction(const float deltaTime)
 {
-	if (!DataPtr_ || !DataPtr_->FrictionTimerControlCurvePtr)
+	if (!DataPtr_ || !DataPtr_->FrictionTimerControlCurvePtr || !DataPtr_->FrictionLostBasedOnSpeedCurvePtr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[PhysicResource] DataPtr_ is null"));
 		return;
@@ -140,6 +140,7 @@ void UPFPhysicResource::ProcessAirFriction(const float deltaTime)
 	}
 
 	float friction = GetCurrentAirFriction();
+	friction *= DataPtr_->FrictionLostBasedOnSpeedCurvePtr->GetFloatValue(GetForwardVelocityPercentage());
 	friction *= FrictionPercentValue();
 	friction *= deltaTime;
 
@@ -203,7 +204,7 @@ void UPFPhysicResource::ProcessVelocity(const float deltaTime)
 
 	CurrentForwardVelocity_ = velocityForward;
 
-	velocity += ForwardRoot->GetForwardVector() * velocityForward.Length();
+	velocity += ForwardRootPtr_->GetForwardVector() * velocityForward.Length();
 
 	PhysicRoot->SetPhysicsLinearVelocity(velocity);
 }
@@ -246,7 +247,7 @@ void UPFPhysicResource::ProcessOverrideVelocity()
 {
 	if (FMath::Abs(CurrentOverrideForwardVelocity_) > 0.1f)
 	{
-		PhysicRoot->SetPhysicsLinearVelocity(ForwardRoot->GetForwardVector() * CurrentOverrideForwardVelocity_);
+		PhysicRoot->SetPhysicsLinearVelocity(ForwardRootPtr_->GetForwardVector() * CurrentOverrideForwardVelocity_);
 		CurrentOverrideForwardVelocity_ = 0;
 	}
 }
@@ -285,11 +286,22 @@ void UPFPhysicResource::ProcessAngularVelocity(const float deltaTime)
 	PhysicRoot->SetPhysicsAngularVelocityInDegrees(velocity);
 }
 
+void UPFPhysicResource::AddToPitchRotationVisual(float rotationToAdd, int priority)
+{
+	if (priority > PitchPriority_ || FMath::Abs(rotationToAdd) < 1)
+		return;
+
+	PitchResetRot_ = false;
+	PitchPriority_ = priority;
+	PitchRotation_ = CurrentPitchValue_ + rotationToAdd;
+}
+
 void UPFPhysicResource::SetPitchRotationVisual(float rotation, int priority)
 {
 	if (priority > PitchPriority_ || FMath::Abs(rotation) < 1)
 		return;
 
+	PitchResetRot_ = false;
 	PitchPriority_ = priority;
 	PitchRotation_ = rotation;
 }
@@ -302,23 +314,25 @@ void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
 		return;
 	}
 
-	FRotator rotation = ForwardRoot->GetRelativeRotation();
+	float delta = FMath::FindDeltaAngleDegrees(CurrentPitchValue_, PitchRotation_);
 
-	float lerpToUse = 1;
-	if (rotation.Pitch > PitchRotation_)
-	{
-		lerpToUse = PitchRotation_ == 0 ?
-			DataPtr_->PitchRotationLerpVelocityDownGoingToBase : DataPtr_->PitchRotationLerpVelocityDown;
-	}
+	float speed = 0;
+	if (PitchResetRot_)
+		speed = (delta > 0.f) ? DataPtr_->PitchRotationLerpVelocityUpGoingToBase : DataPtr_->PitchRotationLerpVelocityDownGoingToBase;
 	else
-	{
-		lerpToUse = PitchRotation_ == 0 ?
-			DataPtr_->PitchRotationLerpVelocityUpGoingToBase : DataPtr_->PitchRotationLerpVelocityUp;
-	}
+		speed = (delta > 0.f) ? DataPtr_->PitchRotationLerpVelocityUp : DataPtr_->PitchRotationLerpVelocityDown;
 	
-	rotation.Pitch = FMath::Lerp(rotation.Pitch, PitchRotation_, deltaTime * lerpToUse);
-	ForwardRoot->SetRelativeRotation(rotation);
+	CurrentPitchValue_ += delta * FMath::Clamp(speed * deltaTime, 0.f, 1.f);
 
+	CurrentPitchValue_ = FRotator::NormalizeAxis(CurrentPitchValue_);
+
+	FRotator birdRot = ForwardRootPtr_->GetRelativeRotation();
+	birdRot.Pitch = CurrentPitchValue_;
+	ForwardRootPtr_->SetRelativeRotation(birdRot);
+
+	bIsFlipped = FMath::FindDeltaAngleDegrees(CurrentPitchValue_, 180) < 90;
+	PitchResetRot_ = true;
+	//PitchRotation_ = bIsFlipped ? 180 : 0;
 	PitchRotation_ = 0;
 	PitchPriority_ = 1000;
 }

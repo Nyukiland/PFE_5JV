@@ -54,6 +54,10 @@ public:
         meta = (ToolTip = "Use the Timer Max Friction to evaluate the curve and use a percentage of the friction"))
     TObjectPtr<UCurveFloat> FrictionTimerControlCurvePtr;
 
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction",
+        meta = (ToolTip = "Based on your speed what will you loose"))
+    TObjectPtr<UCurveFloat> FrictionLostBasedOnSpeedCurvePtr;
+
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Above",
         meta = (ToolTip = "The friction applied to the player when going above the max speed"))
     float AboveVelocityFriction;

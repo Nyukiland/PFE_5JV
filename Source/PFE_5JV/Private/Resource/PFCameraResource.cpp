@@ -26,7 +26,7 @@ void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
     CameraRootPtr_->SetUsingAbsoluteRotation(true);
     PreviousYaw_ = Owner->GetActorRotation().Yaw;
     // BaseCameraRoll_ = CameraPtr_->GetRelativeRotation().Roll;
-    SmoothedCameraRotation_ = FRotator(PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch,
+    SmoothedCameraRotation_ = FRotator(PhysicReferencePtr_->ForwardRootPtr_->GetComponentRotation().Pitch,
         Owner->GetActorRotation().Yaw, 0);//VisualResourcePtr_->GetRelativeRotation().Roll);
     CurrentTurnRoll_ = 0.f;
 }
@@ -118,7 +118,7 @@ void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRot
     FinalRotation.Yaw = SmoothedCameraRotation_.Yaw;
     
     // ---- PITCH ----
-    const float BasePitch = PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch;
+    const float BasePitch = PhysicReferencePtr_->ForwardRootPtr_->GetComponentRotation().Pitch;
     float TargetDeltaPitch = CameraPitchOffset_;
     TargetDeltaPitch = FMath::Clamp(TargetDeltaPitch,-DataPtr_->MaxPitchAngle,DataPtr_->MaxPitchAngle);
     SmoothedPitchDelta_ = FMath::FInterpTo(SmoothedPitchDelta_,TargetDeltaPitch,DeltaTime,DataPtr_->PitchLagSpeed);

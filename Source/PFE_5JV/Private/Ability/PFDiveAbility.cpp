@@ -149,7 +149,7 @@ void UPFDiveAbility::DiveVisual(float deltaTime)
 		return;
 
 	float value = FMath::Lerp(0, DataPtr_->MaxRotationPitch, CurrentMedianValue_);
-	PhysicResourcePtr_->SetPitchRotationVisual(value, -1);
+	PhysicResourcePtr_->SetPitchRotationVisual(value, -4);
 }
 
 void UPFDiveAbility::DiveRoll(float deltaTime)

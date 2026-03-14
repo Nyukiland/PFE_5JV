@@ -35,6 +35,7 @@ protected:
 
 	float WingBeatInARowTimer;
 	int WingBeatInARowCount;
+	float WingBeatValue01;
 	
 	// Debug datas :
 	float CurrentHeight_;
@@ -47,4 +48,5 @@ public:
 
 private:
 	void DebugHeight();
+	float RecalculateWingBeat01();
 };

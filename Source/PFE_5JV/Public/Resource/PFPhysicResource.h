@@ -67,7 +67,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
 	FVector CurrentForwardVelocity_;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
-	FVector CurrentGlobalVelocity_;	
+	FVector CurrentGlobalVelocity_;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pitch")
+	float CurrentPitchValue_;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pitch")
+	bool bIsFlipped;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PhysicResource")
@@ -92,6 +96,7 @@ protected:
 	UPROPERTY()
 	TArray<FVelocityToAdd> AngularVelocities_;
 
+	bool PitchResetRot_;
 	float PitchRotation_;
 	int PitchPriority_;
 
@@ -143,6 +148,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void ProcessAngularVelocity(const float deltaTime);
 
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	void AddToPitchRotationVisual(float rotationToAdd, int priority);
+	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void SetPitchRotationVisual(float rotation, int priority);
 
