@@ -60,6 +60,7 @@ void UPFTurnAbility::Turn(float deltaTime)
 	{
 		PhysicResourcePtr_->SetYawRotationVelocity(0);
 		TimerStartTurn_ = 0;
+		SlowForceTimer_ = 0;
 		return;
 	}
 
