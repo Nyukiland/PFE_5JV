@@ -11,6 +11,7 @@ FString UPFWingBeatAbility::GetInfo_Implementation()
 {
 	FString text = TEXT("<hb>WingBeat:</>");
 	text += TEXT("\n <b>CurrentHeight: </>") + FString::Printf(TEXT("%f"), CurrentHeight_);
+	text += TEXT("\n <b>WingBeatInARowCount: </>") + FString::Printf(TEXT("%d"), WingBeatInARowCount);
 	text += TEXT("\n <b>HeightAtWingBeatBeginning: </>") + FString::Printf(TEXT("%f"), HeightAtWingBeatBeginning_);
 	text += TEXT("\n <b>MaxHeightGain: </>") + FString::Printf(TEXT("%f"), MaxHeightGain_);
 
@@ -28,7 +29,7 @@ void UPFWingBeatAbility::ComponentEnable_Implementation()
 {
 	Super::ComponentEnable_Implementation();
 
-	WingBeatInARowCount = -1;
+	WingBeatInARowCount = 0;
 }
 
 void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
@@ -58,7 +59,7 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 		
 		if (WingBeatInARowTimer > DataPtr_->TimerReset)
 		{
-			WingBeatInARowCount = -1;
+			WingBeatInARowCount = 0;
 		}
 	}
 }
@@ -109,6 +110,7 @@ void UPFWingBeatAbility::WingBeat()
 		TargetPitchAccumulator_ += DataPtr_->RotationAddedIfUnclamped;
 	}
 
+    PhysicResourcePtr_->ResetPhysicsTimer();
 	RecalculateWingBeat01();
 	OnWingBeatCalled.Broadcast(WingBeatInARowCount);
 }
