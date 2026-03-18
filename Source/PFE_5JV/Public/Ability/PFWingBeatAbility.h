@@ -39,7 +39,6 @@ protected:
 
 	float WingBeatInARowTimer;
 	int WingBeatInARowCount;
-	float WingBeatValue01;
 	float TargetPitchAccumulator_;
 	
 	// Debug datas :
@@ -53,5 +52,5 @@ public:
 
 private:
 	void DebugHeight();
-	float RecalculateWingBeat01();
+	float FindClosestClapValue(float pitch) const;
 };

@@ -31,7 +31,7 @@ void UPFWingBeatAbility::ComponentEnable_Implementation()
 {
 	Super::ComponentEnable_Implementation();
 
-	WingBeatInARowCount = 0;
+	WingBeatInARowCount = -1;
 }
 
 void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
@@ -43,8 +43,8 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 		UE_LOG(LogTemp, Error, TEXT("[WingBeatAbility] missing component"));
 		return;
 	}
-	
-	if (!DataPtr_ || !DataPtr_->RotationCurvePtr)
+
+	if (!DataPtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[WingBeatAbility] Bad set up on data"));
 		return;
@@ -56,25 +56,17 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 		WingBeatInARowTimer = 100;
 		return;
 	}
-	
-	if (WingBeatInARowCount > 0)
+
+	if (WingBeatInARowCount >= 0)
 	{
 		WingBeatInARowTimer += deltaTime;
 
-		if (DataPtr_->MaxRotationValue < 360)
-		{
-			float rotationToGive = DataPtr_->MaxRotationValue;
-			rotationToGive *= DataPtr_->RotationCurvePtr->GetFloatValue(WingBeatValue01);
-			PhysicResourcePtr_->SetPitchRotationVisual(rotationToGive, -3);
-		}
-		else
-		{
-			PhysicResourcePtr_->SetPitchRotationVisual(TargetPitchAccumulator_, -3);
-		}
-		
+		float rotationToGive = DataPtr_->RotationPerClap[WingBeatInARowCount];
+		PhysicResourcePtr_->SetPitchRotationVisual(rotationToGive, -3);
+
 		if (WingBeatInARowTimer > DataPtr_->TimerReset)
 		{
-			WingBeatInARowCount = 0;
+			WingBeatInARowCount = -1;
 		}
 	}
 }
@@ -86,7 +78,7 @@ void UPFWingBeatAbility::WingBeat()
 		UE_LOG(LogTemp, Error, TEXT("[WingBeatAbility] missing component"));
 		return;
 	}
-	
+
 	if (!DataPtr_ || !DataPtr_->WingBeatAddForceBasedOnTimeCurvePtr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[WingBeatAbility] Bad set up on data"));
@@ -107,32 +99,18 @@ void UPFWingBeatAbility::WingBeat()
 
 	WingBeatInARowTimer = 0;
 
-	if (DataPtr_->MaxRotationValue < 360)
+	if (FMath::Abs(PhysicResourcePtr_->CurrentPitchValue_) < 1 || WingBeatInARowCount != -1)
 	{
-		if (FMath::Abs(PhysicResourcePtr_->CurrentPitchValue_) < 1 || WingBeatInARowCount != -1)
-		{
-			WingBeatInARowCount++;
-		}
-		else
-		{
-			float pitchRatio = FMath::Abs(PhysicResourcePtr_->CurrentPitchValue_) / DataPtr_->MaxRotationValue;
-			pitchRatio = FMath::Clamp(pitchRatio, 0.0f, 1.0f);
-
-			WingBeatInARowCount = FMath::RoundToInt(pitchRatio * DataPtr_->MaxClapCount);
-		}
+		WingBeatInARowCount++;
 	}
 	else
 	{
-		if (WingBeatInARowCount == -1)
-			TargetPitchAccumulator_ = PhysicResourcePtr_->CurrentPitchValue_;
-		WingBeatInARowTimer = 0.0f;
-		WingBeatInARowCount++;
-
-		TargetPitchAccumulator_ += DataPtr_->RotationAddedIfUnclamped;
+		WingBeatInARowCount = FindClosestClapValue(PhysicResourcePtr_->CurrentPitchValue_);
 	}
 
-    PhysicResourcePtr_->ResetPhysicsTimer();
-	RecalculateWingBeat01();
+	WingBeatInARowCount = FMath::Clamp(WingBeatInARowCount, 0, DataPtr_->RotationPerClap.Num() - 1);
+	
+	PhysicResourcePtr_->ResetPhysicsTimer();
 	OnWingBeatCalled.Broadcast(WingBeatInARowCount);
 }
 
@@ -145,9 +123,26 @@ void UPFWingBeatAbility::DebugHeight()
 	CurrentHeight_ = Owner->ForwardRootPtr->GetComponentLocation().Z;
 }
 
-float UPFWingBeatAbility::RecalculateWingBeat01()
+float UPFWingBeatAbility::FindClosestClapValue(float pitch) const
 {
-	WingBeatValue01 = static_cast<float>(WingBeatInARowCount) / static_cast<float>(DataPtr_->MaxClapCount);
-	WingBeatValue01 = FMath::Clamp(WingBeatValue01, 0.0f, 1.0f);
-	return WingBeatValue01;
+	int validIndex = 0;
+	float closestAngle = 1000;
+	for (int i = 0; i < DataPtr_->RotationPerClap.Num(); i++)
+	{
+		float angle = FMath::Abs(DataPtr_->RotationPerClap[i] - pitch);
+
+		UE_LOG(LogTemp, Error, TEXT("angle %f / closest %f / rot %f / pitch %f"),
+			angle, closestAngle, DataPtr_->RotationPerClap[i], pitch);
+		if (angle < closestAngle)
+		{
+			closestAngle = angle;
+			validIndex = i;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	return validIndex;
 }
