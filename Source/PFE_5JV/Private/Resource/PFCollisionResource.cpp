@@ -2,19 +2,28 @@
 
 #include "StateMachine/PFPlayerCharacter.h"
 
-void UPFCollisionResource::RewindAfterCollision(float deltaTime)
+bool UPFCollisionResource::RewindAfterCollision(float deltaTime)
 {
 	TimerRewindIncrement_++;
 	PhysicResource_->SetKinematic(true);
+	PhysicResource_->StopAllMotion();
 
 	FStoredCollisionInfo stored = StoredCollisionInfoList_[TimerRewindIncrement_];
-	
-	PhysicRoot->SetWorldLocation(stored.Position);
 
-	if (TimeSavedList_.Num() == TimerRewindIncrement_)
+	PhysicRoot->SetWorldLocationAndRotation(stored.Position, stored.PhysicRotation,
+		false, nullptr, ETeleportType::TeleportPhysics);
+	PhysicResource_->HardSetPitchRotationVisual(stored.Pitch);
+
+	if (TimeSavedList_.Num() - 1 == TimerRewindIncrement_)
 	{
 		PhysicResource_->SetKinematic(false);
+		PhysicResource_->AddForwardVelocity(stored.ForwardForce * DataPtr_->SlowPercentageAfterSideCollision, false);
+		PhysicResource_->AddVelocity(stored.GlobalForce * DataPtr_->SlowPercentageAfterSideCollision, false);
+		TimerRewindIncrement_ = 0;
+		return true;
 	}
+
+	return false;
 }
 
 void UPFCollisionResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
@@ -33,6 +42,14 @@ void UPFCollisionResource::ComponentInit_Implementation(APFPlayerCharacter* owne
 		&UPFCollisionResource::OnHit);
 }
 
+void UPFCollisionResource::ComponentTick_Implementation(float deltaTime)
+{
+	Super::ComponentTick_Implementation(deltaTime);
+
+	RecordInfoForRollBack(deltaTime);
+	RecordInfoForPlayTest();
+}
+
 void UPFCollisionResource::RecordInfoForRollBack(float deltaTime)
 {
 	if (!DataPtr_ || !PhysicResource_ || !DiveAbility_)
@@ -44,21 +61,22 @@ void UPFCollisionResource::RecordInfoForRollBack(float deltaTime)
 	if (!DataPtr_->bUseRollBackOnFrontalCollision)
 		return;
 
-	if (!bCanRecord_)
+	if (!bCanRecord_ ||
+		TimerRewindIncrement_ != 0)
 		return;
 
 	float forwardVelo = PhysicResource_->CurrentForwardVelocity_.Length();
 	FVector position = PhysicRoot->GetComponentLocation();
 
 	// Store info for the collision
-	FStoredCollisionInfo CollisionInfo =
+	FStoredCollisionInfo collisionInfo =
 		FStoredCollisionInfo(forwardVelo,
 							PhysicResource_->CurrentGlobalVelocity_,
 							position, PhysicRoot->GetComponentRotation(),
 							DiveAbility_->CurrentMedianValue_);
 
 	TimeSavedList_.Insert(OwnerWorld->GetTimeSeconds(), 0);
-	StoredCollisionInfoList_.Insert(CollisionInfo, 0);
+	StoredCollisionInfoList_.Insert(collisionInfo, 0);
 
 	//Test to remove the useless info
 	if (OwnerWorld->GetTimeSeconds() - TimeSavedList_.Last() > DataPtr_->DurationOfRemember)
@@ -98,9 +116,6 @@ void UPFCollisionResource::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActo
 	FVector normalOfCollider = Hit.ImpactNormal;
 	FVector playerMovement = PhysicResource_->GetCurrentVelocity();
 	float dotCollision = FVector::DotProduct(normalOfCollider, playerMovement.GetSafeNormal());
-
-	if (dotCollision > 0)
-		return;
 
 	if (FMath::Abs(dotCollision) > DataPtr_->ThresholdCollision)
 	{

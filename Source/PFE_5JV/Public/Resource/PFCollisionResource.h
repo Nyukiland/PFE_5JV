@@ -53,7 +53,6 @@ struct FStoredPlaytestInfo
 public:
 	float ForwardForce;
 	FVector Position;
-	// TODO: Add Scoring info 
 
 public:
 	FStoredPlaytestInfo()
@@ -106,14 +105,15 @@ protected:
 	UPROPERTY()
 	TArray<FStoredPlaytestInfo> GameInfoList_;
 
-	int TimerRewindIncrement_;
+	int TimerRewindIncrement_ = 0;
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Collision")
-	void RewindAfterCollision(float deltaTime);
+	bool RewindAfterCollision(float deltaTime);
 	
 protected:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
+	virtual void ComponentTick_Implementation(float deltaTime) override;
 
 	void RecordInfoForRollBack(float deltaTime);
 	void RecordInfoForPlayTest();

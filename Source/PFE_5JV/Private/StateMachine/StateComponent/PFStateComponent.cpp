@@ -20,8 +20,8 @@ void UPFStateComponent::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 		UE_LOG(LogTemp, Error, TEXT("[%s] There is no root attached to the player"), *this->GetName())
 		return;
 	}
-	
-	PhysicRoot = Cast<UPrimitiveComponent>(Owner->GetRootComponent());
+
+	PhysicRoot = Owner->PhysicRootPtr;
 	ForwardRootPtr_ = Owner->ForwardRootPtr;
 }
 

@@ -114,6 +114,11 @@ void UPFWingBeatAbility::WingBeat()
 	OnWingBeatCalled.Broadcast(WingBeatInARowCount);
 }
 
+bool UPFWingBeatAbility::IsCurrentlyGoingUp()
+{
+	return WingBeatInARowCount != -1;
+}
+
 void UPFWingBeatAbility::DebugHeight()
 {
 	if (Owner->ForwardRootPtr->GetComponentLocation().Z > CurrentHeight_)
@@ -131,8 +136,6 @@ float UPFWingBeatAbility::FindClosestClapValue(float pitch) const
 	{
 		float angle = FMath::Abs(DataPtr_->RotationPerClap[i] - pitch);
 
-		UE_LOG(LogTemp, Error, TEXT("angle %f / closest %f / rot %f / pitch %f"),
-			angle, closestAngle, DataPtr_->RotationPerClap[i], pitch);
 		if (angle < closestAngle)
 		{
 			closestAngle = angle;

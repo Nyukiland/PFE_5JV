@@ -222,6 +222,11 @@ void APFPlayerCharacter::ChangeState(TSubclassOf<UPFState> newState)
 	CurrentStatePtr_->OnEnter();
 }
 
+void APFPlayerCharacter::SetDefaultState()
+{
+	ChangeState(DefaultState_);
+}
+
 FName APFPlayerCharacter::GetCurrentStateName() const
 {
 	if (!CurrentStatePtr_)

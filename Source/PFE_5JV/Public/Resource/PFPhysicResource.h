@@ -107,7 +107,7 @@ public:
 	virtual FString GetInfo_Implementation() override;
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	void SetKinematic(bool bShouldMove);
+	void SetKinematic(bool bisKinematic);
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	float GetMaxBoostVelocity() const;
@@ -153,6 +153,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void SetPitchRotationVisual(float rotation, int priority);
+
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	void HardSetPitchRotationVisual(float rotation);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void ProcessPitchVisual(float deltaTime);

@@ -35,9 +35,13 @@ FString UPFPhysicResource::GetInfo_Implementation()
 	return text;
 }
 
-void UPFPhysicResource::SetKinematic(bool bShouldMove)
+void UPFPhysicResource::SetKinematic(bool bisKinematic)
 {
-	PhysicRoot->SetSimulatePhysics(bShouldMove);
+	if (PhysicRoot->IsSimulatingPhysics() == bisKinematic)
+		return;
+	
+	PhysicRoot->SetSimulatePhysics(!bisKinematic);
+	if (bisKinematic) PhysicRoot->WakeRigidBody();
 }
 
 /* return the max velocity of the most effective method to gain a huge one (Dive or SuperWingBeat)
@@ -306,6 +310,16 @@ void UPFPhysicResource::SetPitchRotationVisual(float rotation, int priority)
 	PitchResetRot_ = false;
 	PitchPriority_ = priority;
 	PitchRotation_ = normalizedRot;
+}
+
+void UPFPhysicResource::HardSetPitchRotationVisual(float rotation)
+{
+	PitchRotation_ = rotation;
+	CurrentPitchValue_ = rotation;
+	
+	FRotator newRot = FRotator::ZeroRotator;
+	newRot.Pitch = CurrentPitchValue_;
+	ForwardRootPtr_->SetRelativeRotation(newRot);
 }
 
 void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
