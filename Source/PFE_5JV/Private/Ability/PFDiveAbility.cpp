@@ -38,7 +38,8 @@ FString UPFDiveAbility::GetInfo_Implementation()
 {
 	FString text = TEXT("<hb>Dive:</>");
 	text += TEXT("\n <b>Auto Dive Value: </>") + FString::Printf(TEXT("%f"), TimerAutoDive_);
-	text += TEXT("\n <b>Is Auto Dive Complete: </>") + FString::Printf(TEXT("%s"), (AutoDiveComplete()? TEXT("true") : TEXT("false")));
+	text += TEXT("\n <b>Is Auto Dive Complete: </>") + FString::Printf(
+		TEXT("%s"), (AutoDiveComplete() ? TEXT("true") : TEXT("false")));
 	text += TEXT("\n");
 	text += TEXT("\n <b>Dive Value: </>") + FString::Printf(TEXT("%f"), CurrentMedianValue_);
 
@@ -68,7 +69,7 @@ void UPFDiveAbility::Dive(float deltaTime)
 
 	if (!IsDiving())
 		return;
-	
+
 	float speedToGive = DataPtr_->ForceToGive *
 		DataPtr_->DiveAccelerationBasedOnRotationCurvePtr->GetFloatValue(HighestInput_);
 
@@ -144,7 +145,7 @@ void UPFDiveAbility::DiveVisual(float deltaTime)
 								: DataPtr_->LerpPitchSpeedGoingDown;
 
 	CurrentMedianValue_ = FMath::Lerp(CurrentMedianValue_, highestValue, lerpSpeedToUse * deltaTime);
-	
+
 	if (!IsDiving())
 		return;
 
@@ -182,7 +183,7 @@ bool UPFDiveAbility::IsDiving()
 {
 	if (!DataInputPtr_)
 		return false;
-	
+
 	if (ElapsedTime_ >= DataInputPtr_->DelayBeforeGoingInDive && HighestInput_ != 0)
 		return true;
 
@@ -197,7 +198,7 @@ void UPFDiveAbility::AutoDive(float deltaTime)
 		return;
 	}
 
- 	TimerAutoDive_ += deltaTime;
+	TimerAutoDive_ += deltaTime;
 
 	float value = TimerAutoDive_ / DataPtr_->AutoDiveRotationTime;
 	value = FMath::Clamp(value, 0.0f, 1.0f);
@@ -243,10 +244,16 @@ void UPFDiveAbility::DiveRollInputRecording(float deltaTime)
 	}
 
 	if (RecordedPreviousInputLeft_ > InputLeft_)
+	{
 		RecordedPreviousInputLeft_ = InputLeft_;
+		TimerInputRecording_ = 0;
+	}
 
 	if (RecordedPreviousInputRight_ > InputRight_)
+	{
 		RecordedPreviousInputRight_ = InputRight_;
+		TimerInputRecording_ = 0;
+	}
 
 	if (DiveRollDirection != 0)
 		return;
@@ -269,7 +276,7 @@ void UPFDiveAbility::DiveRollCheck()
 		UE_LOG(LogTemp, Error, TEXT("[DiveAbility] Bad set up on Data"))
 		return;
 	}
-	
+
 	if (!IsDiving())
 	{
 		DiveRollDirection = 0;
@@ -282,11 +289,11 @@ void UPFDiveAbility::DiveRollCheck()
 	float deltaRight = FMath::Abs(RecordedPreviousInputRight_ - InputRight_);
 	bool validDeltaRight = deltaRight > DataInputPtr_->InputChangeRequiredDiveRoll;
 
-	if (validDeltaLeft && !validDeltaRight && InputRight_ == 1)
+	if (validDeltaLeft && !validDeltaRight && InputRight_ >= DataInputPtr_->InputChangeRequiredDiveRoll)
 	{
 		DiveRollDirection = -1;
 	}
-	else if (!validDeltaLeft && validDeltaRight && InputLeft_ == 1)
+	else if (!validDeltaLeft && validDeltaRight && InputLeft_ >= DataInputPtr_->InputChangeRequiredDiveRoll)
 	{
 		DiveRollDirection = 1;
 	}
