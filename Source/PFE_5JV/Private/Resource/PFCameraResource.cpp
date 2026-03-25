@@ -1,10 +1,8 @@
 #include "Resource/PFCameraResource.h"
 
-#include <algorithm>
 #include "Ability/PFTurnAbility.h"
 #include "Camera/CameraComponent.h"
 #include "Helpers/PFMathHelper.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
 UPFCameraResource::UPFCameraResource()
@@ -25,10 +23,14 @@ void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 
     CameraRootPtr_->SetUsingAbsoluteRotation(true);
     PreviousYaw_ = Owner->GetActorRotation().Yaw;
-    // BaseCameraRoll_ = CameraPtr_->GetRelativeRotation().Roll;
     SmoothedCameraRotation_ = FRotator(PhysicReferencePtr_->ForwardRootPtr_->GetComponentRotation().Pitch,
-        Owner->GetActorRotation().Yaw, 0);//VisualResourcePtr_->GetRelativeRotation().Roll);
+        Owner->GetActorRotation().Yaw, 0);
     CurrentTurnRoll_ = 0.f;
+
+    SafeCameraDistance_ = DataPtr_->MaxDistanceToCamera * 100;
+    TargetSafeDistance_ = DataPtr_->MaxDistanceToCamera * 100;
+    bHasObstacle_ = false;
+    LastKnownSafeDistance_ = DataPtr_->MaxDistanceToCamera * 100;
 }
 
 void UPFCameraResource::ComponentTick_Implementation(float deltaTime)
@@ -123,21 +125,6 @@ void UPFCameraResource::UpdateCameraRotation(float DeltaTime, FRotator& FinalRot
     TargetDeltaPitch = FMath::Clamp(TargetDeltaPitch,-DataPtr_->MaxPitchAngle,DataPtr_->MaxPitchAngle);
     SmoothedPitchDelta_ = FMath::FInterpTo(SmoothedPitchDelta_,TargetDeltaPitch,DeltaTime,DataPtr_->PitchLagSpeed);
     FinalRotation.Pitch = BasePitch + SmoothedPitchDelta_;
-    
-    // ---- ROLL ----
-    // const float BaseRoll = VisualResourcePtr_->GetRelativeRotation().Roll;
-    // float TargetWorldRoll = BaseRoll + CameraRollOffset_;
-    // float TargetDeltaRoll = CameraRollOffset_;
-    // TargetDeltaRoll = FMath::Clamp(TargetDeltaRoll,-DataPtr_->MaxRollAngle,DataPtr_->MaxRollAngle);
-    // SmoothedRollDelta_ = FMath::FInterpTo(SmoothedRollDelta_,TargetDeltaRoll,DeltaTime,DataPtr_->RollLagSpeed);
-    // FinalRotation.Roll = BaseRoll + SmoothedRollDelta_;
-
-    // ---- DEBUG ----
-    // float DeltaYaw = FMath::FindDeltaAngleDegrees(Owner->GetActorRotation().Yaw, FinalRotation.Yaw);
-    // float DeltaPitch = FMath::FindDeltaAngleDegrees(PhysicReferencePtr_->ForwardRoot->GetComponentRotation().Pitch, FinalRotation.Pitch);
-    // float DeltaRoll = FMath::FindDeltaAngleDegrees(VisualResourcePtr_->GetRelativeRotation().Roll, FinalRotation.Roll);
-    // GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Caméra: %f/%f/%f"), CameraPtr_->GetComponentRotation().Yaw, CameraPtr_->GetComponentRotation().Pitch, CameraPtr_->GetComponentRotation().Roll));
-    // GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, FString::Printf(TEXT("Oiseau: %f/%f/%f"), DeltaYaw, DeltaPitch, DeltaRoll));
 }
 
 void UPFCameraResource::UpdateCameraDive(float DeltaTime)
@@ -148,8 +135,6 @@ void UPFCameraResource::UpdateCameraDive(float DeltaTime)
     FVector  DiveLocalLocation(0.f, 0.f, DataPtr_->DiveHeightOffset);
 
     ElapsedDiveTime += DeltaTime;
-    // GEngine->AddOnScreenDebugMessage(-1,0.f,FColor::Red,FString::Printf(TEXT("DiveInterpSpeed = %f | DistanceInterpSpeed = %f"), DataPtr_->DiveInterpSpeed, DataPtr_->DistanceInterpSpeed));
-    // GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, FString::Printf(TEXT("Was diving %hhd | HasStartedDiveTransition %hhd | ElasedDiveTime %f"), WasDiving_, HasStartedDiveTransition, ElapsedDiveTime));
     
     // any dive => change camera
     if (!DiveAbilityPtr_->IsDiving())
@@ -210,19 +195,63 @@ void UPFCameraResource::UpdateCameraDive(float DeltaTime)
 void UPFCameraResource::UpdateCameraDistance(float DeltaTime)
 {
     const float CurrentSpeed = PhysicReferencePtr_->GetCurrentVelocity().Length();
-    const float CameraDistance = UPFMathHelper::RemapClamped(
+    float BaseCameraDistance = UPFMathHelper::RemapClamped(
         CurrentSpeed,
         GlideAbilityDataPtr_->AutoDiveSpeedLimit,
         PhysicReferencePtr_->GetMaxBoostVelocity(),
         DataPtr_->MinDistanceToCamera * 100,
         DataPtr_->MaxDistanceToCamera * 100);
-
+    
+    float CollisionDistance = CalculateAndApplyCollision(DeltaTime);
+    
+    float CameraDistance = FMath::Min(BaseCameraDistance, CollisionDistance);
+    
     FVector PlayerCenter = Owner->GetActorLocation();
     FVector Backward = -CameraPtr_->GetForwardVector();
     Backward.Normalize();
     FVector TargetLocation = PlayerCenter + Backward * CameraDistance;
     TargetLocation.Z += DataPtr_->DiveHeightOffset;
-    FVector NewLocation = FMath::VInterpTo(CameraPtr_->GetComponentLocation(), TargetLocation, DeltaTime, DataPtr_->DistanceInterpSpeed);
+    
+    if (bHasObstacle_)
+    {
+        CameraPtr_->SetWorldLocation(TargetLocation);
+    }
+    else
+    {
+        FVector NewLocation = FMath::VInterpTo(
+            CameraPtr_->GetComponentLocation(), 
+            TargetLocation, 
+            DeltaTime, 
+            DataPtr_->DistanceInterpSpeed);
+        CameraPtr_->SetWorldLocation(NewLocation);
+    }
+}
 
-    CameraPtr_->SetWorldLocation(NewLocation);
+float UPFCameraResource::CalculateAndApplyCollision(float DeltaTime)
+{
+    FVector PlayerCenter = Owner->GetActorLocation();
+    FVector CameraDirection = -CameraPtr_->GetForwardVector();
+    CameraDirection.Normalize();
+    
+    FVector StartLocation = PlayerCenter;
+    FVector EndLocation = PlayerCenter + CameraDirection * DataPtr_->MaxDistanceToCamera * 100;
+    
+    FHitResult HitResult;
+    FCollisionQueryParams QueryParams;
+    QueryParams.AddIgnoredActor(Owner);
+    
+    bool bHit = GetWorld()->LineTraceSingleByChannel(
+        HitResult, StartLocation, EndLocation, ECC_Visibility, QueryParams);
+    
+    if (bHit)
+    {
+        bHasObstacle_ = true;
+        LastKnownSafeDistance_ = HitResult.Distance - DataPtr_->CollisionBuffer;
+        return LastKnownSafeDistance_;
+    }
+    else
+    {
+        bHasObstacle_ = false;
+        return DataPtr_->MaxDistanceToCamera * 100;
+    }
 }

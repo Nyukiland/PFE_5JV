@@ -18,17 +18,11 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
 	float MaxPitchAngle = 30.f;
 	
-	// UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
-	// float MaxRollAngle = 30.f;
-	
 	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
 	float YawLagSpeed = 20.f;
 
 	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
 	float PitchLagSpeed = 20.f;
-
-	// UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
-	// float RollLagSpeed = 20.f;
 
 	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
 	float LookAtInterpSpeed = 5.0f;
@@ -82,4 +76,12 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Dive", meta=(ToolTip=""))
 	float DurationBeforeDive = 3.0f;
+
+	/* ===== Spring Arm ===== */
+	
+	UPROPERTY(EditAnywhere, Category = "Spring Arm", meta = (ToolTip = ""))
+	float CollisionBuffer = 50.f;
+	
+	UPROPERTY(EditAnywhere, Category = "Spring Arm", meta = (ToolTip = ""))
+	float MaxRetractionSpeed = 15.f;
 };
