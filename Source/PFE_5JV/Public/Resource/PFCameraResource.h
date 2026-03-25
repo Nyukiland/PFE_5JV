@@ -11,76 +11,86 @@
 
 class UPFTurnAbility;
 class UCameraComponent;
-class USpringArmComponent;
+class USceneComponent;
 
 UCLASS(ClassGroup=(Camera), meta=(BlueprintSpawnableComponent))
 class PFE_5JV_API UPFCameraResource : public UPFResource
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	UPFCameraResource();
 
-	void ComponentInit_Implementation(APFPlayerCharacter* ownerObj);
-	virtual void ComponentTick_Implementation(float deltaTime) override;
+    virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
+    virtual void ComponentTick_Implementation(float deltaTime) override;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
-	TObjectPtr<UPFCameraResourceData> DataPtr_;
-	
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
-	TObjectPtr<UPFGlideAbilityData> GlideAbilityDataPtr_;
+    /* ===== Data Dependencies ===== */
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|Data")
+    TObjectPtr<UPFCameraResourceData> DataPtr_;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|Data")
+    TObjectPtr<UPFGlideAbilityData> GlideAbilityDataPtr_;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
-	TObjectPtr<UCameraComponent> CameraPtr_;
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
+    TObjectPtr<UPFPhysicResource> PhysicReferencePtr_;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
-	TObjectPtr<USceneComponent> CameraRootPtr_;
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
+    TObjectPtr<UPFDiveAbility> DiveAbilityPtr_;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
+    TObjectPtr<UPFTurnAbility> TurnAbilityPtr_;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
-	TObjectPtr<UPrimitiveComponent> VisualResourcePtr_;
+    // The specific object the camera tracks and copies rotation from
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
+    TObjectPtr<USceneComponent> TrackedTargetPtr_;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
-	TObjectPtr<UPFPhysicResource> PhysicReferencePtr_;
+    /* ===== Gimbal Rig Components ===== */
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
-	TObjectPtr<UPFDiveAbility> DiveAbilityPtr_;
-	
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
-	TObjectPtr<UPFTurnAbility> TurnAbilityPtr_;
+    // Handles World Position (Distance / Dive Offset)
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|Components")
+    TObjectPtr<USceneComponent> CameraRootPtr_;
+
+    // Child of Root. Handles World Yaw
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|Components")
+    TObjectPtr<USceneComponent> CameraYawPtr_;
+
+    // Child of Yaw. Handles Local Pitch
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|Components")
+    TObjectPtr<USceneComponent> CameraPitchPtr_;
+
+    // Child of Pitch. Handles Local Roll
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|Components")
+    TObjectPtr<USceneComponent> CameraRollPtr_;
+
+    // Child of Roll. The actual view
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|Components")
+    TObjectPtr<UCameraComponent> CameraPtr_;
 
 private:
 
-	bool CheckValidity() const;
-	
-	void UpdateCameraYaw(float DeltaTime, FVector FinalLocation, FRotator& FinalRotation);
-	void UpdateCameraPitch(float DeltaTime, FVector FinalLocation, FRotator& FinalRotation);
-	void UpdateCameraRoll(float DeltaTime, FVector FinalLocation, FRotator& FinalRotation);
-	void UpdateCameraDive(float DeltaTime);
-	void UpdateCameraDistance(float DeltaTime, FVector& FinalLocation, FRotator FinalRotation);
+    bool CheckValidity() const;
+    
+    void UpdateCameraDistance(float DeltaTime);
+    void UpdateCameraDive(float DeltaTime);
+    void UpdateCameraYaw(float DeltaTime);
+    void UpdateCameraPitch(float DeltaTime);
+    void UpdateCameraRoll(float DeltaTime);
+    void ApplyProceduralEffects(float DeltaTime);
 
-	// Base rotation
-	float CameraYawOffset_   = 0.f;
-	float CameraPitchOffset_ = 0.f;
-	float CameraRollOffset_  = 0.f;
-	float LastActorYaw_   = 0.f;
-	float LastActorPitch_ = 0.f;
-	float LastActorRoll_  = 0.f;
-	float SmoothedOvershootYaw_  = 0.f;
+    // Tracked Base Transforms (Prevents shake/overshoot from breaking interp)
+    FVector BaseLocation_;
+    float BaseYaw_ = 0.f;
+    float BasePitch_ = 0.f;
+    float BaseRoll_ = 0.f;
 
-	// Roll
-	float PreviousYaw_ = 0.f;
-	float BaseCameraRoll_ = 0.f;
-	float CurrentTurnRoll_ = 0.f;
-	FRotator FinalBaseRotation_;
-	FRotator SmoothedCameraRotation_;
+    // Movement tracking
+    float PreviousPlayerYaw_ = 0.f;
+    
+    // Procedural Offsets
+    float SmoothedOvershootYaw_ = 0.f;
+    float CurrentShakePitch_ = 0.f;
+    float CurrentShakeYaw_ = 0.f;
 
-	// Dive
-	bool IsCurrentlyDiving_ = false;
-	bool WasDiving_ = true;
-	bool DiveTransitionComplete_ = false;
-	float SmoothedPitchDelta_ = 0.0f;
-	float SmoothedRollDelta_ = 0.0f;
-	FRotator TargetCameraRotation_;
-	FVector TargetCameraLocation_;
-	float ElapsedDiveTime = 0.f;
+    // Dive State
+    bool IsCurrentlyDiving_ = false;
+    float ElapsedDiveTime_ = 0.f;
 };
