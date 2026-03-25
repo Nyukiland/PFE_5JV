@@ -52,9 +52,11 @@ private:
 
 	bool CheckValidity() const;
 	
-	void UpdateCameraRotation(float DeltaTime, FRotator& FinalRotation);
+	void UpdateCameraYaw(float DeltaTime, FVector FinalLocation, FRotator& FinalRotation);
+	void UpdateCameraPitch(float DeltaTime, FVector FinalLocation, FRotator& FinalRotation);
+	void UpdateCameraRoll(float DeltaTime, FVector FinalLocation, FRotator& FinalRotation);
 	void UpdateCameraDive(float DeltaTime);
-	void UpdateCameraDistance(float DeltaTime);
+	void UpdateCameraDistance(float DeltaTime, FVector& FinalLocation, FRotator FinalRotation);
 
 	// Base rotation
 	float CameraYawOffset_   = 0.f;
@@ -65,9 +67,6 @@ private:
 	float LastActorRoll_  = 0.f;
 	float SmoothedOvershootYaw_  = 0.f;
 
-	// Shake
-	float ShakeTime_ = 0.f;
-
 	// Roll
 	float PreviousYaw_ = 0.f;
 	float BaseCameraRoll_ = 0.f;
@@ -76,9 +75,9 @@ private:
 	FRotator SmoothedCameraRotation_;
 
 	// Dive
-	bool HasStartedDive_ = false;
+	bool IsCurrentlyDiving_ = false;
 	bool WasDiving_ = true;
-	bool HasStartedDiveTransition = false;
+	bool DiveTransitionComplete_ = false;
 	float SmoothedPitchDelta_ = 0.0f;
 	float SmoothedRollDelta_ = 0.0f;
 	FRotator TargetCameraRotation_;

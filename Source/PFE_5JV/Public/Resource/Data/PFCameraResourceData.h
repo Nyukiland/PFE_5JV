@@ -10,6 +10,14 @@ class PFE_5JV_API UPFCameraResourceData : public UDataAsset
 	GENERATED_BODY()
 public:
 	
+	/* ===== Offsets ===== */
+
+	UPROPERTY(EditAnywhere, Category = "Offsets", meta=(ToolTip=""))
+	FVector BaseOffset = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, Category = "Offsets", meta=(ToolTip=""))
+	FVector DiveOffset = FVector::ZeroVector;
+
 	/* ===== Rotation ===== */
 
 	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
@@ -18,17 +26,11 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
 	float MaxPitchAngle = 30.f;
 	
-	// UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
-	// float MaxRollAngle = 30.f;
-	
 	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
 	float YawLagSpeed = 20.f;
 
 	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
 	float PitchLagSpeed = 20.f;
-
-	// UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
-	// float RollLagSpeed = 20.f;
 
 	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
 	float LookAtInterpSpeed = 5.0f;
@@ -73,9 +75,6 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category = "Dive", meta = (ToolTip = ""))
 	float DivePitchRotation = 0.f;
-	
-	UPROPERTY(EditAnywhere, Category = "Dive", meta = (ToolTip = ""))
-	float DiveHeightOffset = 0.f;
 
 	UPROPERTY(EditAnywhere, Category = "Dive", meta=(ToolTip=""))
 	float DiveInterpSpeed = 5.0f;
