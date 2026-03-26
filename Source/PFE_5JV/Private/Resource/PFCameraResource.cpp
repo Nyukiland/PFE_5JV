@@ -229,24 +229,42 @@ void UPFCameraResource::UpdateCameraDistance(float DeltaTime)
 
 float UPFCameraResource::CalculateAndApplyCollision(float DeltaTime)
 {
-    FVector PlayerCenter = Owner->GetActorLocation();
-    FVector CameraDirection = -CameraPtr_->GetForwardVector();
-    CameraDirection.Normalize();
+    FVector CameraLocation = CameraPtr_->GetComponentLocation();
     
-    FVector StartLocation = PlayerCenter;
-    FVector EndLocation = PlayerCenter + CameraDirection * DataPtr_->MaxDistanceToCamera * 100;
+    FVector PlayerCenter = Owner->GetActorLocation();
+    
+    FVector DirectionToPlayer = PlayerCenter - CameraLocation;
+    float DistanceToPlayer = DirectionToPlayer.Size();
+    
+    if (DistanceToPlayer < KINDA_SMALL_NUMBER)
+    {
+        bHasObstacle_ = false;
+        return DataPtr_->MaxDistanceToCamera * 100;
+    }
+
+    DirectionToPlayer.Normalize();
+
+    FVector EndLocation = PlayerCenter; 
     
     FHitResult HitResult;
     FCollisionQueryParams QueryParams;
     QueryParams.AddIgnoredActor(Owner);
     
     bool bHit = GetWorld()->LineTraceSingleByChannel(
-        HitResult, StartLocation, EndLocation, ECC_Visibility, QueryParams);
+        HitResult, 
+        CameraLocation,
+        EndLocation,
+        ECC_Visibility, 
+        QueryParams);
     
     if (bHit)
     {
         bHasObstacle_ = true;
+        
         LastKnownSafeDistance_ = HitResult.Distance - DataPtr_->CollisionBuffer;
+        
+        LastKnownSafeDistance_ = FMath::Max(0.f, LastKnownSafeDistance_);
+        
         return LastKnownSafeDistance_;
     }
     else
