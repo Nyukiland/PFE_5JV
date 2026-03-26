@@ -82,4 +82,18 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Dive", meta=(ToolTip=""))
 	float DurationBeforeDive = 3.0f;
+	
+	/* ===== Sphere Cast ===== */
+	
+	UPROPERTY(EditAnywhere, Category = "Sphere Cast", meta = (ToolTip = ""))
+	float SphereCastRadius = 120.f;
+	
+	UPROPERTY(EditAnywhere, Category = "Sphere Cast", meta = (ToolTip = ""))
+	float CollisionPushForce = 80.f;
+	
+	UPROPERTY(EditAnywhere, Category = "Sphere Cast", meta = (ToolTip = ""))
+	float ReturnSmoothSpeed = 8.f;
+	
+	UPROPERTY(EditAnywhere, Category = "Sphere Cast", meta = (ToolTip = ""))
+	float MaxDetectionDistance = 200.f;
 };

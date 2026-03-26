@@ -37,6 +37,9 @@ public:
 	TObjectPtr<USceneComponent> CameraRootPtr_;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
+	TObjectPtr<USpringArmComponent> SpringArmPtr_;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
 	TObjectPtr<UPrimitiveComponent> VisualResourcePtr_;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera")
@@ -55,6 +58,7 @@ private:
 	void UpdateCameraRotation(float DeltaTime, FRotator& FinalRotation);
 	void UpdateCameraDive(float DeltaTime);
 	void UpdateCameraDistance(float DeltaTime);
+	void UpdateCameraCollision(float DeltaTime);
 
 	// Base rotation
 	float CameraYawOffset_   = 0.f;
@@ -84,4 +88,9 @@ private:
 	FRotator TargetCameraRotation_;
 	FVector TargetCameraLocation_;
 	float ElapsedDiveTime = 0.f;
+
+	// SphereCast
+	FVector CurrentCameraOffset_;
+	FVector TargetCameraOffset_;
+	float CameraFollowLagSpeed_;
 };
