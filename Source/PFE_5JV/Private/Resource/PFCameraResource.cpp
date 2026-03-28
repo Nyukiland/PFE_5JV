@@ -252,9 +252,9 @@ void UPFCameraResource::UpdateCameraCollision(float DeltaTime)
 {
     FVector CameraLocation = CameraPtr_->GetComponentLocation();
     FVector PlayerLocation = Owner->GetActorLocation();
-    FVector PlayerForward = Owner->GetActorForwardVector();
-    FVector PlayerRight = Owner->GetActorRightVector();
-    FVector PlayerUp = FVector::UpVector;
+    FVector PlayerForward  = Owner->GetActorForwardVector();
+    FVector PlayerRight    = Owner->GetActorRightVector();
+    FVector PlayerUp       = FVector::UpVector;
 
     TArray<FOverlapResult> Overlaps;
     FCollisionQueryParams Params;
@@ -281,47 +281,35 @@ void UPFCameraResource::UpdateCameraCollision(float DeltaTime)
 
             FVector ClosestPoint;
             float Distance = Result.Component->GetClosestPointOnCollision(CameraLocation, ClosestPoint);
-            if (Distance < 0.f)
-                continue;
-
-            FVector ToObstacleFromPlayer = (ClosestPoint - PlayerLocation).GetSafeNormal();
-            float Dot = FVector::DotProduct(ToObstacleFromPlayer, PlayerForward);
-
-            // Ignore obstacles devant le joueur
-            if (Dot > 0.5f)
-                continue;
+            if (Distance < 0.f) continue;
 
             FVector ToObstacle = (ClosestPoint - CameraLocation).GetSafeNormal();
 
-            // projections sur axes latéral et vertical
             float RightAmount = FVector::DotProduct(ToObstacle, PlayerRight);
             float UpAmount    = FVector::DotProduct(ToObstacle, PlayerUp);
 
             FVector PushDir = FVector::ZeroVector;
-
             if (FMath::Abs(RightAmount) > FMath::Abs(UpAmount))
-            {
-                PushDir = -PlayerRight * FMath::Sign(RightAmount); // gauche/droite
-            }
+                PushDir = -PlayerRight * FMath::Sign(RightAmount);
             else
-            {
-                PushDir = -PlayerUp * FMath::Sign(UpAmount); // haut/bas
-            }
+                PushDir = -PlayerUp * FMath::Sign(UpAmount);
 
             if (FMath::IsNearlyZero(RightAmount) && FMath::IsNearlyZero(UpAmount))
                 continue;
 
-            // force basée sur distance, mais pas trop réduite
             float Strength = FMath::Clamp(1.f - (Distance / DataPtr_->SphereCastRadius), 0.f, 1.f);
-
             TotalPush += PushDir * Strength;
         }
     }
 
     if (!TotalPush.IsNearlyZero())
     {
-        // Projette seulement après avoir calculé le push
-        TotalPush = FVector::VectorPlaneProject(TotalPush, PlayerForward);
+        float ForwardDot = FVector::DotProduct(TotalPush, PlayerForward);
+        if (ForwardDot < 0.f)
+        {
+            TotalPush -= PlayerForward * ForwardDot;
+        }
+
         TotalPush = TotalPush.GetClampedToMaxSize(1.f);
 
         TargetCameraOffset_ = TotalPush * DataPtr_->CollisionPushForce;
