@@ -251,74 +251,70 @@ void UPFCameraResource::UpdateCameraDistance(float DeltaTime)
 void UPFCameraResource::UpdateCameraCollision(float DeltaTime)
 {
     FVector CameraLocation = CameraPtr_->GetComponentLocation();
-    
-    const float MaxDetectionDistance = 500.0f;
-    const float MinDetectionDistance = 50.0f;
-    
-    TArray<FVector> TestDirections;
-    TestDirections.Add(FVector::UpVector);
-    TestDirections.Add(-FVector::UpVector);
-    TestDirections.Add(CameraPtr_->GetRightVector());
-    TestDirections.Add(-CameraPtr_->GetRightVector());
-    
-    TargetCameraOffset_ = FVector::ZeroVector;
-    float ClosestDistance = FLT_MAX;
-    FVector ClosestHitDirection = FVector::ZeroVector;
-    
-    for (const FVector& Dir : TestDirections)
+    FVector PlayerLocation = Owner->GetActorLocation();
+    FVector PlayerForward = Owner->GetActorForwardVector();
+    TArray<FOverlapResult> Overlaps;
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(Owner);
+    Params.AddIgnoredActor(CameraPtr_->GetOwner());
+    bool bHit = GetWorld()->OverlapMultiByChannel( Overlaps, CameraLocation, FQuat::Identity, ECC_WorldStatic, FCollisionShape::MakeSphere(DataPtr_->SphereCastRadius), Params );
+    FVector TotalPush = FVector::ZeroVector;
+
+    if (bHit)
     {
-        FHitResult HitResult;
-        FCollisionQueryParams QueryParams;
-        QueryParams.AddIgnoredActor(Owner);
-        QueryParams.AddIgnoredActor(CameraPtr_->GetOwner());
-        
-        FVector TraceEnd = CameraLocation + Dir * MaxDetectionDistance;
-        
-        bool bHit = GetWorld()->LineTraceSingleByChannel(
-            HitResult, 
-            CameraLocation, 
-            TraceEnd, 
-            ECC_Visibility, 
-            QueryParams);
-        
-        if (bHit)
+        for (const FOverlapResult& Result : Overlaps)
         {
-            if (HitResult.Distance > MaxDetectionDistance || HitResult.Distance < MinDetectionDistance)
+            if (!Result.Component.IsValid()) continue;
+            FVector ClosestPoint;
+            float Distance = Result.Component->GetClosestPointOnCollision( CameraLocation, ClosestPoint );
+
+            if (Distance < 0.f)
+                continue;
+
+            FVector ToObstacleFromPlayer = (ClosestPoint - PlayerLocation).GetSafeNormal();
+            float Dot = FVector::DotProduct(ToObstacleFromPlayer, PlayerForward);
+
+            // ❌ ignore uniquement devant
+            if (Dot > 0.5f)
             {
                 continue;
             }
-            
-            UE_LOG(LogTemp, Warning, TEXT("COLLISION - Dir: %s, Distance: %f"), *Dir.ToString(), HitResult.Distance);
-            
-            if (HitResult.Distance < ClosestDistance)
+
+            FVector ToObstacle = (ClosestPoint - CameraLocation).GetSafeNormal();
+            FVector Right = Owner->GetActorRightVector();
+            FVector Up = FVector::UpVector;
+            // projections
+            float RightAmount = FVector::DotProduct(ToObstacle, Right);
+            float UpAmount = FVector::DotProduct(ToObstacle, Up);
+            // 👉 on choisit l'axe dominant UNIQUEMENT
+            FVector PushDir = FVector::ZeroVector;
+            if (FMath::Abs(RightAmount) > FMath::Abs(UpAmount))
             {
-                ClosestDistance = HitResult.Distance;
-                ClosestHitDirection = Dir;
+                // gauche / droite
+                PushDir = -Right * FMath::Sign(RightAmount);
             }
+            else
+            {
+                // haut / bas
+                PushDir = -Up * FMath::Sign(UpAmount);
+            }
+            if (FMath::IsNearlyZero(RightAmount) && FMath::IsNearlyZero(UpAmount))
+            {
+                continue;
+            }
+            float Strength = 1.f - (Distance / DataPtr_->SphereCastRadius);
+            Strength = FMath::Clamp(Strength, 0.f, 1.f);
+            TotalPush += PushDir * Strength;
         }
     }
-    
-    if (ClosestDistance < FLT_MAX)
+
+    if (!TotalPush.IsNearlyZero())
     {
-        FVector PushDirection = -ClosestHitDirection;
-        PushDirection.Normalize();
-        
-        float DistanceFactor = 1.0f - (ClosestDistance / MaxDetectionDistance);
-        TargetCameraOffset_ = PushDirection * DataPtr_->CollisionPushForce * DistanceFactor;
-        
-        UE_LOG(LogTemp, Warning, TEXT("CAMERA PUSH - HitDir: %s, PushDir: %s, Offset: %s"), 
-               *ClosestHitDirection.ToString(), 
-               *PushDirection.ToString(),
-               *TargetCameraOffset_.ToString());
+        TotalPush = TotalPush.GetClampedToMaxSize(1.f); TargetCameraOffset_ = TotalPush * DataPtr_->CollisionPushForce;
     }
     else
     {
         TargetCameraOffset_ = FVector::ZeroVector;
     }
-    
-    CurrentCameraOffset_ = FMath::VInterpTo(
-        CurrentCameraOffset_, 
-        TargetCameraOffset_, 
-        DeltaTime, 
-        15.0f);
+    CurrentCameraOffset_ = FMath::VInterpTo( CurrentCameraOffset_, TargetCameraOffset_, DeltaTime, DataPtr_->ReturnSmoothSpeed );
 }
