@@ -253,68 +253,88 @@ void UPFCameraResource::UpdateCameraCollision(float DeltaTime)
     FVector CameraLocation = CameraPtr_->GetComponentLocation();
     FVector PlayerLocation = Owner->GetActorLocation();
     FVector PlayerForward = Owner->GetActorForwardVector();
+    FVector PlayerRight = Owner->GetActorRightVector();
+    FVector PlayerUp = FVector::UpVector;
+
     TArray<FOverlapResult> Overlaps;
     FCollisionQueryParams Params;
     Params.AddIgnoredActor(Owner);
     Params.AddIgnoredActor(CameraPtr_->GetOwner());
-    bool bHit = GetWorld()->OverlapMultiByChannel( Overlaps, CameraLocation, FQuat::Identity, ECC_WorldStatic, FCollisionShape::MakeSphere(DataPtr_->SphereCastRadius), Params );
+
+    bool bHit = GetWorld()->OverlapMultiByChannel(
+        Overlaps,
+        CameraLocation,
+        FQuat::Identity,
+        ECC_WorldStatic,
+        FCollisionShape::MakeSphere(DataPtr_->SphereCastRadius),
+        Params
+    );
+
     FVector TotalPush = FVector::ZeroVector;
 
     if (bHit)
     {
         for (const FOverlapResult& Result : Overlaps)
         {
-            if (!Result.Component.IsValid()) continue;
-            FVector ClosestPoint;
-            float Distance = Result.Component->GetClosestPointOnCollision( CameraLocation, ClosestPoint );
+            if (!Result.Component.IsValid())
+                continue;
 
+            FVector ClosestPoint;
+            float Distance = Result.Component->GetClosestPointOnCollision(CameraLocation, ClosestPoint);
             if (Distance < 0.f)
                 continue;
 
             FVector ToObstacleFromPlayer = (ClosestPoint - PlayerLocation).GetSafeNormal();
             float Dot = FVector::DotProduct(ToObstacleFromPlayer, PlayerForward);
 
-            // ❌ ignore uniquement devant
+            // Ignore obstacles devant le joueur
             if (Dot > 0.5f)
-            {
                 continue;
-            }
 
             FVector ToObstacle = (ClosestPoint - CameraLocation).GetSafeNormal();
-            FVector Right = Owner->GetActorRightVector();
-            FVector Up = FVector::UpVector;
-            // projections
-            float RightAmount = FVector::DotProduct(ToObstacle, Right);
-            float UpAmount = FVector::DotProduct(ToObstacle, Up);
-            // 👉 on choisit l'axe dominant UNIQUEMENT
+
+            // projections sur axes latéral et vertical
+            float RightAmount = FVector::DotProduct(ToObstacle, PlayerRight);
+            float UpAmount    = FVector::DotProduct(ToObstacle, PlayerUp);
+
             FVector PushDir = FVector::ZeroVector;
+
             if (FMath::Abs(RightAmount) > FMath::Abs(UpAmount))
             {
-                // gauche / droite
-                PushDir = -Right * FMath::Sign(RightAmount);
+                PushDir = -PlayerRight * FMath::Sign(RightAmount); // gauche/droite
             }
             else
             {
-                // haut / bas
-                PushDir = -Up * FMath::Sign(UpAmount);
+                PushDir = -PlayerUp * FMath::Sign(UpAmount); // haut/bas
             }
+
             if (FMath::IsNearlyZero(RightAmount) && FMath::IsNearlyZero(UpAmount))
-            {
                 continue;
-            }
-            float Strength = 1.f - (Distance / DataPtr_->SphereCastRadius);
-            Strength = FMath::Clamp(Strength, 0.f, 1.f);
+
+            // force basée sur distance, mais pas trop réduite
+            float Strength = FMath::Clamp(1.f - (Distance / DataPtr_->SphereCastRadius), 0.f, 1.f);
+
             TotalPush += PushDir * Strength;
         }
     }
 
     if (!TotalPush.IsNearlyZero())
     {
-        TotalPush = TotalPush.GetClampedToMaxSize(1.f); TargetCameraOffset_ = TotalPush * DataPtr_->CollisionPushForce;
+        // Projette seulement après avoir calculé le push
+        TotalPush = FVector::VectorPlaneProject(TotalPush, PlayerForward);
+        TotalPush = TotalPush.GetClampedToMaxSize(1.f);
+
+        TargetCameraOffset_ = TotalPush * DataPtr_->CollisionPushForce;
     }
     else
     {
         TargetCameraOffset_ = FVector::ZeroVector;
     }
-    CurrentCameraOffset_ = FMath::VInterpTo( CurrentCameraOffset_, TargetCameraOffset_, DeltaTime, DataPtr_->ReturnSmoothSpeed );
+
+    CurrentCameraOffset_ = FMath::VInterpTo(
+        CurrentCameraOffset_,
+        TargetCameraOffset_,
+        DeltaTime,
+        DataPtr_->ReturnSmoothSpeed
+    );
 }
