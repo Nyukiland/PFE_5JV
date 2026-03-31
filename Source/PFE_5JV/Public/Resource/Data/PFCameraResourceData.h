@@ -10,75 +10,50 @@ class PFE_5JV_API UPFCameraResourceData : public UDataAsset
 	GENERATED_BODY()
 public:
 	
-	/* ===== Offsets ===== */
+	// Position Stuff
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Position")
+	float BaseZOffset = 0;
 
-	UPROPERTY(EditAnywhere, Category = "Offsets", meta=(ToolTip=""))
-	FVector BaseOffset = FVector::ZeroVector;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Position")
+	float DiveZOffset = 0;
 
-	UPROPERTY(EditAnywhere, Category = "Offsets", meta=(ToolTip=""))
-	FVector DiveOffset = FVector::ZeroVector;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Position")
+	float TurnYOffset = 0;
 
-	/* ===== Rotation ===== */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Position")
+	float OffsetTurnLerpSpeed = 1;
 
-	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Position")
+	float OffsetGoToBaseLerpSpeed = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Position")
+	float OffsetGoToDiveLerpSpeed = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Position")
+	float OffsetGoToWingBeatLerpSpeed = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Distance")
+	float BaseDistanceWithPlayer = 100;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Distance")
+	float MaxDistanceWithPlayer = 5000;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Distance")
+	float DistanceLerpSpeed = 2;
+	
+	// Rotation Stuff
+	UPROPERTY(EditAnywhere, Category = "Base Rotation")
 	float MaxYawAngle = 30.f;
 	
-	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Base Rotation")
 	float MaxPitchAngle = 30.f;
 	
-	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Base Rotation")
 	float YawLagSpeed = 20.f;
 
-	UPROPERTY(EditAnywhere, Category = "Base Rotation", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Base Rotation")
 	float PitchLagSpeed = 20.f;
 
-	UPROPERTY(EditAnywhere, Category = "Rotation", meta=(ToolTip=""))
+	UPROPERTY(EditAnywhere, Category = "Rotation")
 	float LookAtInterpSpeed = 5.0f;
-	
-	/* ===== Overshoot ===== */
-	
-	UPROPERTY(EditAnywhere, Category = "Overshoot", meta=(ToolTip=""))
-	float OvershootYawOffset = 5.0f;
-	
-	UPROPERTY(EditAnywhere, Category = "Overshoot", meta=(ToolTip=""))
-	float OvershootInterpSpeed = 5.0f;
-
-	/* ===== Shake ===== */
-
-	UPROPERTY(EditAnywhere, Category = "Shake", meta=(ToolTip=""))
-	float ShakeFrequency = 20.f;
-
-	UPROPERTY(EditAnywhere, Category = "Shake", meta=(ToolTip=""))
-	float RollAmplitude = 25.f;
-	
-	UPROPERTY(EditAnywhere, Category = "Shake", meta=(ToolTip=""))
-	float PitchAmplitude = 10.f;
-
-	UPROPERTY(EditAnywhere, Category = "Shake", meta=(ToolTip=""))
-	float YawAmplitude = 8.f;
-
-	/* ===== Distance ===== */
-
-	UPROPERTY(EditAnywhere, Category = "Distance", meta = (ToolTip = ""))
-	float MinDistanceToCamera = 0.f;
-	
-	UPROPERTY(EditAnywhere, Category = "Distance", meta = (ToolTip = ""))
-	float MaxDistanceToCamera = 20.f;
-
-	UPROPERTY(EditAnywhere, Category = "Distance", meta = (ToolTip = ""))
-	float DistanceInterpSpeed = 5.f;
-
-	/* ===== Dive ===== */
-	
-	UPROPERTY(EditAnywhere, Category = "Dive", meta = (ToolTip = ""))
-	float BasePitchRotation = 0.f;
-	
-	UPROPERTY(EditAnywhere, Category = "Dive", meta = (ToolTip = ""))
-	float DivePitchRotation = 0.f;
-
-	UPROPERTY(EditAnywhere, Category = "Dive", meta=(ToolTip=""))
-	float DiveInterpSpeed = 5.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Dive", meta=(ToolTip=""))
-	float DurationBeforeDive = 3.0f;
 };
