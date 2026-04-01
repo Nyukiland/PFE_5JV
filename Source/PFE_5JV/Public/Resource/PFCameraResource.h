@@ -34,10 +34,7 @@ public:
 
     // Comp in bp link
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|Components")
-    TObjectPtr<USceneComponent> TrackedTargetPtr_;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|Components")
-    TObjectPtr<USceneComponent> CameraRootPtr_;
+    TObjectPtr<USceneComponent> CameraPositionPtr_;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|Components")
     TObjectPtr<USceneComponent> CameraYawPtr_;
@@ -50,6 +47,12 @@ public:
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|Components")
     TObjectPtr<UCameraComponent> CameraPtr_;
+
+private:
+    float TurnCurrentOffset_;
+    float HeightCurrentOffset_;
+
+    float DistanceCurrentOffset_;
     
 public:
     virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
@@ -58,5 +61,9 @@ public:
 private:
     bool CheckValidity() const;
 
-    void ManageCameraOffset();
+    void ManageCameraOffset(float deltaTime);
+    void ManageCameraDistance(float deltaTime);
+
+    void ManageCameraPitch(float deltaTime);
+    void ManageCameraYaw(float deltaTime);
 };

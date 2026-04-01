@@ -121,6 +121,15 @@ bool UPFTurnAbility::IsTurning() const
 	return RotationValue_ != 0 && TimerStartTurn_ >= DataInputPtr_->TurnDelay; 
 }
 
+float UPFTurnAbility::TurnValue() const
+{
+	if (!DataInputPtr_
+		|| !IsTurning())
+		return false;
+	
+	return RotationValue_;
+}
+
 void UPFTurnAbility::GetRotationValue()
 {
 	float rotValue = FMath::Max(InputLeft_, InputRight_) - FMath::Min(InputLeft_, InputRight_);

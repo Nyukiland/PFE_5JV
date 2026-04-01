@@ -60,6 +60,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Turn")
 	bool IsTurning() const;
+	
+	UFUNCTION(BlueprintCallable, Category="Turn")
+	float TurnValue() const;
 
 private:
 	void GetRotationValue();

@@ -190,6 +190,14 @@ bool UPFDiveAbility::IsDiving()
 	return false;
 }
 
+float UPFDiveAbility::GetDivingValue()
+{
+	if (!IsDiving())
+		return 0;
+
+	return HighestInput_;
+}
+
 void UPFDiveAbility::AutoDive(float deltaTime)
 {
 	if (!DataPtr_ || !PhysicResourcePtr_)

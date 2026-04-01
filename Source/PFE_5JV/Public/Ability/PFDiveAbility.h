@@ -82,6 +82,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Dive")
 	bool IsDiving();
 
+	UFUNCTION(BlueprintCallable, Category="Dive")
+	float GetDivingValue();
+	
 	UFUNCTION(BlueprintCallable, Category="AutoDive")
 	void AutoDive(float deltaTime);
 	
