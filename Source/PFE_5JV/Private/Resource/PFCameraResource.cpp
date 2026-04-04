@@ -72,8 +72,8 @@ void UPFCameraResource::ManageCameraOffset(float deltaTime)
 
 	// Turn
 	float desiredTurnValue = DataPtr_->TurnYOffset * TurnAbilityPtr_->TurnValue();
-	TurnCurrentOffset_ = FMath::Lerp(TurnCurrentOffset_, desiredTurnValue,
-									DataPtr_->OffsetTurnLerpSpeed * deltaTime);
+	TurnCurrentOffset_ = FMath::FInterpTo(TurnCurrentOffset_, desiredTurnValue,
+									deltaTime, DataPtr_->OffsetTurnLerpSpeed);
 
 	// Height (Dive, Base, WingBeat)
 	float heightLerpToUse = DiveAbilityPtr_->IsDiving()
@@ -81,8 +81,8 @@ void UPFCameraResource::ManageCameraOffset(float deltaTime)
 								: DataPtr_->OffsetGoToBaseLerpSpeed;
 	float desiredHeightValue = FMath::Lerp(DataPtr_->BaseZOffset, DataPtr_->DiveZOffset,
 											DiveAbilityPtr_->GetDivingValue());
-	HeightCurrentOffset_ = FMath::Lerp(HeightCurrentOffset_, desiredHeightValue,
-										heightLerpToUse * deltaTime);
+	HeightCurrentOffset_ = FMath::FInterpTo(HeightCurrentOffset_, desiredHeightValue,
+										deltaTime, heightLerpToUse);
 
 	// Apply in absolute because main component
 	pos += TurnCurrentOffset_ * ForwardRootPtr_->GetRightVector();
@@ -94,11 +94,11 @@ void UPFCameraResource::ManageCameraDistance(float deltaTime)
 {
 	float desiredDistanceValue = FMath::Lerp(DataPtr_->BaseDistanceWithPlayer, DataPtr_->MaxDistanceWithPlayer,
 											PhysicReferencePtr_->GetForwardVelocityPercentage());
-	DistanceCurrentOffset_ = FMath::Lerp(DistanceCurrentOffset_, desiredDistanceValue,
-										DataPtr_->DistanceLerpSpeed * deltaTime);
+	DistanceCurrentOffset_ = FMath::FInterpTo(DistanceCurrentOffset_, desiredDistanceValue,
+										deltaTime, DataPtr_->DistanceLerpSpeed);
 
 	//Forward -> X
-	CameraPtr_->SetRelativeLocation(FVector(DistanceCurrentOffset_, 0, 0));
+	CameraPtr_->SetRelativeLocation(FVector(-DistanceCurrentOffset_, 0, 0));
 }
 
 void UPFCameraResource::ManageCameraPitch(float deltaTime)
