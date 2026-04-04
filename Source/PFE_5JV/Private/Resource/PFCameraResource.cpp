@@ -112,7 +112,8 @@ void UPFCameraResource::ManageCameraOffset(float deltaTime)
 	FVector pos = ForwardRootPtr_->GetComponentLocation();
 
 	// Turn
-	float desiredTurnValue = DataPtr_->TurnOffsetCurve->GetFloatValue(TurnAbilityPtr_->TurnValue());
+	float turnValue = TurnAbilityPtr_->TurnValue();
+	float desiredTurnValue = DataPtr_->TurnOffsetCurve->GetFloatValue(FMath::Abs(turnValue)) * FMath::Sign(turnValue);
 	desiredTurnValue *= DataPtr_->TurnOffsetSpeedCurve->GetFloatValue(PhysicResourcePtr_->GetForwardVelocityPercentage());
 	desiredTurnValue *= DataPtr_->TurnYOffset;
 	
