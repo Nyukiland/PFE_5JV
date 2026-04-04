@@ -42,7 +42,13 @@ public:
 	float OffsetTurnLerpSpeed = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Position")
+	float OffsetTurnToBaseLerpSpeed = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Position")
 	TObjectPtr<UCurveFloat> TurnOffsetCurve;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Position")
+	TObjectPtr<UCurveFloat> TurnOffsetSpeedCurve;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Distance")
 	float BaseDistanceWithPlayer = 100;
@@ -57,15 +63,40 @@ public:
 	TObjectPtr<UCurveFloat> DistanceCurve;
 	
 	// Rotation Stuff
-	UPROPERTY(EditAnywhere, Category = "Base Rotation")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base Rotation")
 	float MaxYawAngle = 30.f;
 	
-	UPROPERTY(EditAnywhere, Category = "Base Rotation")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base Rotation")
 	float MaxPitchAngle = 30.f;
 	
-	UPROPERTY(EditAnywhere, Category = "Base Rotation")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base Rotation")
 	float YawLagSpeed = 20.f;
 
-	UPROPERTY(EditAnywhere, Category = "Base Rotation")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base Rotation")
 	float PitchLagSpeed = 20.f;
+
+	// True Cam Rot
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "True Cam Rotation")
+	float BaseCamRotation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "True Cam Rotation")
+	float CamRotLerpSpeedToBase;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "True Cam Rotation")
+	float DiveCamRotation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "True Cam Rotation")
+	float CamRotLerpSpeedToDive;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "True Cam Rotation")
+	TObjectPtr<UCurveFloat> DiveCamRotCurve;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "True Cam Rotation")
+	float WingBeatCamRotation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "True Cam Rotation")
+	float CamRotLerpSpeedToWingBeat;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "True Cam Rotation")
+	TObjectPtr<UCurveFloat> WingBeatCamRotCurve;
 };

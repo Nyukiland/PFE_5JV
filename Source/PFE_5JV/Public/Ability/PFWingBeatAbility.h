@@ -52,7 +52,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="WingBeat")
 	bool IsCurrentlyGoingUp();
-
+	
+	UFUNCTION(BlueprintCallable, Category="WingBeat")
+	float GetCurrentWingBeatPercentage();
+	
 private:
 	void DebugHeight();
 	float FindClosestClapValue(float pitch) const;

@@ -16,9 +16,10 @@ void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 {
 	Super::ComponentInit_Implementation(ownerObj);
 
-	PhysicReferencePtr_ = Owner->GetStateComponent<UPFPhysicResource>();
+	PhysicResourcePtr_ = Owner->GetStateComponent<UPFPhysicResource>();
 	TurnAbilityPtr_ = Owner->GetStateComponent<UPFTurnAbility>();
 	DiveAbilityPtr_ = Owner->GetStateComponent<UPFDiveAbility>();
+	WingBeatAbilityPtr_ = Owner->GetStateComponent<UPFWingBeatAbility>();
 
 	CameraPositionPtr_->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 	CameraPositionPtr_->SetWorldLocation(PhysicRoot->GetComponentLocation());
@@ -33,11 +34,13 @@ void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 	CurrentYaw_ = PhysicRoot->GetRelativeRotation().Yaw;
 	DistanceCurrentOffset_ = DataPtr_->BaseDistanceWithPlayer;
 	HeightCurrentOffset_ = DataPtr_->BaseZOffset;
-	TurnCurrentOffset_ = 0.f; 
+	TurnCurrentOffset_ = 0.f;
+	TrueCameraPitch_ = DataPtr_->BaseCamRotation;
 
 	CameraPitchPtr_->SetRelativeRotation(FRotator(CurrentPitch_, 0.f, 0.f));
 	CameraYawPtr_->SetRelativeRotation(FRotator(0.f, CurrentYaw_, 0.f));
 	CameraPtr_->SetRelativeLocation(FVector(-DistanceCurrentOffset_, 0.f, 0.f));
+	CameraPtr_->SetRelativeRotation(FRotator(TrueCameraPitch_, 0.f, 0.f));
 }
 
 // Regular tick to make sure physic movement is applied before doing the tick
@@ -54,6 +57,7 @@ void UPFCameraResource::TickComponent(float DeltaTime, enum ELevelTick TickType,
 
 	ManageCameraOffset(DeltaTime);
 	ManageCameraDistance(DeltaTime);
+	ManageTrueCameraPitch(DeltaTime);
 }
 
 bool UPFCameraResource::CheckValidity() const
@@ -65,27 +69,41 @@ bool UPFCameraResource::CheckValidity() const
 	}
 	if (!DataPtr_)
 	{
-		UE_LOG(LogTemp, Error, TEXT("The Data referenced in PlayerCharacter blueprint is NULL"))
+		UE_LOG(LogTemp, Error, TEXT("[UPFCameraResource] The Data referenced in CameraResource blueprint is NULL"))
 		return false;
 	}
 
-	if (!PhysicReferencePtr_)
+	if (!DataPtr_->DistanceCurve || !DataPtr_->DiveOffsetCurve
+		|| !DataPtr_->TurnOffsetCurve || !DataPtr_->WingBeatOffsetCurve)
 	{
-		UE_LOG(LogTemp, Error, TEXT("The PhysicResource referenced in PlayerCharacter blueprint is NULL"))
+		UE_LOG(LogTemp, Error, TEXT("[UPFCameraResource] The Data Curve in CameraResource blueprint is NULL"))
+		return false;
+	}
+	
+	if (!PhysicResourcePtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[UPFCameraResource] The PhysicResource referenced in CameraResource blueprint is NULL"))
 		return false;
 	}
 
 	if (!DiveAbilityPtr_)
 	{
-		UE_LOG(LogTemp, Error, TEXT("The VisualResource referenced in PlayerCharacter blueprint is NULL"))
+		UE_LOG(LogTemp, Error, TEXT("[UPFCameraResource] The VisualResource referenced in CameraResource blueprint is NULL"))
 		return false;
 	}
 
 	if (!TurnAbilityPtr_)
 	{
-		UE_LOG(LogTemp, Error, TEXT("The TurnAbility referenced in PlayerCharacter blueprint is NULL"))
+		UE_LOG(LogTemp, Error, TEXT("[UPFCameraResource] The TurnAbility referenced in CameraResource blueprint is NULL"))
 		return false;
 	}
+
+	if (!WingBeatAbilityPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[UPFCameraResource] The WingBeatAbility referenced in CameraResource blueprint is NULL"))
+		return false;
+	}
+	
 	return true;
 }
 
@@ -94,17 +112,37 @@ void UPFCameraResource::ManageCameraOffset(float deltaTime)
 	FVector pos = ForwardRootPtr_->GetComponentLocation();
 
 	// Turn
-	float desiredTurnValue = DataPtr_->TurnYOffset * TurnAbilityPtr_->TurnValue();
+	float desiredTurnValue = DataPtr_->TurnOffsetCurve->GetFloatValue(TurnAbilityPtr_->TurnValue());
+	desiredTurnValue *= DataPtr_->TurnOffsetSpeedCurve->GetFloatValue(PhysicResourcePtr_->GetForwardVelocityPercentage());
+	desiredTurnValue *= DataPtr_->TurnYOffset;
+	
+	float turnLerpToUse = TurnAbilityPtr_->TurnValue() == 0?
+		DataPtr_->OffsetTurnToBaseLerpSpeed : DataPtr_->OffsetTurnLerpSpeed;
+	
 	TurnCurrentOffset_ = FMath::FInterpTo(TurnCurrentOffset_, desiredTurnValue,
-									deltaTime, DataPtr_->OffsetTurnLerpSpeed);
+									deltaTime, turnLerpToUse);
 
 	// Height (Dive, Base, WingBeat)
-	float heightLerpToUse = DiveAbilityPtr_->IsDiving()
-								? DataPtr_->OffsetGoToDiveLerpSpeed
-								: DataPtr_->OffsetGoToBaseLerpSpeed;
-	float desiredHeightValue = FMath::Lerp(DataPtr_->BaseZOffset, DataPtr_->DiveZOffset,
-											DiveAbilityPtr_->GetDivingValue());
-	HeightCurrentOffset_ = FMath::FInterpTo(HeightCurrentOffset_, desiredHeightValue,
+	float targetHeight = DataPtr_->BaseZOffset;
+	float heightLerpToUse = DataPtr_->OffsetGoToBaseLerpSpeed;
+
+	float wingBeatValue = WingBeatAbilityPtr_->GetCurrentWingBeatPercentage();
+	if (wingBeatValue > 0)
+	{
+		float percentage = DataPtr_->WingBeatOffsetCurve->GetFloatValue(wingBeatValue);
+		targetHeight = FMath::Lerp(DataPtr_->BaseZOffset, DataPtr_->WingBeatZOffset, percentage);
+		heightLerpToUse = DataPtr_->OffsetGoToWingBeatLerpSpeed;
+	}
+
+	float diveValue = DiveAbilityPtr_->GetDivingValue();
+	if (diveValue > 0)
+	{
+		float percentage = DataPtr_->WingBeatOffsetCurve->GetFloatValue(diveValue);
+		targetHeight = FMath::Lerp(DataPtr_->BaseZOffset, DataPtr_->DiveZOffset, percentage);
+		heightLerpToUse = DataPtr_->OffsetGoToDiveLerpSpeed;
+	}
+	
+	HeightCurrentOffset_ = FMath::FInterpTo(HeightCurrentOffset_, targetHeight,
 										deltaTime, heightLerpToUse);
 
 	// Apply in absolute because main component
@@ -116,7 +154,7 @@ void UPFCameraResource::ManageCameraOffset(float deltaTime)
 void UPFCameraResource::ManageCameraDistance(float deltaTime)
 {
 	float desiredDistanceValue = FMath::Lerp(DataPtr_->BaseDistanceWithPlayer, DataPtr_->MaxDistanceWithPlayer,
-											PhysicReferencePtr_->GetForwardVelocityPercentage());
+											PhysicResourcePtr_->GetForwardVelocityPercentage());
 	DistanceCurrentOffset_ = FMath::FInterpTo(DistanceCurrentOffset_, desiredDistanceValue,
 										deltaTime, DataPtr_->DistanceLerpSpeed);
 
@@ -152,4 +190,30 @@ void UPFCameraResource::ManageCameraYaw(float deltaTime)
 	CurrentYaw_ = FRotator::NormalizeAxis(CurrentYaw_);
 
 	CameraYawPtr_->SetRelativeRotation(FRotator(0.f, CurrentYaw_, 0.f));
+}
+
+void UPFCameraResource::ManageTrueCameraPitch(float deltaTime)
+{
+	float targetPitch = DataPtr_->BaseCamRotation;
+	float lerpToUse = DataPtr_->CamRotLerpSpeedToBase;
+
+	float wingBeatValue = WingBeatAbilityPtr_->GetCurrentWingBeatPercentage();
+	if (wingBeatValue > 0)
+	{
+		float percentage = DataPtr_->WingBeatCamRotCurve->GetFloatValue(wingBeatValue);
+		targetPitch = FMath::Lerp(DataPtr_->BaseCamRotation, DataPtr_->WingBeatCamRotation, percentage);
+		lerpToUse = DataPtr_->CamRotLerpSpeedToWingBeat;
+	}
+
+	float diveValue = DiveAbilityPtr_->GetDivingValue();
+	if (diveValue > 0)
+	{
+		float percentage = DataPtr_->DiveCamRotCurve->GetFloatValue(diveValue);
+		targetPitch = FMath::Lerp(DataPtr_->BaseCamRotation, DataPtr_->DiveCamRotation, percentage);
+		lerpToUse = DataPtr_->CamRotLerpSpeedToDive;
+	}
+
+	TrueCameraPitch_ = FMath::FInterpTo(TrueCameraPitch_, targetPitch,
+		deltaTime, lerpToUse);
+	CameraPtr_->SetRelativeRotation(FRotator(TrueCameraPitch_, 0.f, 0.f));
 }

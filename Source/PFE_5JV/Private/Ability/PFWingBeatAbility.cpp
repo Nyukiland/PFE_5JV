@@ -109,7 +109,7 @@ void UPFWingBeatAbility::WingBeat()
 	}
 
 	WingBeatInARowCount = FMath::Clamp(WingBeatInARowCount, 0, DataPtr_->RotationPerClap.Num() - 1);
-	
+
 	PhysicResourcePtr_->ResetPhysicsTimer();
 	OnWingBeatCalled.Broadcast(WingBeatInARowCount);
 }
@@ -117,6 +117,16 @@ void UPFWingBeatAbility::WingBeat()
 bool UPFWingBeatAbility::IsCurrentlyGoingUp()
 {
 	return WingBeatInARowCount != -1;
+}
+
+float UPFWingBeatAbility::GetCurrentWingBeatPercentage()
+{
+	if (!IsCurrentlyGoingUp())
+	{
+		return 0;
+	}
+
+	return static_cast<float>(WingBeatInARowCount + 1) / static_cast<float>(DataPtr_->RotationPerClap.Num() + 1);
 }
 
 void UPFWingBeatAbility::DebugHeight()

@@ -24,13 +24,16 @@ public:
 
     // C++ Ref
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
-    TObjectPtr<UPFPhysicResource> PhysicReferencePtr_;
+    TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
     TObjectPtr<UPFDiveAbility> DiveAbilityPtr_;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
     TObjectPtr<UPFTurnAbility> TurnAbilityPtr_;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
+    TObjectPtr<UPFWingBeatAbility> WingBeatAbilityPtr_;
 
     // Comp in bp link
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|Components")
@@ -56,6 +59,7 @@ private:
 
     float CurrentPitch_;
     float CurrentYaw_;
+    float TrueCameraPitch_;
     
 public:
     UPFCameraResource();
@@ -71,4 +75,5 @@ private:
 
     void ManageCameraPitch(float deltaTime);
     void ManageCameraYaw(float deltaTime);
+    void ManageTrueCameraPitch(float deltaTime);
 };
