@@ -53,10 +53,15 @@ private:
     float HeightCurrentOffset_;
 
     float DistanceCurrentOffset_;
+
+    float CurrentPitch_;
+    float CurrentYaw_;
     
 public:
+    UPFCameraResource();
+    
     virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
-    virtual void ComponentTick_Implementation(float deltaTime) override;
+    virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
     
 private:
     bool CheckValidity() const;

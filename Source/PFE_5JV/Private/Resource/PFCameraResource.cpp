@@ -2,9 +2,15 @@
 #include <algorithm>
 #include "Ability/PFTurnAbility.h"
 #include "Camera/CameraComponent.h"
-#include "Helpers/PFMathHelper.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "StateMachine/PFPlayerCharacter.h"
+
+UPFCameraResource::UPFCameraResource()
+{
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = true;
+
+	PrimaryComponentTick.TickGroup = TG_PostPhysics;
+}
 
 void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 {
@@ -17,20 +23,37 @@ void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 	CameraPositionPtr_->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 	CameraPositionPtr_->SetWorldLocation(PhysicRoot->GetComponentLocation());
 	CameraPositionPtr_->SetWorldRotation(FRotator::ZeroRotator);
+
+	if (!CheckValidity())
+	{
+		return;
+	}
+
+	CurrentPitch_ = ForwardRootPtr_->GetRelativeRotation().Pitch;
+	CurrentYaw_ = PhysicRoot->GetRelativeRotation().Yaw;
+	DistanceCurrentOffset_ = DataPtr_->BaseDistanceWithPlayer;
+	HeightCurrentOffset_ = DataPtr_->BaseZOffset;
+	TurnCurrentOffset_ = 0.f; 
+
+	CameraPitchPtr_->SetRelativeRotation(FRotator(CurrentPitch_, 0.f, 0.f));
+	CameraYawPtr_->SetRelativeRotation(FRotator(0.f, CurrentYaw_, 0.f));
+	CameraPtr_->SetRelativeLocation(FVector(-DistanceCurrentOffset_, 0.f, 0.f));
 }
 
-void UPFCameraResource::ComponentTick_Implementation(float deltaTime)
+// Regular tick to make sure physic movement is applied before doing the tick
+void UPFCameraResource::TickComponent(float DeltaTime, enum ELevelTick TickType,
+	FActorComponentTickFunction* ThisTickFunction)
 {
-	Super::ComponentTick_Implementation(deltaTime);
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	if (!CheckValidity())
 		return;
 
-	ManageCameraPitch(deltaTime);
-	ManageCameraYaw(deltaTime);
+	ManageCameraPitch(DeltaTime);
+	ManageCameraYaw(DeltaTime);
 
-	ManageCameraOffset(deltaTime);
-	ManageCameraDistance(deltaTime);
+	ManageCameraOffset(DeltaTime);
+	ManageCameraDistance(DeltaTime);
 }
 
 bool UPFCameraResource::CheckValidity() const
@@ -103,10 +126,30 @@ void UPFCameraResource::ManageCameraDistance(float deltaTime)
 
 void UPFCameraResource::ManageCameraPitch(float deltaTime)
 {
-	CameraPitchPtr_->SetRelativeRotation(ForwardRootPtr_->GetRelativeRotation());
+	float targetPitch = ForwardRootPtr_->GetRelativeRotation().Pitch;
+	
+	float delta = FMath::FindDeltaAngleDegrees(CurrentPitch_, targetPitch);
+	delta = FMath::Clamp(delta, -DataPtr_->MaxPitchAngle, DataPtr_->MaxPitchAngle);
+
+	CurrentPitch_ = targetPitch - delta;
+	CurrentPitch_ = FMath::FInterpTo(CurrentPitch_, CurrentPitch_ + delta,
+		deltaTime, DataPtr_->PitchLagSpeed);
+	CurrentPitch_ = FRotator::NormalizeAxis(CurrentPitch_);
+
+	CameraPitchPtr_->SetRelativeRotation(FRotator(CurrentPitch_, 0.f, 0.f));
 }
 
 void UPFCameraResource::ManageCameraYaw(float deltaTime)
 {
-	CameraYawPtr_->SetRelativeRotation(PhysicRoot->GetRelativeRotation());
+	float targetYaw = PhysicRoot->GetRelativeRotation().Yaw;
+
+	float delta = FMath::FindDeltaAngleDegrees(CurrentYaw_, targetYaw);
+	delta = FMath::Clamp(delta, -DataPtr_->MaxYawAngle, DataPtr_->MaxYawAngle);
+
+	CurrentYaw_ = targetYaw - delta;
+	CurrentYaw_ = FMath::FInterpTo(CurrentYaw_, CurrentYaw_ + delta,
+		deltaTime, DataPtr_->YawLagSpeed);
+	CurrentYaw_ = FRotator::NormalizeAxis(CurrentYaw_);
+
+	CameraYawPtr_->SetRelativeRotation(FRotator(0.f, CurrentYaw_, 0.f));
 }
