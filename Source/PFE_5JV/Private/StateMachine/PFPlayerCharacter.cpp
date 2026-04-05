@@ -56,7 +56,7 @@ void APFPlayerCharacter::BeginPlay()
 		UClass* classNative = GetNativeClass(comp->GetClass());
 
 		if (ComponentIndexMap_.Contains(classNative))
-			UE_LOG(LogTemp, Error, TEXT("[Player] Duplicate component detected"));
+			UE_LOG(LogTemp, Error, TEXT("[Player] Duplicate component detected: %s"), *classNative->GetName());
 
 		ComponentIndexMap_.Add(classNative, i);
 		comp->ComponentEarlyInit();
@@ -341,6 +341,10 @@ UClass* APFPlayerCharacter::GetNativeClass(TSubclassOf<UPFStateComponent> native
 	
 	while (nativeClass && Cast<UBlueprintGeneratedClass>(nativeClass))
 	{
+		if (nativeClass->GetSuperClass() == UPFStateComponent::StaticClass()
+			|| nativeClass->GetClass() == UPFAbility::StaticClass()
+			|| nativeClass->GetSuperClass() == UPFResource::StaticClass())
+			break;
 		nativeClass = nativeClass->GetSuperClass();
 	}
 
