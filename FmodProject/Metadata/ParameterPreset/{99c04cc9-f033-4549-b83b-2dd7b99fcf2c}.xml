@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="ParameterPreset" id="{99c04cc9-f033-4549-b83b-2dd7b99fcf2c}">
+		<property name="name">
+			<value>Low_Flying</value>
+		</property>
+		<relationship name="folder">
+			<destination>{6c3204a8-6722-45ba-9bcb-d19b45990736}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{aea68e62-aa1b-49f3-ad98-29ee145c53c4}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{aea68e62-aa1b-49f3-ad98-29ee145c53c4}">
+		<property name="maximum">
+			<value>100</value>
+		</property>
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+	</object>
+</objects>

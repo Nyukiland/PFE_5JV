@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="EventFolder" id="{73ffb21f-dcb6-426a-85fd-d636fb869e7a}">
+		<property name="name">
+			<value>WAZO</value>
+		</property>
+		<relationship name="folder">
+			<destination>{d2cd186c-5e52-4ecc-8188-eb171a6d9ea7}</destination>
+		</relationship>
+	</object>
+</objects>
