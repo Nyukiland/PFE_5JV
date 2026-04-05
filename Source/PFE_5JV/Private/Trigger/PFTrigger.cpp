@@ -7,8 +7,10 @@ APFTrigger::APFTrigger()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
+	
 	TriggerBoxPtr_ = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerBox"));
-	RootComponent = TriggerBoxPtr_;
+	TriggerBoxPtr_->SetupAttachment(RootComponent);
 
 	TriggerBoxPtr_->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	TriggerBoxPtr_->SetCollisionObjectType(ECC_WorldDynamic);
