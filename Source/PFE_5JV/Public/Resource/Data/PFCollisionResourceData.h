@@ -19,6 +19,10 @@ public:
 	float DurationOfRemember;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision",
+		meta = (ToolTip = "How long will the player roll back when colliding with the wall"))
+	float DurationOfRewind;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision",
 		meta = (ToolTip = "The amount of speed reduced when the player collides with the wall"))
 	float SlowPercentageAfterFrontalCollision;
 

@@ -97,7 +97,7 @@ protected:
 	TObjectPtr<UWorld> OwnerWorld;
 	
 	UPROPERTY()
-	TArray<double> TimeSavedList_;
+	TArray<float> TimeSavedList_;
 	
 	UPROPERTY()
 	TArray<FStoredCollisionInfo> StoredCollisionInfoList_;
@@ -105,7 +105,7 @@ protected:
 	UPROPERTY()
 	TArray<FStoredPlaytestInfo> GameInfoList_;
 
-	int TimerRewindIncrement_ = 0;
+	float TimeSavedOnImpact_ = 0;
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Collision")

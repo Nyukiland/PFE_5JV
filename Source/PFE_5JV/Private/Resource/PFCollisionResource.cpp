@@ -4,22 +4,25 @@
 
 bool UPFCollisionResource::RewindAfterCollision(float deltaTime)
 {
-	TimerRewindIncrement_++;
 	PhysicResource_->SetKinematic(true);
 	PhysicResource_->StopAllMotion();
 
-	FStoredCollisionInfo stored = StoredCollisionInfoList_[TimerRewindIncrement_];
-
+	FStoredCollisionInfo stored = StoredCollisionInfoList_[0];
+	float time = TimeSavedList_[0];
+	StoredCollisionInfoList_.RemoveAt(0);
+	TimeSavedList_.RemoveAt(0);
+	
 	PhysicRoot->SetWorldLocationAndRotation(stored.Position, stored.PhysicRotation,
 		false, nullptr, ETeleportType::TeleportPhysics);
 	PhysicResource_->HardSetPitchRotationVisual(stored.Pitch);
 
-	if (TimeSavedList_.Num() - 1 == TimerRewindIncrement_)
+	if (TimeSavedOnImpact_ - time > DataPtr_->DurationOfRewind
+		|| StoredCollisionInfoList_.Num() == 0)
 	{
 		PhysicResource_->SetKinematic(false);
 		PhysicResource_->AddForwardVelocity(stored.ForwardForce * DataPtr_->SlowPercentageAfterSideCollision, false);
 		PhysicResource_->AddVelocity(stored.GlobalForce * DataPtr_->SlowPercentageAfterSideCollision, false);
-		TimerRewindIncrement_ = 0;
+		TimeSavedOnImpact_ = 0;
 		return true;
 	}
 
@@ -62,7 +65,7 @@ void UPFCollisionResource::RecordInfoForRollBack(float deltaTime)
 		return;
 
 	if (!bCanRecord_ ||
-		TimerRewindIncrement_ != 0)
+		TimeSavedOnImpact_ != 0)
 		return;
 
 	float forwardVelo = PhysicResource_->CurrentForwardVelocity_.Length();
@@ -75,11 +78,12 @@ void UPFCollisionResource::RecordInfoForRollBack(float deltaTime)
 							position, PhysicRoot->GetComponentRotation(),
 							DiveAbility_->CurrentMedianValue_);
 
-	TimeSavedList_.Insert(OwnerWorld->GetTimeSeconds(), 0);
+	float time = TimeSavedList_.Num() == 0 ? 0 : TimeSavedList_[0] + deltaTime;
+	TimeSavedList_.Insert(time, 0);
 	StoredCollisionInfoList_.Insert(collisionInfo, 0);
 
 	//Test to remove the useless info
-	if (OwnerWorld->GetTimeSeconds() - TimeSavedList_.Last() > DataPtr_->DurationOfRemember)
+	if (time - TimeSavedList_.Last() > DataPtr_->DurationOfRemember)
 	{
 		TimeSavedList_.RemoveAt(TimeSavedList_.Num() - 1);
 		StoredCollisionInfoList_.RemoveAt(StoredCollisionInfoList_.Num() - 1);
@@ -119,6 +123,7 @@ void UPFCollisionResource::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActo
 
 	if (FMath::Abs(dotCollision) > DataPtr_->ThresholdCollision)
 	{
+		TimeSavedOnImpact_ = OwnerWorld->GetTimeSeconds();
 		OnHardCollision.Broadcast();
 		return;
 	}
