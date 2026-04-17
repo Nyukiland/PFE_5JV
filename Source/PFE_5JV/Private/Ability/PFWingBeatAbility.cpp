@@ -12,7 +12,7 @@ FString UPFWingBeatAbility::GetInfo_Implementation()
 {
 	FString text = TEXT("<hb>WingBeat:</>");
 	text += TEXT("\n <b>CurrentHeight: </>") + FString::Printf(TEXT("%f"), CurrentHeight_);
-	text += TEXT("\n <b>WingBeatInARowCount: </>") + FString::Printf(TEXT("%d"), WingBeatInARowCount);
+	text += TEXT("\n <b>Current Rotation: </>") + FString::Printf(TEXT("%f"), CurrentRot_);
 	text += TEXT("\n <b>HeightAtWingBeatBeginning: </>") + FString::Printf(TEXT("%f"), HeightAtWingBeatBeginning_);
 	text += TEXT("\n <b>MaxHeightGain: </>") + FString::Printf(TEXT("%f"), MaxHeightGain_);
 
@@ -31,7 +31,7 @@ void UPFWingBeatAbility::ComponentEnable_Implementation()
 {
 	Super::ComponentEnable_Implementation();
 
-	WingBeatInARowCount = -1;
+	CurrentRot_ = 0;
 }
 
 void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
@@ -52,21 +52,20 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 
 	if (DiveAbilityPtr_->IsDiving())
 	{
-		WingBeatInARowCount = 0;
-		WingBeatInARowTimer = 100;
+		CurrentRot_ = 0;
+		WingBeatInARowTimer_ = 100;
 		return;
 	}
 
-	if (WingBeatInARowCount >= 0)
+	if (CurrentRot_ > 0)
 	{
-		WingBeatInARowTimer += deltaTime;
+		WingBeatInARowTimer_ += deltaTime;
+		
+		PhysicResourcePtr_->SetPitchRotationVisual(CurrentRot_, -3);
 
-		float rotationToGive = DataPtr_->RotationPerClap[WingBeatInARowCount];
-		PhysicResourcePtr_->SetPitchRotationVisual(rotationToGive, -3);
-
-		if (WingBeatInARowTimer > DataPtr_->TimerReset)
+		if (WingBeatInARowTimer_ > DataPtr_->TimerReset)
 		{
-			WingBeatInARowCount = -1;
+			CurrentRot_ = 0;
 		}
 	}
 }
@@ -85,6 +84,7 @@ void UPFWingBeatAbility::WingBeat()
 		return;
 	}
 
+	// Velocity
 	float forwardVelo = PhysicResourcePtr_->CurrentForwardVelocity_.Length();
 	if (forwardVelo <= DataPtr_->MaxVelocityWingBeatVelocity)
 	{
@@ -92,31 +92,39 @@ void UPFWingBeatAbility::WingBeat()
 		float veloWithAdded = forwardVelo + toAdd;
 		float veloDiff = DataPtr_->MaxVelocityWingBeatVelocity - forwardVelo;
 		toAdd = DataPtr_->MaxVelocityWingBeatVelocity > veloWithAdded ? toAdd : veloDiff;
+		
 		PhysicResourcePtr_->AddForwardVelocity(toAdd, true, true,
-												DataPtr_->WingBeatTimeForceGiven,
-												DataPtr_->WingBeatAddForceBasedOnTimeCurvePtr);
+			DataPtr_->WingBeatTimeForceGiven,DataPtr_->WingBeatAddForceBasedOnTimeCurvePtr);
 	}
 
-	WingBeatInARowTimer = 0;
+	// Actual Rotation
+	WingBeatInARowTimer_ = 0;
 
-	if (FMath::Abs(PhysicResourcePtr_->CurrentPitchValue_) < 1 || WingBeatInARowCount != -1)
+	if (CurrentRot_ == 0)
 	{
-		WingBeatInARowCount++;
+		if (PhysicResourcePtr_->CurrentPitchValue_ <= 0)
+		{
+			CurrentRot_ = DataPtr_->RotationPerClap;
+		}
+		else
+		{
+			CurrentRot_ = PhysicResourcePtr_->CurrentPitchValue_;
+		}
 	}
 	else
 	{
-		WingBeatInARowCount = FindClosestClapValue(PhysicResourcePtr_->CurrentPitchValue_);
+		CurrentRot_ += 	DataPtr_->RotationPerClap;
 	}
 
-	WingBeatInARowCount = FMath::Clamp(WingBeatInARowCount, 0, DataPtr_->RotationPerClap.Num() - 1);
+	CurrentRot_ = FMath::Clamp(CurrentRot_, 0, DataPtr_->MaxWingBeatRotation);
 
 	PhysicResourcePtr_->ResetPhysicsTimer();
-	OnWingBeatCalled.Broadcast(WingBeatInARowCount);
+	OnWingBeatCalled.Broadcast();
 }
 
 bool UPFWingBeatAbility::IsCurrentlyGoingUp()
 {
-	return WingBeatInARowCount != -1;
+	return CurrentRot_ != 0;
 }
 
 float UPFWingBeatAbility::GetCurrentWingBeatPercentage()
@@ -126,7 +134,7 @@ float UPFWingBeatAbility::GetCurrentWingBeatPercentage()
 		return 0;
 	}
 
-	return static_cast<float>(WingBeatInARowCount + 1) / static_cast<float>(DataPtr_->RotationPerClap.Num() + 1);
+	return CurrentRot_ / DataPtr_->MaxWingBeatRotation;
 }
 
 void UPFWingBeatAbility::DebugHeight()
@@ -136,26 +144,4 @@ void UPFWingBeatAbility::DebugHeight()
 		MaxHeightGain_ = Owner->ForwardRootPtr->GetComponentLocation().Z - HeightAtWingBeatBeginning_;
 	}
 	CurrentHeight_ = Owner->ForwardRootPtr->GetComponentLocation().Z;
-}
-
-float UPFWingBeatAbility::FindClosestClapValue(float pitch) const
-{
-	int validIndex = 0;
-	float closestAngle = 1000;
-	for (int i = 0; i < DataPtr_->RotationPerClap.Num(); i++)
-	{
-		float angle = FMath::Abs(DataPtr_->RotationPerClap[i] - pitch);
-
-		if (angle < closestAngle)
-		{
-			closestAngle = angle;
-			validIndex = i;
-		}
-		else
-		{
-			break;
-		}
-	}
-
-	return validIndex;
 }

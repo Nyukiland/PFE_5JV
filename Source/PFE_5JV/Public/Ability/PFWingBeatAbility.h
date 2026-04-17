@@ -10,7 +10,7 @@ class UPFVisualResource;
 class UPFWingBeatAbilityData;
 class UPFPhysicResource;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWingBeatCalled, int, wingBeatCount);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWingBeatCalled);
 
 UCLASS(Abstract, Blueprintable)
 class PFE_5JV_API UPFWingBeatAbility : public UPFAbility
@@ -37,9 +37,8 @@ protected:
 	virtual void ComponentEnable_Implementation() override;
 	virtual void ComponentTick_Implementation(float deltaTime) override;
 
-	float WingBeatInARowTimer;
-	int WingBeatInARowCount;
-	float TargetPitchAccumulator_;
+	float WingBeatInARowTimer_;
+	float CurrentRot_;
 	
 	// Debug datas :
 	float CurrentHeight_;
@@ -58,5 +57,4 @@ public:
 	
 private:
 	void DebugHeight();
-	float FindClosestClapValue(float pitch) const;
 };

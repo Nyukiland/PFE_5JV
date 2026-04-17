@@ -38,7 +38,7 @@ void UPFAutoDiveState::OnTick_Implementation(float deltaTime)
 		DivePtr_->AutoDive(deltaTime);
 }
 
-void UPFAutoDiveState::OnWingBeat(int count)
+void UPFAutoDiveState::OnWingBeat()
 {
 	if (!DivePtr_ || !BaseCombinedState_)
 	{

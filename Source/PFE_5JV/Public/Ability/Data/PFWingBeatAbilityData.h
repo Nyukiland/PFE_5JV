@@ -13,8 +13,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Velocité à donner à la vitesse"))
 	float MaxVelocityWingBeatVelocity;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="La rotation basé sur l'input"))
-	TArray<float> RotationPerClap;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="La rotation a chaque clap"))
+	float RotationPerClap;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="La rotation maximum pour le wingbeat"))
+	float MaxWingBeatRotation;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="WingBeat", meta=(ToolTip="Le temps avant le début du reset de la rotation"))
 	float TimerReset;

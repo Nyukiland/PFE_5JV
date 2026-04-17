@@ -33,5 +33,5 @@ public:
 
 private:
 	UFUNCTION()
-	void OnWingBeat(int count);	
+	void OnWingBeat();	
 };

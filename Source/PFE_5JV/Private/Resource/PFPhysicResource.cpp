@@ -359,7 +359,6 @@ void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
 
 	bIsFlipped = FMath::FindDeltaAngleDegrees(CurrentPitchValue_, 180) < 90;
 	PitchResetRot_ = true;
-	//PitchRotation_ = bIsFlipped ? 180 : 0;
 	PitchRotation_ = 0;
 	PitchPriority_ = 1000;
 }
