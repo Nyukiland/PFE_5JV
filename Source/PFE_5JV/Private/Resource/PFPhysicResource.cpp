@@ -19,6 +19,19 @@ void UPFPhysicResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 	MaxAbsoluteVelocity = GetMaxBoostVelocity();
 }
 
+void UPFPhysicResource::ComponentTick_Implementation(float deltaTime)
+{
+	Super::ComponentTick_Implementation(deltaTime);
+
+	ProcessPitchVisual(deltaTime);
+	ProcessAirFriction(deltaTime);
+	DoGravity(deltaTime);
+	ProcessVelocity(deltaTime);
+	ProcessBaseMaxVelocity(deltaTime);
+	ProcessAngularVelocity(deltaTime);
+	ProcessOverrideVelocity();
+}
+
 FString UPFPhysicResource::GetInfo_Implementation()
 {
 	FString text = TEXT("<hb>Physic:</>");

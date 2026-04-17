@@ -16,4 +16,5 @@ protected:
 	
 public:
 	virtual void OnEnter_Implementation() override;
+	virtual void OnInputTriggered_Implementation(FName inputName, ETriggerEvent triggerEvent, const FInputActionValue& value) override;
 };

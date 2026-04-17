@@ -27,9 +27,13 @@ protected:
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
+	virtual void ComponentTick_Implementation(float deltaTime) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Glide")
 	void ReceiveInputMovement(FVector2D inputValue);
+	
+	UFUNCTION(BlueprintCallable, Category = "Glide")
+	bool ShouldGoInAutoDive();
 	
 protected:	
 	UFUNCTION(BlueprintCallable, Category = "Glide")
@@ -37,7 +41,4 @@ protected:
 	
 	UFUNCTION(BlueprintCallable, Category = "Glide")
 	void ConstantMovement(float deltaTime);
-
-	UFUNCTION(BlueprintCallable, Category = "Glide")
-	bool ShouldGoInAutoDive();
 };

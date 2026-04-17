@@ -50,12 +50,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Visual")
 	void ProcessRollRotation(float deltaTime);
 
-	UFUNCTION(BlueprintCallable, Category = "Visual")
-	void ChangeMeshMaterial(int const MaterialIndex, EStateMaterial NewStateMaterial) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Visual")
-	EStateMaterial GetMeshMaterial(int const MaterialIndex) const;
-
 protected:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
+	virtual void ComponentTick_Implementation(float deltaTime) override;
 };

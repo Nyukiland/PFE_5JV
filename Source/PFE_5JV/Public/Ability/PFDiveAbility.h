@@ -56,7 +56,7 @@ protected:
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
-	virtual void ComponentTick_Implementation(float DeltaTime) override;
+	virtual void ComponentTick_Implementation(float deltaTime) override;
 	virtual FString GetInfo_Implementation() override;
 
 	virtual void ComponentDisable_Implementation() override;

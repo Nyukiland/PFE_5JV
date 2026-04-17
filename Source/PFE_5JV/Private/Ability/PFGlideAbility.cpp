@@ -10,6 +10,14 @@ void UPFGlideAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 	PhysicResourcePtr_ = Owner->GetStateComponent<UPFPhysicResource>();
 }
 
+void UPFGlideAbility::ComponentTick_Implementation(float deltaTime)
+{
+	Super::ComponentTick_Implementation(deltaTime);
+
+	ConstantMovement(deltaTime);
+	MovementBasedJoystick();
+}
+
 void UPFGlideAbility::ReceiveInputMovement(FVector2D inputValue)
 {
 	Input_ = inputValue;

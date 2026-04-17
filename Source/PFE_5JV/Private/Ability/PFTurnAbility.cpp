@@ -23,6 +23,14 @@ void UPFTurnAbility::ComponentDisable_Implementation()
 	GetRotationValue();
 }
 
+void UPFTurnAbility::ComponentTick_Implementation(float deltaTime)
+{
+	Super::ComponentTick_Implementation(deltaTime);
+
+	Turn(deltaTime);
+	TurnVisual();
+}
+
 FString UPFTurnAbility::GetInfo_Implementation()
 {
 	FString text = TEXT("<hb>Turn:</>");

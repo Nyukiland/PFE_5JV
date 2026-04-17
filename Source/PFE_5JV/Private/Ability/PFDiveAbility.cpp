@@ -26,12 +26,22 @@ void UPFDiveAbility::ComponentDisable_Implementation()
 	MaxTimeGoingUp_ = 0;
 }
 
-void UPFDiveAbility::ComponentTick_Implementation(float DeltaTime)
+void UPFDiveAbility::ComponentTick_Implementation(float deltaTime)
 {
 	if (HighestInput_ != 0)
-		ElapsedTime_ += DeltaTime;
+		ElapsedTime_ += deltaTime;
 	else
 		ElapsedTime_ = 0;
+
+	Dive(deltaTime);
+	AfterDiveGoingUp(deltaTime);
+	DiveVisual(deltaTime);
+	DiveRoll(deltaTime);
+
+	if (IsDiving())
+	{
+		PhysicResourcePtr_->ResetPhysicsTimer();
+	}
 }
 
 FString UPFDiveAbility::GetInfo_Implementation()

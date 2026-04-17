@@ -1,5 +1,6 @@
 #include "Resource/PFCollisionResource.h"
 
+#include "State/PFAfterCollisionState.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
 bool UPFCollisionResource::RewindAfterCollision(float deltaTime)
@@ -43,6 +44,13 @@ void UPFCollisionResource::ComponentInit_Implementation(APFPlayerCharacter* owne
 	PhysicRoot->OnComponentHit.AddDynamic(
 		this,
 		&UPFCollisionResource::OnHit);
+
+	if (DataPtr_ && DataPtr_->bUseRollBackOnFrontalCollision)
+	{
+		OnHardCollision.AddDynamic(
+			this,
+			&UPFCollisionResource::OnHardCollisionEventCalled);
+	}
 }
 
 void UPFCollisionResource::ComponentTick_Implementation(float deltaTime)
@@ -137,4 +145,9 @@ void UPFCollisionResource::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActo
 	PhysicRoot->SetWorldRotation(YawOnlyRotation);
 
 	PhysicResource_->CurrentForwardVelocity_ *= DataPtr_->SlowPercentageAfterSideCollision;
+}
+
+void UPFCollisionResource::OnHardCollisionEventCalled()
+{
+	Owner->ChangeState(UPFAfterCollisionState::StaticClass());
 }
