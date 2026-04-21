@@ -3106,6 +3106,14 @@
 			"Type": "RequiredResource"
 		},
 		{
+			"Path": "$(EngineDir)/Plugins/Experimental/RawInput/Binaries/Win64/UnrealEditor-RawInput.dll",
+			"Type": "DynamicLibrary"
+		},
+		{
+			"Path": "$(EngineDir)/Plugins/Experimental/RawInput/Binaries/Win64/UnrealEditor.modules",
+			"Type": "RequiredResource"
+		},
+		{
 			"Path": "$(EngineDir)/Plugins/Experimental/RuntimeTelemetry/Binaries/Win64/UnrealEditor-RuntimeTelemetry.dll",
 			"Type": "DynamicLibrary"
 		},
@@ -28452,6 +28460,10 @@
 			"Type": "UFS"
 		},
 		{
+			"Path": "$(EngineDir)/Plugins/Experimental/RawInput/RawInput.uplugin",
+			"Type": "UFS"
+		},
+		{
 			"Path": "$(EngineDir)/Plugins/Experimental/RuntimeTelemetry/RuntimeTelemetry.uplugin",
 			"Type": "UFS"
 		},
@@ -28984,6 +28996,7 @@
 		"PropertyBindingUtils",
 		"ProxyLODPlugin",
 		"PythonScriptPlugin",
+		"RawInput",
 		"RenderDocPlugin",
 		"RenderGraphInsights",
 		"ResonanceAudio",
