@@ -31,6 +31,9 @@ protected:
 	TObjectPtr<UPFVisualResource> VisualResourcePtr_;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
+	TObjectPtr<UPFHapticsResource> HapticsResource_;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
 	float InputRight_;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
 	float InputLeft_;
@@ -75,6 +78,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Dive")
 	void DiveVisual(float deltaTime);
+	
+	void DiveHaptics();
 
 	UFUNCTION(BlueprintCallable, Category="Dive")
 	void DiveRoll(float deltaTime);

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Data/PFTurnAbilityData.h"
 #include "Input/PFInputFilteringData.h"
+#include "Resource/PFHapticsResource.h"
 #include "Resource/PFVisualResource.h"
 #include "StateMachine/StateComponent/PFAbility.h"
 #include "PFTurnAbility.generated.h"
@@ -36,6 +37,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Turn")
 	TObjectPtr<UPFVisualResource> VisualResourcePtr_;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Turn")
+	TObjectPtr<UPFHapticsResource> HapticsResource_;
+	
 	float RotationValue_;
 	float SlowForceTimer_;
 
@@ -58,6 +62,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Turn")
 	void TurnVisual();
+	
+	void TurnHaptics();
 
 	UFUNCTION(BlueprintCallable, Category="Turn")
 	bool IsTurning() const;

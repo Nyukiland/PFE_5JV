@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Resource/PFHapticsResource.h"
 #include "PFTurnAbilityData.generated.h"
 
 UCLASS(Blueprintable, BlueprintType)
@@ -45,4 +46,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Turn/WingRotation",
 	meta = (ToolTip = "Max rotation when the bird is turnin"))
 	float MaxWingRotation;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn/Haptics")
+	FHapticsSettings HapticsSettings;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn/Haptics")
+	TObjectPtr<UCurveFloat> HapticsBasedOnRotation;
 };

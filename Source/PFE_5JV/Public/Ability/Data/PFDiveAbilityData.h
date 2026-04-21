@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Resource/PFHapticsResource.h"
 #include "PFDiveAbilityData.generated.h"
 
 UCLASS(Blueprintable, BlueprintType)
@@ -73,4 +74,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive/DiveRoll",
 		meta = (ToolTip = "The rotation force when diving"))
 	float DiveRollRotationForce;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive/Haptics")
+	FHapticsSettings HapticsSettings;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive/Haptics")
+	TObjectPtr<UCurveFloat> HapticsBasedOnRotation;
 };
