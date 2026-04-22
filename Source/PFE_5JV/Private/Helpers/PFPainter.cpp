@@ -50,6 +50,10 @@ APFPainter* APFPainter::GetPainter(UObject* WorldContext)
 	return Instance;
 }
 
+void APFPainter::PaintStuff_Implementation(const TArray<FHitResult>& validHitResults, const TArray<float>& brushSizes)
+{
+}
+
 void APFPainter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
@@ -60,7 +64,3 @@ void APFPainter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 }
 
-void APFPainter::PaintStuff_Implementation(FVector start, FVector end,
-	float BrushSphereDistanceRef, FVector2D BrushSizeMinMaxRef, float BrushDistance)
-{
-}
