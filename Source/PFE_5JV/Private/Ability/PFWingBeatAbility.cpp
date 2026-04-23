@@ -108,7 +108,7 @@ void UPFWingBeatAbility::WingBeat()
 		}
 		else
 		{
-			CurrentRot_ = PhysicResourcePtr_->CurrentPitchValue_;
+			CurrentRot_ = PhysicResourcePtr_->CurrentPitchValue_ + DataPtr_->RotationPerClap;
 		}
 	}
 	else

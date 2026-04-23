@@ -115,6 +115,10 @@ protected:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 	virtual void ComponentTick_Implementation(float deltaTime) override;
 
+	bool IsHardCollision(const FVector& ImpactNormal, const FVector& CurrentVelocity) const;
+	void HandleSoftCollision(const FVector& ImpactNormal, const FVector& CurrentVelocity);
+	
+	void CheckPredictiveCollision(float deltaTime);
 	void RecordInfoForRollBack(float deltaTime);
 	void RecordInfoForPlayTest();
 

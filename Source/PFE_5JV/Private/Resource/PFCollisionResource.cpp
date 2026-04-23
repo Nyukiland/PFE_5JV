@@ -5,20 +5,29 @@
 
 bool UPFCollisionResource::RewindAfterCollision(float deltaTime)
 {
+	if (!DataPtr_) 
+	{
+		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad set up on data"));
+		return false;
+	}
+	
+	if (StoredCollisionInfoList_.Num() == 0) 
+		return false;
+
 	PhysicResource_->SetKinematic(true);
 	PhysicResource_->StopAllMotion();
 
-	FStoredCollisionInfo stored = StoredCollisionInfoList_[0];
-	float time = TimeSavedList_[0];
-	StoredCollisionInfoList_.RemoveAt(0);
-	TimeSavedList_.RemoveAt(0);
-	
+	FStoredCollisionInfo stored = StoredCollisionInfoList_.Last();
+	float time = TimeSavedList_.Last();
+    
+	StoredCollisionInfoList_.Pop(false);
+	TimeSavedList_.Pop(false);
+    
 	PhysicRoot->SetWorldLocationAndRotation(stored.Position, stored.PhysicRotation,
-		false, nullptr, ETeleportType::TeleportPhysics);
+	   false, nullptr, ETeleportType::TeleportPhysics);
 	PhysicResource_->HardSetPitchRotationVisual(stored.Pitch);
 
-	if (TimeSavedOnImpact_ - time > DataPtr_->DurationOfRewind
-		|| StoredCollisionInfoList_.Num() == 0)
+	if (TimeSavedOnImpact_ - time > DataPtr_->DurationOfRewind || StoredCollisionInfoList_.Num() == 0)
 	{
 		PhysicResource_->SetKinematic(false);
 		PhysicResource_->AddForwardVelocity(stored.ForwardForce * DataPtr_->SlowPercentageAfterSideCollision, false);
@@ -40,7 +49,8 @@ void UPFCollisionResource::ComponentInit_Implementation(APFPlayerCharacter* owne
 	OwnerWorld = Owner->GetWorld();
 
 	PhysicRoot->SetNotifyRigidBodyCollision(true);
-
+	PhysicRoot->BodyInstance.bUseCCD = true;
+	
 	PhysicRoot->OnComponentHit.AddDynamic(
 		this,
 		&UPFCollisionResource::OnHit);
@@ -57,8 +67,81 @@ void UPFCollisionResource::ComponentTick_Implementation(float deltaTime)
 {
 	Super::ComponentTick_Implementation(deltaTime);
 
+	CheckPredictiveCollision(deltaTime);
+
 	RecordInfoForRollBack(deltaTime);
 	RecordInfoForPlayTest();
+}
+
+bool UPFCollisionResource::IsHardCollision(const FVector& ImpactNormal, const FVector& CurrentVelocity) const
+{
+	if (!DataPtr_) 
+	{
+		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad set up on data"));
+		return false;
+	}
+
+	float ImpactSeverity = FVector::DotProduct(CurrentVelocity.GetSafeNormal(), -ImpactNormal);
+
+	return ImpactSeverity > DataPtr_->ThresholdHorizontalCollision;
+}
+
+void UPFCollisionResource::HandleSoftCollision(const FVector& ImpactNormal, const FVector& CurrentVelocity)
+{
+	if (!DataPtr_) 
+	{
+		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad set up on data"));
+		return;
+	}
+	
+	OnSoftCollision.Broadcast();
+
+	FVector ProjectedMovement = CurrentVelocity.MirrorByVector(ImpactNormal);
+	if (!ProjectedMovement.IsNearlyZero())
+	{
+		FRotator LookAtRotation = ProjectedMovement.GetSafeNormal().Rotation();
+        
+		FRotator YawOnlyRotation(0.f, LookAtRotation.Yaw, 0.f);
+		PhysicRoot->SetWorldRotation(YawOnlyRotation);
+	}
+
+	PhysicResource_->CurrentForwardVelocity_ *= DataPtr_->SlowPercentageAfterSideCollision;
+}
+
+void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
+{
+	if (!PhysicResource_ || !DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad Set up"))
+		return;
+	}
+
+	FVector velocity = PhysicResource_->GetCurrentVelocity();
+	
+	if (velocity.IsNearlyZero() || TimeSavedOnImpact_ != 0)
+		return;
+
+	FVector startPos = PhysicRoot->GetComponentLocation();
+	FVector endPos = startPos + (velocity * deltaTime * DataPtr_->SweepAnticipation); 
+
+	FHitResult hitResult;
+	FCollisionQueryParams queryParams;
+	queryParams.AddIgnoredActor(Owner);
+	FCollisionShape sweepShape = FCollisionShape::MakeSphere(DataPtr_->PreshotSphereSize);
+
+	if (OwnerWorld->SweepSingleByChannel(hitResult,	startPos, endPos, FQuat::Identity, 
+		ECC_WorldStatic, sweepShape, queryParams))
+	{
+		if (IsHardCollision(hitResult.ImpactNormal, velocity))
+		{
+			TimeSavedOnImpact_ = TimeSavedList_.Last();
+			OnHardCollision.Broadcast();
+		}
+		else
+		{
+			HandleSoftCollision(hitResult.ImpactNormal, velocity);
+		}
+	}
 }
 
 void UPFCollisionResource::RecordInfoForRollBack(float deltaTime)
@@ -68,39 +151,36 @@ void UPFCollisionResource::RecordInfoForRollBack(float deltaTime)
 		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad set up on data"));
 		return;
 	}
-
-	if (!DataPtr_->bUseRollBackOnFrontalCollision)
+	
+	if (!DataPtr_->bUseRollBackOnFrontalCollision) 
 		return;
-
-	if (!bCanRecord_ ||
-		TimeSavedOnImpact_ != 0)
+    
+	if (!bCanRecord_ || TimeSavedOnImpact_ != 0) 
 		return;
 
 	float forwardVelo = PhysicResource_->CurrentForwardVelocity_.Length();
 	FVector position = PhysicRoot->GetComponentLocation();
 
-	// Store info for the collision
 	FStoredCollisionInfo collisionInfo =
-		FStoredCollisionInfo(forwardVelo,
-							PhysicResource_->CurrentGlobalVelocity_,
-							position, PhysicRoot->GetComponentRotation(),
-							DiveAbility_->CurrentMedianValue_);
+	   FStoredCollisionInfo(forwardVelo,
+					  PhysicResource_->CurrentGlobalVelocity_,
+					  position, PhysicRoot->GetComponentRotation(),
+					  DiveAbility_->CurrentMedianValue_);
 
-	float time = TimeSavedList_.Num() == 0 ? 0 : TimeSavedList_[0] + deltaTime;
-	TimeSavedList_.Insert(time, 0);
-	StoredCollisionInfoList_.Insert(collisionInfo, 0);
+	float time = TimeSavedList_.Num() == 0 ? 0.f : TimeSavedList_.Last() + deltaTime;
+	TimeSavedList_.Add(time);
+	StoredCollisionInfoList_.Add(collisionInfo);
 
-	//Test to remove the useless info
-	if (time - TimeSavedList_.Last() > DataPtr_->DurationOfRemember)
+	while (TimeSavedList_.Num() > 0 && (time - TimeSavedList_[0] > DataPtr_->DurationOfRemember))
 	{
-		TimeSavedList_.RemoveAt(TimeSavedList_.Num() - 1);
-		StoredCollisionInfoList_.RemoveAt(StoredCollisionInfoList_.Num() - 1);
+		TimeSavedList_.RemoveAt(0, 1, false);
+		StoredCollisionInfoList_.RemoveAt(0, 1, false);
 	}
 }
 
 void UPFCollisionResource::RecordInfoForPlayTest()
 {
-	if (!DataPtr_ || !PhysicResource_ || !DiveAbility_)
+	if (!DataPtr_ || !PhysicResource_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad set up on data"));
 		return;
@@ -123,31 +203,30 @@ void UPFCollisionResource::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActo
 								FVector NormalImpulse, const FHitResult& Hit)
 {
 	if (!DataPtr_ || !PhysicResource_)
-		return;
-
-	FVector normalOfCollider = Hit.ImpactNormal;
-	FVector playerMovement = PhysicResource_->GetCurrentVelocity();
-	float dotCollision = FVector::DotProduct(normalOfCollider, playerMovement.GetSafeNormal());
-
-	if (FMath::Abs(dotCollision) > DataPtr_->ThresholdCollision)
 	{
-		TimeSavedOnImpact_ = OwnerWorld->GetTimeSeconds();
-		OnHardCollision.Broadcast();
+		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad set up on data"));
 		return;
 	}
 
-	OnSoftCollision.Broadcast();
+	FVector Velocity = PhysicResource_->GetCurrentVelocity();
 
-	FVector mirroredMovement = playerMovement.MirrorByVector(normalOfCollider);
-	FRotator LookAtRotation = mirroredMovement.GetSafeNormal().Rotation();
-
-	FRotator YawOnlyRotation(0.f, LookAtRotation.Yaw, 0.f);
-	PhysicRoot->SetWorldRotation(YawOnlyRotation);
-
-	PhysicResource_->CurrentForwardVelocity_ *= DataPtr_->SlowPercentageAfterSideCollision;
+	if (IsHardCollision(Hit.ImpactNormal, Velocity))
+	{
+		TimeSavedOnImpact_ = TimeSavedList_.Last();
+		OnHardCollision.Broadcast();
+	}
+	else
+	{
+		HandleSoftCollision(Hit.ImpactNormal, Velocity);
+	}
 }
 
 void UPFCollisionResource::OnHardCollisionEventCalled()
 {
-	Owner->ChangeState(UPFAfterCollisionState::StaticClass());
+	if (!DataPtr_ || !DataPtr_->AfterCollisionState)
+	{
+		return;
+	}
+	
+	Owner->ChangeState(DataPtr_->AfterCollisionState);
 }

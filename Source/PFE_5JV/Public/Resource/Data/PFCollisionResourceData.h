@@ -4,6 +4,8 @@
 #include "Engine/DataAsset.h"
 #include "PFCollisionResourceData.generated.h"
 
+class UPFAfterCollisionState;
+
 UCLASS(Blueprintable, BlueprintType)
 class PFE_5JV_API UPFCollisionResourceData : public UDataAsset
 {
@@ -31,7 +33,15 @@ public:
 	float SlowPercentageAfterSideCollision;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision",
-		meta = (ToolTip = "The amount of speed reduced when the player collides with the wall on the side",
-			ClampMax = 1, ClampMin = 0))
-	float ThresholdCollision;
+		meta = (ClampMax = 1, ClampMin = 0))
+	float ThresholdHorizontalCollision;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	float PreshotSphereSize = 35;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	float SweepAnticipation = 1.8f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	TSubclassOf<UPFAfterCollisionState> AfterCollisionState;
 };

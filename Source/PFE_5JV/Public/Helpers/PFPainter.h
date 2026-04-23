@@ -24,6 +24,6 @@ public:
 	static APFPainter* GetPainter(UObject* WorldContext);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void PaintStuff(FVector start, FVector end, float BrushSphereDistanceRef, FVector2D BrushSizeMinMaxRef, float BrushDistance);
-	void PaintStuff_Implementation(FVector start, FVector end, float BrushSphereDistanceRef, FVector2D BrushSizeMinMaxRef, float BrushDistance);
+	void PaintStuff(const TArray<FHitResult>& validHitResults, const TArray<float>& brushSizes);
+	void PaintStuff_Implementation(const TArray<FHitResult>& validHitResults, const TArray<float>& brushSizes);
 };
