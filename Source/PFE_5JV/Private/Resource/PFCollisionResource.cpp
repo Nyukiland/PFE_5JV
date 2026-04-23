@@ -96,8 +96,7 @@ void UPFCollisionResource::HandleSoftCollision(const FVector& ImpactNormal, cons
 	
 	OnSoftCollision.Broadcast();
 
-	FVector ProjectedMovement = FVector::VectorPlaneProject(CurrentVelocity, ImpactNormal);
-
+	FVector ProjectedMovement = CurrentVelocity.MirrorByVector(ImpactNormal);
 	if (!ProjectedMovement.IsNearlyZero())
 	{
 		FRotator LookAtRotation = ProjectedMovement.GetSafeNormal().Rotation();
