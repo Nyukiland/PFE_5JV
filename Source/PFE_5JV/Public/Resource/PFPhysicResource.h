@@ -83,7 +83,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DiveResource")
 	TObjectPtr<UPFDiveAbilityData> DataDivePtr_;
 	
-	float MaxAbsoluteVelocity;
+	float MaxAbsoluteVelocity_;
 	float GravityTimer_ = 0;
 	float FrictionTimer_ = 0;
 	FVector GlobalVelocity_;
@@ -101,6 +101,9 @@ protected:
 	int PitchPriority_;
 
 	float CurrentOverrideForwardVelocity_;
+	float AutoSteerTimer_ = 0.f;
+	FRotator AutoSteerTargetRotation_ = FRotator::ZeroRotator;
+	float AutoSteerTurnRate_ = 0.f;
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
@@ -131,23 +134,24 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	float GetCurrentAirFriction() const;
 	
-	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void ProcessAirFriction(const float deltaTime);
 	
-	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void ProcessVelocity(const float deltaTime);
 
-	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void ProcessBaseMaxVelocity(const float deltaTime);
 	
-	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void ProcessOverrideVelocity();
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource", meta = (AdvancedDisplay = "bShouldResetForce, bShouldAddAtTheEnd, duration, curve"))
 	void SetYawRotationVelocity(float rotation, bool bShouldResetVelocity = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);
 	
-	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void ProcessAngularVelocity(const float deltaTime);
+
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	void ForceAutoSteer(FRotator targetRotation, float turnRate, float duration);
+	
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	bool IsAutoSteering() const;
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void AddToPitchRotationVisual(float rotationToAdd, int priority);
@@ -161,7 +165,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void ProcessPitchVisual(float deltaTime);
 	
-	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void DoGravity(const float deltaTime);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")

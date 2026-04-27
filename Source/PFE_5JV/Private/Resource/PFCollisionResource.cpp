@@ -68,12 +68,11 @@ void UPFCollisionResource::ComponentTick_Implementation(float deltaTime)
 	Super::ComponentTick_Implementation(deltaTime);
 
 	CheckPredictiveCollision(deltaTime);
-
 	RecordInfoForRollBack(deltaTime);
 	RecordInfoForPlayTest();
 }
 
-bool UPFCollisionResource::IsHardCollision(const FVector& ImpactNormal, const FVector& CurrentVelocity) const
+bool UPFCollisionResource::IsHardCollision(const FVector& impactNormal, const FVector& currentVelocity) const
 {
 	if (!DataPtr_) 
 	{
@@ -81,12 +80,11 @@ bool UPFCollisionResource::IsHardCollision(const FVector& ImpactNormal, const FV
 		return false;
 	}
 
-	float ImpactSeverity = FVector::DotProduct(CurrentVelocity.GetSafeNormal(), -ImpactNormal);
-
-	return ImpactSeverity > DataPtr_->ThresholdHorizontalCollision;
+	float impactSeverity = FVector::DotProduct(currentVelocity.GetSafeNormal(), -impactNormal);
+	return impactSeverity > DataPtr_->ThresholdHorizontalCollision;
 }
 
-void UPFCollisionResource::HandleSoftCollision(const FVector& ImpactNormal, const FVector& CurrentVelocity)
+void UPFCollisionResource::HandleSoftCollision(const FVector& impactNormal, const FVector& currentVelocity)
 {
 	if (!DataPtr_) 
 	{
@@ -96,13 +94,12 @@ void UPFCollisionResource::HandleSoftCollision(const FVector& ImpactNormal, cons
 	
 	OnSoftCollision.Broadcast();
 
-	FVector ProjectedMovement = CurrentVelocity.MirrorByVector(ImpactNormal);
-	if (!ProjectedMovement.IsNearlyZero())
+	FVector projectedMovement = currentVelocity.MirrorByVector(impactNormal);
+	if (!projectedMovement.IsNearlyZero())
 	{
-		FRotator LookAtRotation = ProjectedMovement.GetSafeNormal().Rotation();
-        
-		FRotator YawOnlyRotation(0.f, LookAtRotation.Yaw, 0.f);
-		PhysicRoot->SetWorldRotation(YawOnlyRotation);
+		FRotator lookAtRotation = projectedMovement.GetSafeNormal().Rotation();
+		FRotator yawOnlyRotation(0.f, lookAtRotation.Yaw, 0.f);
+		PhysicRoot->SetWorldRotation(yawOnlyRotation);
 	}
 
 	PhysicResource_->CurrentForwardVelocity_ *= DataPtr_->SlowPercentageAfterSideCollision;
@@ -122,7 +119,9 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 		return;
 
 	FVector startPos = PhysicRoot->GetComponentLocation();
-	FVector endPos = startPos + (velocity * deltaTime * DataPtr_->SweepAnticipation); 
+	float collisionDist = velocity.Length() * deltaTime * DataPtr_->SweepAnticipation;
+	float avoidanceDist = velocity.Length() * deltaTime * DataPtr_->AvoidanceAnticipationMultiplier;
+	FVector endPos = startPos + (velocity.GetSafeNormal() * avoidanceDist);
 
 	FHitResult hitResult;
 	FCollisionQueryParams queryParams;
@@ -132,14 +131,22 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 	if (OwnerWorld->SweepSingleByChannel(hitResult,	startPos, endPos, FQuat::Identity, 
 		ECC_WorldStatic, sweepShape, queryParams))
 	{
-		if (IsHardCollision(hitResult.ImpactNormal, velocity))
+		if (hitResult.Distance <= collisionDist)
 		{
-			TimeSavedOnImpact_ = TimeSavedList_.Last();
-			OnHardCollision.Broadcast();
+			if (IsHardCollision(hitResult.ImpactNormal, velocity))
+			{
+				TimeSavedOnImpact_ = TimeSavedList_.Last();
+				OnHardCollision.Broadcast();
+			}
+			else
+			{
+				HandleSoftCollision(hitResult.ImpactNormal, velocity);
+			}
 		}
 		else
 		{
-			HandleSoftCollision(hitResult.ImpactNormal, velocity);
+			if (!PhysicResource_->IsAutoSteering())
+				ApplyAvoidanceSteering(hitResult, deltaTime);
 		}
 	}
 }
@@ -192,11 +199,96 @@ void UPFCollisionResource::RecordInfoForPlayTest()
 	float forwardVelo = PhysicResource_->CurrentForwardVelocity_.Length();
 	FVector position = PhysicRoot->GetComponentLocation();
 
-	FStoredPlaytestInfo PlaytestInfo =
+	FStoredPlaytestInfo playtestInfo =
 		FStoredPlaytestInfo(forwardVelo,
 							position);
 
-	GameInfoList_.Add(PlaytestInfo);
+	GameInfoList_.Add(playtestInfo);
+}
+
+void UPFCollisionResource::ApplyAvoidanceSteering(const FHitResult& hit, float deltaTime)
+{
+	if (!DataPtr_ || !PhysicResource_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad set up on data"));
+		return;
+	}
+
+	FVector velocity = PhysicResource_->GetCurrentVelocity();
+	FVector velNormal = velocity.GetSafeNormal();
+    
+	float impactSeverity = FMath::Max(0.f, FVector::DotProduct(velNormal, -hit.ImpactNormal));
+	float speedFactor = FMath::Clamp(velocity.Length() / PhysicResource_->GetMaxBoostVelocity(), 0.1f, 1.0f);
+
+	FVector escapeDir;
+    
+	if (impactSeverity > 0.9f)
+	{
+		FVector rightDir = PhysicRoot->GetRightVector();
+		float yawBias = FVector::DotProduct(velNormal, rightDir);
+		escapeDir = (yawBias >= 0.f) ? rightDir : -rightDir;
+	}
+	else
+	{
+		escapeDir = FindBestEvasionDirection(PhysicRoot->GetComponentLocation(), velNormal, hit.ImpactNormal);
+	}
+
+	float turnRate = DataPtr_->BaseAvoidanceTurnRate * speedFactor * (1.0f + impactSeverity);
+    
+	float lockDuration = 0.15f; 
+	PhysicResource_->ForceAutoSteer(escapeDir.Rotation(), turnRate, lockDuration);
+	PhysicResource_->CurrentForwardVelocity_ *= DataPtr_->SlowPercentageDuringAvoidance;
+}
+
+FVector UPFCollisionResource::FindBestEvasionDirection(const FVector& startPos, const FVector& currentVelocityNormal,
+	const FVector& impactNormal)
+{
+	TArray<FVector> testDirections = {
+		currentVelocityNormal.RotateAngleAxis(45.f, PhysicRoot->GetRightVector()),   
+		currentVelocityNormal.RotateAngleAxis(-45.f, PhysicRoot->GetRightVector()),  
+		currentVelocityNormal.RotateAngleAxis(45.f, PhysicRoot->GetUpVector()),      
+		currentVelocityNormal.RotateAngleAxis(-45.f, PhysicRoot->GetUpVector()),     
+		currentVelocityNormal.RotateAngleAxis(45.f, PhysicRoot->GetRightVector() + PhysicRoot->GetUpVector()) 
+	};
+
+	FVector bestDirection = FVector::ZeroVector;
+	float bestScore = -MAX_flt;
+
+	float avoidanceDistance = DataPtr_->AvoidanceAnticipationMultiplier * PhysicResource_->GetCurrentVelocity().Length() * 0.1f;
+	avoidanceDistance = FMath::Max(avoidanceDistance, 1000.f); 
+
+	FCollisionQueryParams queryParams;
+	queryParams.AddIgnoredActor(Owner);
+	FCollisionShape sweepShape = FCollisionShape::MakeSphere(DataPtr_->PreshotSphereSize * 0.8f);
+
+	for (const FVector& dir : testDirections)
+	{
+		FVector endPos = startPos + (dir * avoidanceDistance);
+		FHitResult hit;
+        
+		bool bHit = OwnerWorld->SweepSingleByChannel(hit, startPos, endPos, FQuat::Identity,
+			ECC_WorldStatic, sweepShape, queryParams);
+
+		if (!bHit)
+		{
+			float flowScore = FVector::DotProduct(dir, currentVelocityNormal);
+			float escapeScore = FVector::DotProduct(dir, impactNormal);
+			float totalScore = flowScore + escapeScore;
+
+			if (totalScore > bestScore)
+			{
+				bestScore = totalScore;
+				bestDirection = dir;
+			}
+		}
+	}
+
+	if (bestDirection.IsNearlyZero())
+	{
+		bestDirection = currentVelocityNormal.MirrorByVector(impactNormal);
+	}
+
+	return bestDirection.GetSafeNormal();
 }
 
 void UPFCollisionResource::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,

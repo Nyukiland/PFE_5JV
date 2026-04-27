@@ -41,6 +41,16 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
 	float SweepAnticipation = 1.8f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	float AvoidanceAnticipationMultiplier = 1.8f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	float BaseAvoidanceTurnRate = 1.8f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision",
+		meta = (ClampMin = 0, ClampMax = 1))
+	float SlowPercentageDuringAvoidance = 0.8f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
 	TSubclassOf<UPFAfterCollisionState> AfterCollisionState;

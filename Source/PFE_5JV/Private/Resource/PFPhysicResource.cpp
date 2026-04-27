@@ -16,19 +16,35 @@ void UPFPhysicResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 
 	ForwardVelocity_ = FVector::ForwardVector * DataPtr_->InitialVelocity;
 	CurrentForwardVelocity_ = ForwardVelocity_;
-	MaxAbsoluteVelocity = GetMaxBoostVelocity();
+	MaxAbsoluteVelocity_ = GetMaxBoostVelocity();
 }
 
 void UPFPhysicResource::ComponentTick_Implementation(float deltaTime)
 {
 	Super::ComponentTick_Implementation(deltaTime);
 
-	ProcessPitchVisual(deltaTime);
+	if (AutoSteerTimer_ > 0.f)
+	{
+		AutoSteerTimer_ -= deltaTime;
+        
+		FRotator CurrentRot = PhysicRoot->GetComponentRotation();
+		FRotator NewRot = FMath::RInterpTo(CurrentRot, AutoSteerTargetRotation_, deltaTime, AutoSteerTurnRate_);
+        
+		PhysicRoot->SetWorldRotation(NewRot);
+		HardSetPitchRotationVisual(NewRot.Pitch);
+
+		RemoveAngularVelocities(); 
+	}
+	else
+	{
+		ProcessPitchVisual(deltaTime);
+		ProcessAngularVelocity(deltaTime);
+	}
+	
 	ProcessAirFriction(deltaTime);
 	DoGravity(deltaTime);
 	ProcessVelocity(deltaTime);
 	ProcessBaseMaxVelocity(deltaTime);
-	ProcessAngularVelocity(deltaTime);
 	ProcessOverrideVelocity();
 }
 
@@ -167,8 +183,8 @@ void UPFPhysicResource::ProcessAirFriction(const float deltaTime)
 	dir = ForwardVelocity_.Length() > 1 ? ForwardVelocity_.GetSafeNormal() : ForwardVelocity_;
 	ForwardVelocity_ -= friction * dir;
 
-	ForwardVelocity_ = ForwardVelocity_.GetClampedToSize(0, MaxAbsoluteVelocity);
-	GlobalVelocity_ = GlobalVelocity_.GetClampedToSize(0, MaxAbsoluteVelocity);
+	ForwardVelocity_ = ForwardVelocity_.GetClampedToSize(0, MaxAbsoluteVelocity_);
+	GlobalVelocity_ = GlobalVelocity_.GetClampedToSize(0, MaxAbsoluteVelocity_);
 }
 
 void UPFPhysicResource::ProcessVelocity(const float deltaTime)
@@ -238,7 +254,7 @@ void UPFPhysicResource::ProcessBaseMaxVelocity(const float deltaTime)
 	FVector velocity = GetCurrentVelocity();
 
 	// control that we don't exceed system max velocity
-	velocity = velocity.GetClampedToMaxSize(MaxAbsoluteVelocity);
+	velocity = velocity.GetClampedToMaxSize(MaxAbsoluteVelocity_);
 
 	// control that we don't exceed base velocity
 	if (velocity.Length() < DataWingBeatPtr_->MaxVelocityWingBeatVelocity)
@@ -301,6 +317,18 @@ void UPFPhysicResource::ProcessAngularVelocity(const float deltaTime)
 	}
 
 	PhysicRoot->SetPhysicsAngularVelocityInDegrees(velocity);
+}
+
+void UPFPhysicResource::ForceAutoSteer(FRotator targetRotation, float turnRate, float duration)
+{
+	AutoSteerTargetRotation_ = targetRotation;
+	AutoSteerTurnRate_ = turnRate;
+	AutoSteerTimer_ = duration;
+}
+
+bool UPFPhysicResource::IsAutoSteering() const
+{
+	return AutoSteerTimer_ > 0.f;
 }
 
 void UPFPhysicResource::AddToPitchRotationVisual(float rotationToAdd, int priority)
@@ -443,7 +471,7 @@ FVector UPFPhysicResource::CalculateVelocity(FVelocityToAdd* velocity, float del
 	if (!velocity->bShouldReset)
 	{
 		VelocityGlobal += toAdd;
-		VelocityGlobal = VelocityGlobal.GetClampedToMaxSize(MaxAbsoluteVelocity);
+		VelocityGlobal = VelocityGlobal.GetClampedToMaxSize(MaxAbsoluteVelocity_);
 	}
 
 	if (velocity->Timer <= 0)
@@ -451,7 +479,7 @@ FVector UPFPhysicResource::CalculateVelocity(FVelocityToAdd* velocity, float del
 		if (velocity->bShoudEndAdded)
 		{
 			VelocityGlobal += toAdd;
-			VelocityGlobal = VelocityGlobal.GetClampedToMaxSize(MaxAbsoluteVelocity);
+			VelocityGlobal = VelocityGlobal.GetClampedToMaxSize(MaxAbsoluteVelocity_);
 		}
 	}
 

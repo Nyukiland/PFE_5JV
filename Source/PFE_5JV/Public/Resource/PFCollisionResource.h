@@ -115,13 +115,16 @@ protected:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 	virtual void ComponentTick_Implementation(float deltaTime) override;
 
-	bool IsHardCollision(const FVector& ImpactNormal, const FVector& CurrentVelocity) const;
-	void HandleSoftCollision(const FVector& ImpactNormal, const FVector& CurrentVelocity);
+	bool IsHardCollision(const FVector& impactNormal, const FVector& currentVelocity) const;
+	void HandleSoftCollision(const FVector& impactNormal, const FVector& currentVelocity);
 	
 	void CheckPredictiveCollision(float deltaTime);
 	void RecordInfoForRollBack(float deltaTime);
 	void RecordInfoForPlayTest();
 
+	void ApplyAvoidanceSteering(const FHitResult& hit, float deltaTime);
+	FVector FindBestEvasionDirection(const FVector& startPos, const FVector& currentVelocityNormal, const FVector& impactNormal);
+	
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,	FVector NormalImpulse, const FHitResult& Hit);
