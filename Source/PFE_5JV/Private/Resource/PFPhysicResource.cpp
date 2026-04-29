@@ -23,24 +23,9 @@ void UPFPhysicResource::ComponentTick_Implementation(float deltaTime)
 {
 	Super::ComponentTick_Implementation(deltaTime);
 
-	if (AutoSteerTimer_ > 0.f)
-	{
-		AutoSteerTimer_ -= deltaTime;
-        
-		FRotator CurrentRot = PhysicRoot->GetComponentRotation();
-		FRotator NewRot = FMath::RInterpTo(CurrentRot, AutoSteerTargetRotation_, deltaTime, AutoSteerTurnRate_);
-        
-		PhysicRoot->SetWorldRotation(NewRot);
-		HardSetPitchRotationVisual(NewRot.Pitch);
-
-		RemoveAngularVelocities(); 
-	}
-	else
-	{
-		ProcessPitchVisual(deltaTime);
-		ProcessAngularVelocity(deltaTime);
-	}
-	
+	ProcessPitchVisual(deltaTime);
+	ProcessAngularVelocity(deltaTime);
+    
 	ProcessAirFriction(deltaTime);
 	DoGravity(deltaTime);
 	ProcessVelocity(deltaTime);
@@ -316,19 +301,35 @@ void UPFPhysicResource::ProcessAngularVelocity(const float deltaTime)
 		velocity += toAdd;
 	}
 
+	if (bBlockRight_ && velocity.Z > 0.f)
+		velocity.Z = 0.f;
+	if (bBlockLeft_ && velocity.Z < 0.f)
+		velocity.Z = 0.f;
+
+	if (!AvoidanceNormal_.IsNearlyZero())
+	{
+		float rightDot = FVector::DotProduct(PhysicRoot->GetRightVector(), AvoidanceNormal_);
+        
+		if (rightDot < -0.1f && velocity.Z > 0.f)
+			velocity.Z = 0.f;
+		if (rightDot > 0.1f && velocity.Z < 0.f)
+			velocity.Z = 0.f;
+	}
+	
 	PhysicRoot->SetPhysicsAngularVelocityInDegrees(velocity);
 }
 
-void UPFPhysicResource::ForceAutoSteer(FRotator targetRotation, float turnRate, float duration)
+void UPFPhysicResource::SetAvoidanceNormal(const FVector& Normal)
 {
-	AutoSteerTargetRotation_ = targetRotation;
-	AutoSteerTurnRate_ = turnRate;
-	AutoSteerTimer_ = duration;
+	AvoidanceNormal_ = Normal;
 }
 
-bool UPFPhysicResource::IsAutoSteering() const
+void UPFPhysicResource::SetDirectionalBlocks(bool bBlockRight, bool bBlockLeft, bool bBlockUp, bool bBlockDown)
 {
-	return AutoSteerTimer_ > 0.f;
+	bBlockRight_ = bBlockRight;
+	bBlockLeft_ = bBlockLeft;
+	bBlockUp_ = bBlockUp;
+	bBlockDown_ = bBlockDown;
 }
 
 void UPFPhysicResource::AddToPitchRotationVisual(float rotationToAdd, int priority)
@@ -372,7 +373,22 @@ void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
 	}
 
 	float delta = FMath::FindDeltaAngleDegrees(CurrentPitchValue_, PitchRotation_);
+	
+	if (bBlockUp_ && delta > 0.f)
+		delta = 0.f;
+	if (bBlockDown_ && delta < 0.f)
+		delta = 0.f;
 
+	if (!AvoidanceNormal_.IsNearlyZero())
+	{
+		float upDot = FVector::DotProduct(PhysicRoot->GetUpVector(), AvoidanceNormal_);
+        
+		if (upDot > 0.1f && delta < 0.f)
+			delta = 0.f;
+		if (upDot < -0.1f && delta > 0.f)
+			delta = 0.f;
+	}
+	
 	float speed = 0;
 	if (PitchResetRot_)
 		speed = (delta > 0.f) ? DataPtr_->PitchRotationLerpVelocityUpGoingToBase : DataPtr_->PitchRotationLerpVelocityDownGoingToBase;

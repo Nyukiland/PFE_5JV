@@ -101,9 +101,13 @@ protected:
 	int PitchPriority_;
 
 	float CurrentOverrideForwardVelocity_;
-	float AutoSteerTimer_ = 0.f;
-	FRotator AutoSteerTargetRotation_ = FRotator::ZeroRotator;
-	float AutoSteerTurnRate_ = 0.f;
+	
+	FVector AvoidanceNormal_ = FVector::ZeroVector;
+
+	bool bBlockRight_ = false;
+	bool bBlockLeft_ = false;
+	bool bBlockUp_ = false;
+	bool bBlockDown_ = false;
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
@@ -148,10 +152,10 @@ public:
 	void ProcessAngularVelocity(const float deltaTime);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	void ForceAutoSteer(FRotator targetRotation, float turnRate, float duration);
-	
+	void SetAvoidanceNormal(const FVector& Normal);
+
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	bool IsAutoSteering() const;
+	void SetDirectionalBlocks(bool bBlockRight, bool bBlockLeft, bool bBlockUp, bool bBlockDown);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void AddToPitchRotationVisual(float rotationToAdd, int priority);

@@ -67,6 +67,7 @@ void UPFCollisionResource::ComponentTick_Implementation(float deltaTime)
 {
 	Super::ComponentTick_Implementation(deltaTime);
 
+	CheckFlank();
 	CheckPredictiveCollision(deltaTime);
 	RecordInfoForRollBack(deltaTime);
 	RecordInfoForPlayTest();
@@ -105,6 +106,28 @@ void UPFCollisionResource::HandleSoftCollision(const FVector& impactNormal, cons
 	PhysicResource_->CurrentForwardVelocity_ *= DataPtr_->SlowPercentageAfterSideCollision;
 }
 
+void UPFCollisionResource::CheckFlank()
+{
+	if (!PhysicResource_ || !DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad Set up"))
+		return;
+	}
+
+	float flankTraceLength = DataPtr_->PreshotSphereSize + 50.f; 
+	FVector startPos = PhysicRoot->GetComponentLocation();
+    
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(Owner);
+
+	bool bHitRight = OwnerWorld->LineTraceTestByChannel(startPos, startPos + (PhysicRoot->GetRightVector() * flankTraceLength), ECC_WorldStatic, QueryParams);
+	bool bHitLeft  = OwnerWorld->LineTraceTestByChannel(startPos, startPos + (-PhysicRoot->GetRightVector() * flankTraceLength), ECC_WorldStatic, QueryParams);
+	bool bHitUp    = OwnerWorld->LineTraceTestByChannel(startPos, startPos + (PhysicRoot->GetUpVector() * flankTraceLength), ECC_WorldStatic, QueryParams);
+	bool bHitDown  = OwnerWorld->LineTraceTestByChannel(startPos, startPos + (-PhysicRoot->GetUpVector() * flankTraceLength), ECC_WorldStatic, QueryParams);
+
+	PhysicResource_->SetDirectionalBlocks(bHitRight, bHitLeft, bHitUp, bHitDown);
+}
+
 void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 {
 	if (!PhysicResource_ || !DataPtr_)
@@ -131,6 +154,8 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 	if (OwnerWorld->SweepSingleByChannel(hitResult,	startPos, endPos, FQuat::Identity, 
 		ECC_WorldStatic, sweepShape, queryParams))
 	{
+		PhysicResource_->SetAvoidanceNormal(hitResult.ImpactNormal);
+
 		if (hitResult.Distance <= collisionDist)
 		{
 			if (IsHardCollision(hitResult.ImpactNormal, velocity))
@@ -145,9 +170,13 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 		}
 		else
 		{
-			if (!PhysicResource_->IsAutoSteering())
-				ApplyAvoidanceSteering(hitResult, deltaTime);
+			float distanceFactor = FMath::Clamp(1.0f - (hitResult.Distance / avoidanceDist), 0.0f, 1.0f);
+			ApplyProgressiveSteering(hitResult, distanceFactor, deltaTime);
 		}
+	}
+	else
+	{
+		PhysicResource_->SetAvoidanceNormal(FVector::ZeroVector);
 	}
 }
 
@@ -206,7 +235,7 @@ void UPFCollisionResource::RecordInfoForPlayTest()
 	GameInfoList_.Add(playtestInfo);
 }
 
-void UPFCollisionResource::ApplyAvoidanceSteering(const FHitResult& hit, float deltaTime)
+void UPFCollisionResource::ApplyProgressiveSteering(const FHitResult& hit, float distanceFactor, float deltaTime)
 {
 	if (!DataPtr_ || !PhysicResource_)
 	{
@@ -221,7 +250,6 @@ void UPFCollisionResource::ApplyAvoidanceSteering(const FHitResult& hit, float d
 	float speedFactor = FMath::Clamp(velocity.Length() / PhysicResource_->GetMaxBoostVelocity(), 0.1f, 1.0f);
 
 	FVector escapeDir;
-    
 	if (impactSeverity > 0.9f)
 	{
 		FVector rightDir = PhysicRoot->GetRightVector();
@@ -233,11 +261,16 @@ void UPFCollisionResource::ApplyAvoidanceSteering(const FHitResult& hit, float d
 		escapeDir = FindBestEvasionDirection(PhysicRoot->GetComponentLocation(), velNormal, hit.ImpactNormal);
 	}
 
-	float turnRate = DataPtr_->BaseAvoidanceTurnRate * speedFactor * (1.0f + impactSeverity);
+	float turnRate = DataPtr_->BaseAvoidanceTurnRate * speedFactor * distanceFactor * (1.0f + impactSeverity);
     
-	float lockDuration = 0.15f; 
-	PhysicResource_->ForceAutoSteer(escapeDir.Rotation(), turnRate, lockDuration);
-	PhysicResource_->CurrentForwardVelocity_ *= DataPtr_->SlowPercentageDuringAvoidance;
+	FRotator CurrentRot = PhysicRoot->GetComponentRotation();
+	FRotator NewRot = FMath::RInterpTo(CurrentRot, escapeDir.Rotation(), deltaTime, turnRate);
+    
+	PhysicRoot->SetWorldRotation(NewRot);
+	PhysicResource_->HardSetPitchRotationVisual(NewRot.Pitch);
+
+	float currentSlowdown = FMath::Lerp(1.0f, DataPtr_->SlowPercentageDuringAvoidance, distanceFactor);
+	PhysicResource_->CurrentForwardVelocity_ *= currentSlowdown;
 }
 
 FVector UPFCollisionResource::FindBestEvasionDirection(const FVector& startPos, const FVector& currentVelocityNormal,
