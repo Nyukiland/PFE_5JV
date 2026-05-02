@@ -42,11 +42,6 @@ protected:
     float HighestInput_;
 
     float TimerAutoDive_ = 0;
-    
-    bool bIsDivingStateGoingUp_;
-    float SpeedBeforeDive_;
-    float GoingUpTimer_ = 10;
-    float MaxTimeGoingUp_ = 0;
 
     float RecordedPreviousInputRight_;
     float RecordedPreviousInputLeft_;
@@ -78,9 +73,6 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="Dive")
     void Dive(float deltaTime);
-
-    UFUNCTION(BlueprintCallable, Category="Dive")
-    void AfterDiveGoingUp(float deltaTime);
 
     UFUNCTION(BlueprintCallable, Category="Dive")
     void DiveVisual(float deltaTime);

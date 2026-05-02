@@ -21,11 +21,6 @@ void UPFDiveAbility::ComponentDisable_Implementation()
     GetHighestValue();
     TimerAutoDive_ = 0;
 
-    bIsDivingStateGoingUp_ = false;
-    SpeedBeforeDive_ = 0.0f;
-    GoingUpTimer_ = 10;
-    MaxTimeGoingUp_ = 0;
-
     // Reset Velocity and Smoothing variables
     SmoothedInputLeft_ = 0.0f;
     SmoothedInputRight_ = 0.0f;
@@ -43,7 +38,6 @@ void UPFDiveAbility::ComponentTick_Implementation(float deltaTime)
        ElapsedTime_ = 0;
 
     Dive(deltaTime);
-    AfterDiveGoingUp(deltaTime);
     DiveVisual(deltaTime);
     DiveRoll(deltaTime);
     DiveHaptics();
@@ -105,49 +99,6 @@ void UPFDiveAbility::Dive(float deltaTime)
        toAdd = DataPtr_->MaxDiveVelocity > veloWithAdded ? toAdd : veloDiff;
        PhysicResourcePtr_->AddForwardVelocity(toAdd, false);
     }
-}
-
-void UPFDiveAbility::AfterDiveGoingUp(float deltaTime)
-{
-    if (!DataPtr_ || !PhysicResourcePtr_
-       || !DataPtr_->GoingUpRotationCurve
-       || !DataPtr_->GoingUpDurationCurve)
-    {
-       UE_LOG(LogTemp, Error, TEXT("[DiveAbility] Bad Set up on data"));
-       return;
-    }
-
-    if (!DataPtr_->bUseUCurveGoingUp)
-       return;
-
-    if (IsDiving() && !bIsDivingStateGoingUp_)
-    {
-       bIsDivingStateGoingUp_ = true;
-       GoingUpTimer_ = 100;
-       SpeedBeforeDive_ = PhysicResourcePtr_->GetCurrentVelocity().Length();
-    }
-
-    if (!IsDiving() && bIsDivingStateGoingUp_)
-    {
-       bIsDivingStateGoingUp_ = false;
-
-       float value01 = PhysicResourcePtr_->GetCurrentVelocity().Length() - SpeedBeforeDive_;
-       value01 /= DataPtr_->MaxDiveVelocity;
-       value01 = FMath::Clamp(value01, 0.0f, 1.0f);
-       MaxTimeGoingUp_ = DataPtr_->MaxTimeForGoingUpAfterDive;
-       MaxTimeGoingUp_ *= DataPtr_->GoingUpDurationCurve->GetFloatValue(value01);
-       GoingUpTimer_ = 0;
-    }
-
-    if (bIsDivingStateGoingUp_ || GoingUpTimer_ > MaxTimeGoingUp_)
-       return;
-
-    GoingUpTimer_ += deltaTime;
-
-    float timer01 = FMath::Clamp(GoingUpTimer_ / MaxTimeGoingUp_, 0, 1);
-    float rotationValue = DataPtr_->MaxUpRotationPitch;
-    rotationValue *= DataPtr_->GoingUpRotationCurve->GetFloatValue(timer01);
-    PhysicResourcePtr_->SetPitchRotationVisual(rotationValue, -1);
 }
 
 void UPFDiveAbility::DiveVisual(float deltaTime)
