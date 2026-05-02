@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Data/PFDiveAbilityData.h"
 #include "Input/PFInputFilteringData.h"
+#include "Resource/PFCollisionResource.h"
 #include "Resource/PFPhysicResource.h"
 #include "Resource/PFVisualResource.h"
 #include "StateMachine/StateComponent/PFAbility.h"
@@ -29,6 +30,9 @@ protected:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
     TObjectPtr<UPFVisualResource> VisualResourcePtr_;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
+    TObjectPtr<UPFCollisionResource> CollisionResource_;
     
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Dive")
     TObjectPtr<UPFHapticsResource> HapticsResource_;

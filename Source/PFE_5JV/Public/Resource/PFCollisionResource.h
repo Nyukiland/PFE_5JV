@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "PFPhysicResource.h"
-#include "Ability/PFDiveAbility.h"
 #include "Data/PFCollisionResourceData.h"
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFCollisionResource.generated.h"
@@ -20,7 +19,6 @@ public:
 
 	FVector Position;
 	FRotator PhysicRotation;
-	float Pitch;
 
 public:
 	FStoredCollisionInfo()
@@ -30,18 +28,16 @@ public:
 
 		Position = FVector::ZeroVector;
 		PhysicRotation = FRotator::ZeroRotator;
-		Pitch = 0;
 	}
 	
 	FStoredCollisionInfo(float forward, FVector global, FVector position,
-		FRotator physicRotation, float pitch)
+		FRotator physicRotation)
 	{
 		ForwardForce = forward;
 		GlobalForce = global;
 
 		Position = position;
 		PhysicRotation = physicRotation;
-		Pitch = pitch;
 	}
 };
 
@@ -79,6 +75,11 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Collision")
 	FOnPlayerCollision OnHardCollision;
+
+	bool bHitRight;
+	bool bHitLeft;
+	bool bHitUp; 
+	bool bHitDown;  
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
@@ -86,9 +87,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
 	TObjectPtr<UPFPhysicResource> PhysicResource_;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
-	TObjectPtr<UPFDiveAbility> DiveAbility_;
 
 	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = "Collision")
 	bool bCanRecord_ = true;
@@ -110,6 +108,8 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable, Category = "Collision")
 	bool RewindAfterCollision(float deltaTime);
+	
+	virtual FString GetInfo_Implementation() override;
 	
 protected:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;

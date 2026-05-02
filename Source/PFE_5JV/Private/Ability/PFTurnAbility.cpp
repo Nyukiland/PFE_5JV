@@ -8,10 +8,9 @@ void UPFTurnAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 	Super::ComponentInit_Implementation(ownerObj);
 
 	PhysicResourcePtr_ = Owner->GetStateComponent<UPFPhysicResource>();
-
 	VisualResourcePtr_ = Owner->GetStateComponent<UPFVisualResource>();
-	
 	HapticsResource_ = Owner->GetStateComponent<UPFHapticsResource>();
+	CollisionResource_ = Owner->GetStateComponent<UPFCollisionResource>();
 }
 
 void UPFTurnAbility::ComponentDisable_Implementation()
@@ -28,6 +27,8 @@ void UPFTurnAbility::ComponentDisable_Implementation()
 void UPFTurnAbility::ComponentTick_Implementation(float deltaTime)
 {
 	Super::ComponentTick_Implementation(deltaTime);
+
+	GetRotationValue();
 
 	Turn(deltaTime);
 	TurnVisual();
@@ -46,13 +47,11 @@ FString UPFTurnAbility::GetInfo_Implementation()
 void UPFTurnAbility::ReceiveInputLeft(float left)
 {
 	InputLeft_ = left;
-	GetRotationValue();
 }
 
 void UPFTurnAbility::ReceiveInputRight(float right)
 {
 	InputRight_ = right;
-	GetRotationValue();
 }
 
 void UPFTurnAbility::Turn(float deltaTime)
@@ -79,16 +78,16 @@ void UPFTurnAbility::Turn(float deltaTime)
 
 	if (!IsTurning())
 		return;
-	
+
 	float velocity0to1 = PhysicResourcePtr_->GetForwardVelocityPercentage();
 	float valueAbs = FMath::Abs(RotationValue_);
-	
+
 	// Rotation
 	float rotValue = DataPtr_->RotationForce;
 	rotValue *= FMath::Sign(RotationValue_);
 	rotValue *= DataPtr_->RotationForceBasedOnInputPtr->GetFloatValue(valueAbs);
 	rotValue *= DataPtr_->RotationForceBasedOnVelocityPtr->GetFloatValue(velocity0to1);
-	
+
 	PhysicResourcePtr_->SetYawRotationVelocity(rotValue);
 
 	// Slow Down
@@ -101,7 +100,7 @@ void UPFTurnAbility::Turn(float deltaTime)
 	{
 		bIsDrifting = true;
 		SlowForceTimer_ += deltaTime;
-		float slowValue01 = FMath::Clamp(SlowForceTimer_/DataPtr_->TimeToGoFullSlowForce, 0.f, 1.f);
+		float slowValue01 = FMath::Clamp(SlowForceTimer_ / DataPtr_->TimeToGoFullSlowForce, 0.f, 1.f);
 		slowValue *= DataPtr_->SlowForceInProgressCurvePtr->GetFloatValue(slowValue01);
 	}
 	else
@@ -109,7 +108,7 @@ void UPFTurnAbility::Turn(float deltaTime)
 		bIsDrifting = false;
 		SlowForceTimer_ = 0;
 	}
-	
+
 	PhysicResourcePtr_->AddForwardVelocity(-slowValue * deltaTime, false);
 }
 
@@ -131,7 +130,7 @@ void UPFTurnAbility::TurnHaptics()
 		UE_LOG(LogTemp, Error, TEXT("[Turn] Bad set up on Data"))
 		return;
 	}
-	
+
 	FHapticsSettings settings = DataPtr_->HapticsSettings;
 	float intensity = DataPtr_->HapticsBasedOnRotation->GetFloatValue(FMath::Abs(RotationValue_)) * settings.Intensity;
 	intensity = FMath::Clamp(intensity, 0.f, 1.f);
@@ -148,8 +147,8 @@ bool UPFTurnAbility::IsTurning() const
 {
 	if (!DataInputPtr_)
 		return false;
-	
-	return RotationValue_ != 0 && TimerStartTurn_ >= DataInputPtr_->TurnDelay; 
+
+	return RotationValue_ != 0 && TimerStartTurn_ >= DataInputPtr_->TurnDelay;
 }
 
 float UPFTurnAbility::TurnValue() const
@@ -157,21 +156,32 @@ float UPFTurnAbility::TurnValue() const
 	if (!DataInputPtr_
 		|| !IsTurning())
 		return false;
-	
+
 	return RotationValue_;
 }
 
 void UPFTurnAbility::GetRotationValue()
 {
-	float rotValue = FMath::Max(InputLeft_, InputRight_) - FMath::Min(InputLeft_, InputRight_);
-	rotValue *= InputLeft_ > InputRight_ ? -1 : 1;
-	
-	if (DataPtr_ && DataInputPtr_ &&
-		FMath::Abs(rotValue) > DataInputPtr_->ToleranceRotBetweenInput)
+	if (!DataInputPtr_ || !CollisionResource_)
 	{
-		RotationValue_ = rotValue;
+		UE_LOG(LogTemp, Error, TEXT("[Turn] Bad set up"))
 		return;
 	}
 
-	RotationValue_ = 0;
+	float desiredRotValue = FMath::Max(InputLeft_, InputRight_) - FMath::Min(InputLeft_, InputRight_);
+	desiredRotValue *= InputLeft_ > InputRight_ ? -1.f : 1.f;
+
+	if (FMath::Abs(desiredRotValue) > DataInputPtr_->ToleranceRotBetweenInput)
+	{
+		if ((CollisionResource_->bHitLeft && desiredRotValue < 0.f)
+			|| (CollisionResource_->bHitRight && desiredRotValue > 0.f))
+		{
+			desiredRotValue = 0.f;
+		}
+
+		RotationValue_ = desiredRotValue;
+		return;
+	}
+	
+	RotationValue_ = 0.f;
 }

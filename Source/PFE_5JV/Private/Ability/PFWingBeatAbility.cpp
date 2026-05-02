@@ -25,6 +25,7 @@ void UPFWingBeatAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerO
 
 	PhysicResourcePtr_ = ownerObj->GetStateComponent<UPFPhysicResource>();
 	DiveAbilityPtr_ = ownerObj->GetStateComponent<UPFDiveAbility>();
+	CollisionResource_ = ownerObj->GetStateComponent<UPFCollisionResource>();
 }
 
 void UPFWingBeatAbility::ComponentEnable_Implementation()
@@ -38,7 +39,7 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 {
 	Super::ComponentTick_Implementation(deltaTime);
 
-	if (!PhysicResourcePtr_ && !DiveAbilityPtr_)
+	if (!PhysicResourcePtr_ || !DiveAbilityPtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[WingBeatAbility] missing component"));
 		return;
@@ -57,22 +58,27 @@ void UPFWingBeatAbility::ComponentTick_Implementation(float deltaTime)
 		return;
 	}
 
-	if (CurrentRot_ > 0)
-	{
-		WingBeatInARowTimer_ += deltaTime;
-		
-		PhysicResourcePtr_->SetPitchRotationVisual(CurrentRot_, -3);
+	if (CurrentRot_ <= 0)
+		return;
 
-		if (WingBeatInARowTimer_ > DataPtr_->TimerReset)
-		{
-			CurrentRot_ = 0;
-		}
+	if (CollisionResource_->bHitUp)
+	{
+		CurrentRot_ = PhysicResourcePtr_->CurrentPitchValue_;
+	}
+
+	WingBeatInARowTimer_ += deltaTime;
+
+	PhysicResourcePtr_->SetPitchRotationVisual(CurrentRot_, -3);
+
+	if (WingBeatInARowTimer_ > DataPtr_->TimerReset)
+	{
+		CurrentRot_ = 0;
 	}
 }
 
 void UPFWingBeatAbility::WingBeat()
 {
-	if (!PhysicResourcePtr_ && !DiveAbilityPtr_)
+	if (!PhysicResourcePtr_ || !DiveAbilityPtr_ || !CollisionResource_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[WingBeatAbility] missing component"));
 		return;
@@ -84,6 +90,9 @@ void UPFWingBeatAbility::WingBeat()
 		return;
 	}
 
+	if (CollisionResource_->bHitUp)
+		return;
+
 	// Velocity
 	float forwardVelo = PhysicResourcePtr_->CurrentForwardVelocity_.Length();
 	if (forwardVelo <= DataPtr_->MaxVelocityWingBeatVelocity)
@@ -92,9 +101,10 @@ void UPFWingBeatAbility::WingBeat()
 		float veloWithAdded = forwardVelo + toAdd;
 		float veloDiff = DataPtr_->MaxVelocityWingBeatVelocity - forwardVelo;
 		toAdd = DataPtr_->MaxVelocityWingBeatVelocity > veloWithAdded ? toAdd : veloDiff;
-		
+
 		PhysicResourcePtr_->AddForwardVelocity(toAdd, true, true,
-			DataPtr_->WingBeatTimeForceGiven,DataPtr_->WingBeatAddForceBasedOnTimeCurvePtr);
+												DataPtr_->WingBeatTimeForceGiven,
+												DataPtr_->WingBeatAddForceBasedOnTimeCurvePtr);
 	}
 
 	// Actual Rotation
@@ -113,7 +123,7 @@ void UPFWingBeatAbility::WingBeat()
 	}
 	else
 	{
-		CurrentRot_ += 	DataPtr_->RotationPerClap;
+		CurrentRot_ += DataPtr_->RotationPerClap;
 	}
 
 	CurrentRot_ = FMath::Clamp(CurrentRot_, 0, DataPtr_->MaxWingBeatRotation);

@@ -38,6 +38,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
 	float PreshotSphereSize = 35;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	float FlankDetectionDist = 100;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
 	float SweepAnticipation = 1.8f;

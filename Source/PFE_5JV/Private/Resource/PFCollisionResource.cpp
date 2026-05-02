@@ -25,7 +25,6 @@ bool UPFCollisionResource::RewindAfterCollision(float deltaTime)
     
 	PhysicRoot->SetWorldLocationAndRotation(stored.Position, stored.PhysicRotation,
 	   false, nullptr, ETeleportType::TeleportPhysics);
-	PhysicResource_->HardSetPitchRotationVisual(stored.Pitch);
 
 	if (TimeSavedOnImpact_ - time > DataPtr_->DurationOfRewind || StoredCollisionInfoList_.Num() == 0)
 	{
@@ -39,12 +38,21 @@ bool UPFCollisionResource::RewindAfterCollision(float deltaTime)
 	return false;
 }
 
+FString UPFCollisionResource::GetInfo_Implementation()
+{
+	FString text = TEXT("<hb>Collision:</>");
+	text += TEXT("\n <b>Hit Right: </>") + FString::Printf(TEXT("%i"), bHitRight);
+	text += TEXT("\n <b>Hit Left: </>") + FString::Printf(TEXT("%i"), bHitLeft);
+	text += TEXT("\n <b>Hit Up: </>") + FString::Printf(TEXT("%i"), bHitUp);
+	text += TEXT("\n <b>Hit Down: </>") + FString::Printf(TEXT("%i"), bHitDown);
+	return text;
+}
+
 void UPFCollisionResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 {
 	Super::ComponentInit_Implementation(ownerObj);
 
 	PhysicResource_ = Owner->GetStateComponent<UPFPhysicResource>();
-	DiveAbility_ = Owner->GetStateComponent<UPFDiveAbility>();
 
 	OwnerWorld = Owner->GetWorld();
 
@@ -68,7 +76,7 @@ void UPFCollisionResource::ComponentTick_Implementation(float deltaTime)
 	Super::ComponentTick_Implementation(deltaTime);
 
 	CheckFlank();
-	CheckPredictiveCollision(deltaTime);
+	//CheckPredictiveCollision(deltaTime);
 	RecordInfoForRollBack(deltaTime);
 	RecordInfoForPlayTest();
 }
@@ -114,18 +122,16 @@ void UPFCollisionResource::CheckFlank()
 		return;
 	}
 
-	float flankTraceLength = DataPtr_->PreshotSphereSize + 50.f; 
+	float flankTraceLength = DataPtr_->FlankDetectionDist; 
 	FVector startPos = PhysicRoot->GetComponentLocation();
     
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(Owner);
 
-	bool bHitRight = OwnerWorld->LineTraceTestByChannel(startPos, startPos + (PhysicRoot->GetRightVector() * flankTraceLength), ECC_WorldStatic, QueryParams);
-	bool bHitLeft  = OwnerWorld->LineTraceTestByChannel(startPos, startPos + (-PhysicRoot->GetRightVector() * flankTraceLength), ECC_WorldStatic, QueryParams);
-	bool bHitUp    = OwnerWorld->LineTraceTestByChannel(startPos, startPos + (PhysicRoot->GetUpVector() * flankTraceLength), ECC_WorldStatic, QueryParams);
-	bool bHitDown  = OwnerWorld->LineTraceTestByChannel(startPos, startPos + (-PhysicRoot->GetUpVector() * flankTraceLength), ECC_WorldStatic, QueryParams);
-
-	PhysicResource_->SetDirectionalBlocks(bHitRight, bHitLeft, bHitUp, bHitDown);
+	bHitRight = OwnerWorld->LineTraceTestByChannel(startPos, startPos + (PhysicRoot->GetRightVector() * flankTraceLength), ECC_WorldStatic, QueryParams);
+	bHitLeft  = OwnerWorld->LineTraceTestByChannel(startPos, startPos + (-PhysicRoot->GetRightVector() * flankTraceLength), ECC_WorldStatic, QueryParams);
+	bHitUp    = OwnerWorld->LineTraceTestByChannel(startPos, startPos + (PhysicRoot->GetUpVector() * flankTraceLength), ECC_WorldStatic, QueryParams);
+	bHitDown  = OwnerWorld->LineTraceTestByChannel(startPos, startPos + (-PhysicRoot->GetUpVector() * flankTraceLength), ECC_WorldStatic, QueryParams);
 }
 
 void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
@@ -154,8 +160,8 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 	if (OwnerWorld->SweepSingleByChannel(hitResult,	startPos, endPos, FQuat::Identity, 
 		ECC_WorldStatic, sweepShape, queryParams))
 	{
-		PhysicResource_->SetAvoidanceNormal(hitResult.ImpactNormal);
 
+		// Avoidance Stuff
 		if (hitResult.Distance <= collisionDist)
 		{
 			if (IsHardCollision(hitResult.ImpactNormal, velocity))
@@ -174,15 +180,11 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 			ApplyProgressiveSteering(hitResult, distanceFactor, deltaTime);
 		}
 	}
-	else
-	{
-		PhysicResource_->SetAvoidanceNormal(FVector::ZeroVector);
-	}
 }
 
 void UPFCollisionResource::RecordInfoForRollBack(float deltaTime)
 {
-	if (!DataPtr_ || !PhysicResource_ || !DiveAbility_)
+	if (!DataPtr_ || !PhysicResource_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad set up on data"));
 		return;
@@ -200,8 +202,7 @@ void UPFCollisionResource::RecordInfoForRollBack(float deltaTime)
 	FStoredCollisionInfo collisionInfo =
 	   FStoredCollisionInfo(forwardVelo,
 					  PhysicResource_->CurrentGlobalVelocity_,
-					  position, PhysicRoot->GetComponentRotation(),
-					  DiveAbility_->CurrentMedianValue_);
+					  position, PhysicRoot->GetComponentRotation());
 
 	float time = TimeSavedList_.Num() == 0 ? 0.f : TimeSavedList_.Last() + deltaTime;
 	TimeSavedList_.Add(time);

@@ -102,13 +102,6 @@ protected:
 
 	float CurrentOverrideForwardVelocity_;
 	
-	FVector AvoidanceNormal_ = FVector::ZeroVector;
-
-	bool bBlockRight_ = false;
-	bool bBlockLeft_ = false;
-	bool bBlockUp_ = false;
-	bool bBlockDown_ = false;
-	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 	virtual void ComponentTick_Implementation(float deltaTime) override;
@@ -150,12 +143,6 @@ public:
 	void SetYawRotationVelocity(float rotation, bool bShouldResetVelocity = true, bool bShouldAddAtTheEnd = false, float duration = 0, UCurveFloat* curve = nullptr);
 	
 	void ProcessAngularVelocity(const float deltaTime);
-
-	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	void SetAvoidanceNormal(const FVector& Normal);
-
-	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	void SetDirectionalBlocks(bool bBlockRight, bool bBlockLeft, bool bBlockUp, bool bBlockDown);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void AddToPitchRotationVisual(float rotationToAdd, int priority);

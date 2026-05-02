@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Data/PFWingBeatAbilityData.h"
+#include "Resource/PFCollisionResource.h"
 #include "StateMachine/StateComponent/PFAbility.h"
 #include "PFWingBeatAbility.generated.h"
 
@@ -32,7 +33,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="WingBeat")
 	TObjectPtr<UPFDiveAbility> DiveAbilityPtr_;
-		
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="WingBeat")
+	TObjectPtr<UPFCollisionResource> CollisionResource_;
+	
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 	virtual void ComponentEnable_Implementation() override;
 	virtual void ComponentTick_Implementation(float deltaTime) override;
