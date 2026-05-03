@@ -8,6 +8,10 @@ void UPFGlideAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 	Super::ComponentInit_Implementation(ownerObj);
 
 	PhysicResourcePtr_ = Owner->GetStateComponent<UPFPhysicResource>();
+	if (PhysicResourcePtr_ && DataPtr_)
+	{
+		PhysicResourcePtr_->SetMinVelocity(DataPtr_->BaseForwardMovement);
+	}
 }
 
 void UPFGlideAbility::ComponentTick_Implementation(float deltaTime)

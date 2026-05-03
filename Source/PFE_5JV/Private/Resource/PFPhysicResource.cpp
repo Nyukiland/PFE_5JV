@@ -25,7 +25,7 @@ void UPFPhysicResource::ComponentTick_Implementation(float deltaTime)
 
 	ProcessPitchVisual(deltaTime);
 	ProcessAngularVelocity(deltaTime);
-    
+
 	ProcessAirFriction(deltaTime);
 	DoGravity(deltaTime);
 	ProcessVelocity(deltaTime);
@@ -49,11 +49,16 @@ FString UPFPhysicResource::GetInfo_Implementation()
 	return text;
 }
 
+void UPFPhysicResource::SetMinVelocity(float velocity)
+{
+	MinVelocity_ = velocity;
+}
+
 void UPFPhysicResource::SetKinematic(bool bisKinematic)
 {
 	if (PhysicRoot->IsSimulatingPhysics() == bisKinematic)
 		return;
-	
+
 	PhysicRoot->SetSimulatePhysics(!bisKinematic);
 	if (bisKinematic) PhysicRoot->WakeRigidBody();
 }
@@ -68,15 +73,14 @@ float UPFPhysicResource::GetMaxBoostVelocity() const
 		UE_LOG(LogTemp, Error, TEXT("[DiveResource] No Data available"))
 		return 0;
 	}
-	
+
 	if (!DataWingBeatPtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[WingBeatResource] No Data available"))
 		return 0;
 	}
 
-	const float maxBoostVelocity = DataDivePtr_->MaxDiveVelocity;
-	return maxBoostVelocity;
+	return DataDivePtr_->MaxDiveVelocity;
 }
 
 float UPFPhysicResource::GetForwardVelocityPercentage() const
@@ -87,20 +91,26 @@ float UPFPhysicResource::GetForwardVelocityPercentage() const
 		return 0.0f;
 	}
 
-	return FMath::Clamp(CurrentForwardVelocity_.Length() / DataDivePtr_->MaxDiveVelocity, 0, 1);
+	float forwardVelo = CurrentForwardVelocity_.Length() - MinVelocity_;
+	float maxVelo = DataDivePtr_->MaxDiveVelocity - MinVelocity_;
+
+	return FMath::Clamp(forwardVelo / maxVelo, 0, 1);
 }
 
-void UPFPhysicResource::AddVelocity(FVector velocity, bool bShouldResetVelocity, bool bShouldAddAtTheEnd, float duration,
-								UCurveFloat* curve)
+void UPFPhysicResource::AddVelocity(FVector velocity, bool bShouldResetVelocity, bool bShouldAddAtTheEnd,
+									float duration,
+									UCurveFloat* curve)
 {
 	FVelocityToAdd velocityToAdd(velocity, bShouldResetVelocity, bShouldAddAtTheEnd, duration, curve);
 	GlobalVelocities_.Add(velocityToAdd);
 }
 
-void UPFPhysicResource::AddForwardVelocity(float velocity, bool bShouldResetVelocity, bool bShouldAddAtTheEnd, float duration,
-										UCurveFloat* curve)
+void UPFPhysicResource::AddForwardVelocity(float velocity, bool bShouldResetVelocity, bool bShouldAddAtTheEnd,
+											float duration,
+											UCurveFloat* curve)
 {
-	FVelocityToAdd velocityToAdd(FVector::ForwardVector * velocity, bShouldResetVelocity, bShouldAddAtTheEnd, duration, curve);
+	FVelocityToAdd velocityToAdd(FVector::ForwardVector * velocity, bShouldResetVelocity, bShouldAddAtTheEnd, duration,
+								curve);
 	ForwardVelocities_.Add(velocityToAdd);
 }
 
@@ -220,6 +230,7 @@ void UPFPhysicResource::ProcessVelocity(const float deltaTime)
 		velocityForward += toAdd;
 	}
 
+	velocityForward = velocityForward.GetClampedToSize(MinVelocity_, MaxAbsoluteVelocity_);
 	CurrentForwardVelocity_ = velocityForward;
 
 	velocity += ForwardRootPtr_->GetForwardVector() * velocityForward.Length();
@@ -246,17 +257,18 @@ void UPFPhysicResource::ProcessBaseMaxVelocity(const float deltaTime)
 		return;
 
 	// If we exceed base velocity, we need to slow down :
-
 	// - take the direction
-	FVector dir = velocity.GetSafeNormal();
 	// - get how much we exceed base velocity : 
-	float velocityScaled = velocity.Length() - DataWingBeatPtr_->MaxVelocityWingBeatVelocity;
 	// - get how much boost velocity is above base velocity :
-	float maxVelocityScaled = GetMaxBoostVelocity() - DataWingBeatPtr_->MaxVelocityWingBeatVelocity;
-	// - get the ratio :
-	float ratio = FMath::Clamp(velocityScaled / maxVelocityScaled, 0.f, 1.f);
+	// - get the ratio
 	// - remove velocity from the friction effect
-	velocity -= DataPtr_->AboveBaseMaxVelocityFrictionCurvePtr->GetFloatValue(ratio) * DataPtr_->AboveVelocityFriction * deltaTime * dir;
+
+	FVector dir = velocity.GetSafeNormal();
+	float velocityScaled = velocity.Length() - DataWingBeatPtr_->MaxVelocityWingBeatVelocity;
+	float maxVelocityScaled = GetMaxBoostVelocity() - DataWingBeatPtr_->MaxVelocityWingBeatVelocity;
+	float ratio = FMath::Clamp(velocityScaled / maxVelocityScaled, 0.f, 1.f);
+	velocity -= DataPtr_->AboveBaseMaxVelocityFrictionCurvePtr->GetFloatValue(ratio) * DataPtr_->AboveVelocityFriction *
+		deltaTime * dir;
 
 	PhysicRoot->SetPhysicsLinearVelocity(velocity);
 }
@@ -271,9 +283,10 @@ void UPFPhysicResource::ProcessOverrideVelocity()
 }
 
 void UPFPhysicResource::SetYawRotationVelocity(float rotation, bool bShouldResetVelocity, bool bShouldAddAtTheEnd,
-											float duration, UCurveFloat* curve)
+												float duration, UCurveFloat* curve)
 {
-	const FVelocityToAdd velocityToAdd(FVector(0, 0, rotation), bShouldResetVelocity, bShouldAddAtTheEnd, duration, curve);
+	const FVelocityToAdd velocityToAdd(FVector(0, 0, rotation), bShouldResetVelocity, bShouldAddAtTheEnd, duration,
+										curve);
 	AngularVelocities_.Add(velocityToAdd);
 }
 
@@ -300,7 +313,7 @@ void UPFPhysicResource::ProcessAngularVelocity(const float deltaTime)
 
 		velocity += toAdd;
 	}
-	
+
 	PhysicRoot->SetPhysicsAngularVelocityInDegrees(velocity);
 }
 
@@ -320,7 +333,7 @@ void UPFPhysicResource::SetPitchRotationVisual(float rotation, int priority)
 		return;
 
 	float normalizedRot = FRotator::NormalizeAxis(rotation);
-	
+
 	PitchResetRot_ = false;
 	PitchPriority_ = priority;
 	PitchRotation_ = normalizedRot;
@@ -330,7 +343,7 @@ void UPFPhysicResource::HardSetPitchRotationVisual(float rotation)
 {
 	PitchRotation_ = rotation;
 	CurrentPitchValue_ = rotation;
-	
+
 	FRotator newRot = FRotator::ZeroRotator;
 	newRot.Pitch = CurrentPitchValue_;
 	ForwardRootPtr_->SetRelativeRotation(newRot);
@@ -345,13 +358,15 @@ void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
 	}
 
 	float delta = FMath::FindDeltaAngleDegrees(CurrentPitchValue_, PitchRotation_);
-	
+
 	float speed = 0;
 	if (PitchResetRot_)
-		speed = (delta > 0.f) ? DataPtr_->PitchRotationLerpVelocityUpGoingToBase : DataPtr_->PitchRotationLerpVelocityDownGoingToBase;
+		speed = (delta > 0.f)
+					? DataPtr_->PitchRotationLerpVelocityUpGoingToBase
+					: DataPtr_->PitchRotationLerpVelocityDownGoingToBase;
 	else
 		speed = (delta > 0.f) ? DataPtr_->PitchRotationLerpVelocityUp : DataPtr_->PitchRotationLerpVelocityDown;
-	
+
 	CurrentPitchValue_ += delta * FMath::Clamp(speed * deltaTime, 0.f, 1.f);
 
 	FRotator newRot = FRotator::ZeroRotator;
@@ -436,7 +451,8 @@ FVector UPFPhysicResource::CalculateVelocity(FVelocityToAdd* velocity, float del
 
 	if (velocity->CurvePtr)
 	{
-		toAdd = velocity->Velocity * velocity->CurvePtr->GetFloatValue((velocity->Duration - velocity->Timer) / velocity->Duration);
+		toAdd = velocity->Velocity * velocity->CurvePtr->GetFloatValue(
+			(velocity->Duration - velocity->Timer) / velocity->Duration);
 	}
 
 	velocity->Timer -= deltaTime;

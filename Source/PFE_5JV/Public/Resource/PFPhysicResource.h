@@ -82,7 +82,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DiveResource")
 	TObjectPtr<UPFDiveAbilityData> DataDivePtr_;
-	
+
+	float MinVelocity_;
 	float MaxAbsoluteVelocity_;
 	float GravityTimer_ = 0;
 	float FrictionTimer_ = 0;
@@ -107,6 +108,9 @@ public:
 	virtual void ComponentTick_Implementation(float deltaTime) override;
 	virtual FString GetInfo_Implementation() override;
 
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	void SetMinVelocity(float velocity);
+	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void SetKinematic(bool bisKinematic);
 	
