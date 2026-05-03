@@ -59,8 +59,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Distance")
 	float DistanceLerpSpeed = 2;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Position")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Distance")
 	TObjectPtr<UCurveFloat> DistanceCurve;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sphere check")
+	float SphereDetectionSize = 100;
 	
 	// Rotation Stuff
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base Rotation")

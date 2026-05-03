@@ -25,6 +25,8 @@ void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 	CameraPositionPtr_->SetWorldLocation(PhysicRoot->GetComponentLocation());
 	CameraPositionPtr_->SetWorldRotation(FRotator::ZeroRotator);
 
+	OwnerWorldPtr_ = Owner->GetWorld();
+
 	if (!CheckValidity())
 	{
 		return;
@@ -103,6 +105,12 @@ bool UPFCameraResource::CheckValidity() const
 		UE_LOG(LogTemp, Error, TEXT("[UPFCameraResource] The WingBeatAbility referenced in CameraResource blueprint is NULL"))
 		return false;
 	}
+
+	if (!OwnerWorldPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[UPFCameraResource] The OwnerWorld referenced in CameraResource blueprint is NULL"))
+		return false;
+	}
 	
 	return true;
 }
@@ -161,6 +169,24 @@ void UPFCameraResource::ManageCameraDistance(float deltaTime)
 
 	//Forward -> X
 	CameraPtr_->SetRelativeLocation(FVector(-DistanceCurrentOffset_, 0, 0));
+
+	// Overriding pos based on collision ray
+	FVector startPos = CameraPositionPtr_->GetComponentLocation();
+	FVector endPos = CameraPtr_->GetComponentLocation();
+
+	
+	FCollisionQueryParams queryParams;
+	queryParams.AddIgnoredActor(Owner);
+	FCollisionShape sweepShape = FCollisionShape::MakeSphere(DataPtr_->SphereDetectionSize);
+	FHitResult hit;
+
+	if (!OwnerWorldPtr_->SweepSingleByChannel(hit, startPos, endPos,
+		FQuat::Identity, ECC_WorldStatic, sweepShape, queryParams))
+	{
+		return;
+	}
+
+	CameraPtr_->SetWorldLocation(hit.Location);
 }
 
 void UPFCameraResource::ManageCameraPitch(float deltaTime)

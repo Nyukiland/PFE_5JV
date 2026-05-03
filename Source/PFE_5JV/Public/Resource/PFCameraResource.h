@@ -52,6 +52,9 @@ public:
     TObjectPtr<UCameraComponent> CameraPtr_;
 
 private:
+    UPROPERTY()
+    TObjectPtr<UWorld> OwnerWorldPtr_;
+    
     float TurnCurrentOffset_;
     float HeightCurrentOffset_;
 
