@@ -118,13 +118,12 @@ protected:
 	bool IsHardCollision(const FVector& impactNormal, const FVector& currentVelocity) const;
 	void HandleSoftCollision(const FVector& impactNormal, const FVector& currentVelocity);
 
-	void CheckFlank();
+	void CheckFlank(float deltaTime);
 	void CheckPredictiveCollision(float deltaTime);
+	void DrawDebugWhiskerCone(const FVector& StartPos, const FVector& EndPos, bool bHit, const FHitResult& HitResult);
+	
 	void RecordInfoForRollBack(float deltaTime);
 	void RecordInfoForPlayTest();
-
-	void ApplyProgressiveSteering(const FHitResult& hit, float distanceFactor, float deltaTime);
-	FVector FindBestEvasionDirection(const FVector& startPos, const FVector& currentVelocityNormal, const FVector& impactNormal);
 	
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,

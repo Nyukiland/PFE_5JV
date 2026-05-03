@@ -327,6 +327,11 @@ void UPFPhysicResource::AddToPitchRotationVisual(float rotationToAdd, int priori
 	PitchRotation_ = CurrentPitchValue_ + rotationToAdd;
 }
 
+void UPFPhysicResource::AddAssistPitch(float offset)
+{
+	FramePitchAssistOffset_ += offset;
+}
+
 void UPFPhysicResource::SetPitchRotationVisual(float rotation, int priority)
 {
 	if (priority > PitchPriority_ || FMath::Abs(rotation) < 1)
@@ -357,7 +362,8 @@ void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
 		return;
 	}
 
-	float delta = FMath::FindDeltaAngleDegrees(CurrentPitchValue_, PitchRotation_);
+	float targetPitch = PitchRotation_ + FramePitchAssistOffset_;
+	float delta = FMath::FindDeltaAngleDegrees(CurrentPitchValue_, targetPitch);
 
 	float speed = 0;
 	if (PitchResetRot_)
@@ -374,9 +380,11 @@ void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
 	ForwardRootPtr_->SetRelativeRotation(newRot);
 
 	bIsFlipped = FMath::FindDeltaAngleDegrees(CurrentPitchValue_, 180) < 90;
+	
 	PitchResetRot_ = true;
 	PitchRotation_ = 0;
 	PitchPriority_ = 1000;
+	FramePitchAssistOffset_ = 0.f;
 }
 
 void UPFPhysicResource::DoGravity(const float deltaTime)

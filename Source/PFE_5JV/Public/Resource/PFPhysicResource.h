@@ -100,6 +100,7 @@ protected:
 	bool PitchResetRot_;
 	float PitchRotation_;
 	int PitchPriority_;
+	float FramePitchAssistOffset_ = 0.f;
 
 	float CurrentOverrideForwardVelocity_;
 	
@@ -150,6 +151,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void AddToPitchRotationVisual(float rotationToAdd, int priority);
+
+	void AddAssistPitch(float offset);
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void SetPitchRotationVisual(float rotation, int priority);
