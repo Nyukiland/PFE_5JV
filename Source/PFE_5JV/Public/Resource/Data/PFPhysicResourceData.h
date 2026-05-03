@@ -58,27 +58,27 @@ public:
         meta = (ToolTip = "Based on your speed what will you loose"))
     TObjectPtr<UCurveFloat> FrictionLostBasedOnSpeedCurvePtr;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Above",
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction|Above",
         meta = (ToolTip = "The friction applied to the player when going above the max speed"))
     float AboveVelocityFriction;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Above",
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction|Above",
         meta = (ToolTip = "The curve used for the friction when going above speed, 0 is max speed, 1 is above max speed"))
     TObjectPtr<UCurveFloat> AboveBaseMaxVelocityFrictionCurvePtr;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Friction Up",
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction|Friction Up",
         meta = (ToolTip = "The friction applied to the player when going up"))
     float AirFrictionGoingUp;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Friction Up",
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction|Friction Up",
         meta = (ToolTip = "The curve used for the friction based on the rotation"))
     TObjectPtr<UCurveFloat> AirFrictionCurveUpPtr;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Friction Down",
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction|Friction Down",
         meta = (ToolTip = "The friction applied to the player when going horizontal"))
     float AirFrictionGoingDown;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction/Friction Down",
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Friction|Friction Down",
         meta = (ToolTip = "The curve used for the friction based on the rotation"))
     TObjectPtr<UCurveFloat> AirFrictionCurveDownPtr;
 };

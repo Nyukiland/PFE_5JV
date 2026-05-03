@@ -23,33 +23,33 @@ public:
 		meta = (ToolTip = "The amount of rotation based on the current velocity"))
 	TObjectPtr<UCurveFloat> RotationForceBasedOnVelocityPtr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn/SlowDown",
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn|SlowDown",
 		meta = (ToolTip = "The slowDown force given to the player when turning", ClampMin = 0))
 	float SlowForce;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn/SlowDown",
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn|SlowDown",
 		meta = (ToolTip = "The amount of slow used based on the current input"))
 	TObjectPtr<UCurveFloat> SlowForceBasedOnInputPtr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn/SlowDown",
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn|SlowDown",
 		meta = (ToolTip = "The amount of slow used based on the current velocity"))
 	TObjectPtr<UCurveFloat> SlowForceBasedOnVelocityPtr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn/SlowDown",
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn|SlowDown",
 		meta = (ToolTip = "The time required to reach the full slowForce", ClampMin = 0))
 	float TimeToGoFullSlowForce;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn/SlowDown",
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn|SlowDown",
 		meta = (ToolTip = "The curve of the force based on the timer for slowForce"))
 	TObjectPtr<UCurveFloat> SlowForceInProgressCurvePtr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Turn/WingRotation",
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Turn|WingRotation",
 	meta = (ToolTip = "Max rotation when the bird is turnin"))
 	float MaxWingRotation;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn/Haptics")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn|Haptics")
 	FHapticsSettings HapticsSettings;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn/Haptics")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn|Haptics")
 	TObjectPtr<UCurveFloat> HapticsBasedOnRotation;
 };
