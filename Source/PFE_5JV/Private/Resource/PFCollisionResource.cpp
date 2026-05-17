@@ -154,7 +154,9 @@ void UPFCollisionResource::CheckFlank(float deltaTime)
 
 void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 {
-	if (!PhysicResource_ || !DataPtr_)
+	if (!PhysicResource_ || !DataPtr_
+		|| !DataPtr_->AssistTurnCurve
+		|| !DataPtr_->AssistForceCurve)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad Set up"))
 		return;
@@ -196,7 +198,8 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 	for (int i = 0; i < rayDirs.Num(); ++i)
 	{
 		FHitResult hit;
-		FVector endPos = startPos + (rayDirs[i] * DataPtr_->AssistDistance);
+		float assistDistance = i == 0? DataPtr_->AssistDistance : DataPtr_->AssistDistanceSides;
+		FVector endPos = startPos + (rayDirs[i] * assistDistance);
 
 		bool bHit = OwnerWorld->SweepSingleByChannel(hit, startPos, endPos, FQuat::Identity,
 								  ECC_WorldStatic, sweepShape, queryParams);
@@ -210,7 +213,7 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 		if (i == 0) bHitCenter = true;
 		if (hit.Distance < closestDistance) closestDistance = hit.Distance;
 
-		float weight = 1.0f - (hit.Distance / DataPtr_->AssistDistance);
+		float weight = 1.0f - (hit.Distance / assistDistance);
 		totalRepulsion += hit.ImpactNormal * weight;
 	}
 
@@ -253,14 +256,17 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 	float intensity = 1.0f - distanceRatio;
 	intensity = FMath::Clamp(intensity, 0.0f, 1.0f);
 	
-	PhysicResource_->AddVelocity(totalRepulsion * (DataPtr_->AssistForce * intensity));
+	float forceMultiplier = DataPtr_->AssistForceCurve->GetFloatValue(intensity);
+	PhysicResource_->AddVelocity(totalRepulsion * (DataPtr_->AssistForce * forceMultiplier));
 
+	float turnMultiplier  = DataPtr_->AssistTurnCurve->GetFloatValue(intensity);
+	
 	float targetPitchOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Pitch, totalRepulsion.Rotation().Pitch);
-	float pitchNudge = targetPitchOffset * intensity * DataPtr_->AssistTurnSpeed;
+	float pitchNudge = targetPitchOffset * turnMultiplier * DataPtr_->AssistTurnSpeed;
 	PhysicResource_->AddAssistPitch(pitchNudge);
 
 	float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw, totalRepulsion.Rotation().Yaw);
-	PhysicResource_->SetYawRotationVelocity(targetYawOffset * intensity * DataPtr_->AssistTurnSpeed);
+	PhysicResource_->SetYawRotationVelocity(targetYawOffset * turnMultiplier * DataPtr_->AssistTurnSpeed);
 }
 
 void UPFCollisionResource::DrawDebugWhiskerCone(const FVector& StartPos, const FVector& EndPos,
