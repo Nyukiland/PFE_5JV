@@ -62,7 +62,7 @@ void UPFProximityResource::OverlapMultiByChannel()
             continue;
 
         // Filtre 1 : doit être un Landscape
-        // if (!HitActor->IsA<landscap>())
+        // if (!HitActor->IsA<Landscape>())
         //     continue;
 
         // Filtre 2 : doit avoir le composant assigné dans l'éditeur (BP_PaintableSurface)
@@ -102,20 +102,17 @@ void UPFProximityResource::OverlapMultiByChannel()
 // ─────────────────────────────────────────────────────────────────────────────
 float UPFProximityResource::OverlapAnyTestByChannel() const
 {
-    const FVector Origin = Owner->GetActorLocation();
-
     FCollisionQueryParams QueryParams;
     QueryParams.AddIgnoredActor(Owner);
 
     float CurrentRadius = ClosestObstacleConfig.InitialRadius;
 
-    // On commence au rayon max et on réduit jusqu'à ne plus avoir de collision
     while (CurrentRadius > ClosestObstacleConfig.MinRadius)
     {
         const FCollisionShape Sphere = FCollisionShape::MakeSphere(CurrentRadius);
 
-        const bool bHasOverlap = GetWorld()->OverlapAnyTestByChannel(
-            Origin,
+        bool bHit = GetWorld()->OverlapAnyTestByChannel(
+            StartPosition,
             FQuat::Identity,
             ClosestObstacleConfig.CollisionChannel,
             Sphere,
@@ -124,28 +121,18 @@ float UPFProximityResource::OverlapAnyTestByChannel() const
 
         if (ClosestObstacleConfig.bDrawDebug)
         {
-            const FColor Color = bHasOverlap ? FColor::Orange : FColor::Cyan;
-            DrawDebugSphere(
-                GetWorld(),
-                Origin,
-                CurrentRadius,
-                12,
-                Color,
-                false,
-                ClosestObstacleConfig.DebugDrawDuration
-            );
+            const FColor Color = bHit ? FColor::Red : FColor::Green;
+            DrawDebugSphere(GetWorld(), StartPosition, CurrentRadius,
+                16, Color, false, ClosestObstacleConfig.DebugDrawDuration);
         }
 
-        if (!bHasOverlap)
-        {
-            // Ce rayon ne touche plus rien : la distance à l'obstacle est ici
-            return CurrentRadius;
-        }
+        if (!bHit)
+            return CurrentRadius; // Le rayon au moment où on ne touche plus rien = distance exacte
 
         CurrentRadius -= ClosestObstacleConfig.RadiusStep;
     }
 
-    // On est au minimum : l'obstacle est très proche ou en collision directe
+    // L'obstacle est extrêmement proche (en dessous de MinRadius)
     return ClosestObstacleConfig.MinRadius;
 }
 
@@ -172,11 +159,11 @@ FDirectionalTraceResult UPFProximityResource::LineTraceSingleByChannel(const FDi
 {
     FDirectionalTraceResult Result;
 
-    const FVector Start = Owner->GetActorLocation();
-
-    // La direction est en espace local → on la convertit en world space
-    const FVector WorldDirection = Owner->GetActorTransform().TransformVectorNoScale(Config.LocalDirection.GetSafeNormal());
-    const FVector End = Start + WorldDirection * Config.TraceLength;
+    if (!Owner || !GetWorld())
+        return Result;
+    
+    const FVector TraceStart = Owner->GetActorLocation();
+    const FVector TraceEnd   = TraceStart + FVector(0.f, 0.f, -1.f) * Config.TraceLength;
 
     FCollisionQueryParams QueryParams;
     QueryParams.AddIgnoredActor(Owner);
@@ -184,30 +171,30 @@ FDirectionalTraceResult UPFProximityResource::LineTraceSingleByChannel(const FDi
     FHitResult HitResult;
     const bool bHit = GetWorld()->LineTraceSingleByChannel(
         HitResult,
-        Start,
-        End,
+        TraceStart,
+        TraceEnd,
         Config.CollisionChannel,
         QueryParams
     );
 
     if (bHit)
     {
-        Result.bHit       = true;
-        Result.Distance   = HitResult.Distance;
-        Result.ImpactPoint  = HitResult.ImpactPoint;
-        Result.ImpactNormal = HitResult.ImpactNormal;
-        Result.HitActor   = HitResult.GetActor();
+        Result.bHit        = true;
+        Result.Distance    = HitResult.Distance;
+        Result.ImpactPoint = HitResult.ImpactPoint;
+        Result.ImpactNormal= HitResult.ImpactNormal;
+        Result.HitActor    = HitResult.GetActor();
     }
 
     if (Config.bDrawDebug)
     {
         const FColor Color = bHit ? FColor::Red : FColor::Green;
-        DrawDebugLine(GetWorld(), Start, End, Color, false, Config.DebugDrawDuration, 0, 1.5f);
+        DrawDebugLine(GetWorld(), TraceStart, bHit ? HitResult.ImpactPoint : TraceEnd,
+            Color, false, Config.DebugDrawDuration, 0, 2.f);
 
         if (bHit)
-        {
-            DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 8.f, 8, FColor::Yellow, false, Config.DebugDrawDuration);
-        }
+            DrawDebugSphere(GetWorld(), HitResult.ImpactPoint,
+                10.f, 8, FColor::Yellow, false, Config.DebugDrawDuration);
     }
 
     return Result;
