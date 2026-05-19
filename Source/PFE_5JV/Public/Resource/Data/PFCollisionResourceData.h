@@ -50,6 +50,10 @@ public:
 		meta = (ToolTip = "How fast the bird's nose visually pitches/yaws away during an assist."))
 	float AssistTurnSpeed = 5;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist",
+		meta = (ClampMin = 0))
+	float SmoothingTurn = 5;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist")
 	TObjectPtr<UCurveFloat> AssistForceCurve;
 

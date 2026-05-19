@@ -104,8 +104,12 @@ protected:
 	TArray<FStoredPlaytestInfo> GameInfoList_;
 
 	float TimeSavedOnImpact_ = 0;
+	FVector CurrentRepulsion_ = FVector::ZeroVector;
+	bool bIsInHardAvoid_ = false;
 	
 public:
+	UPFCollisionResource();
+	
 	UFUNCTION(BlueprintCallable, Category = "Collision")
 	bool RewindAfterCollision(float deltaTime);
 	
@@ -113,7 +117,8 @@ public:
 	
 protected:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
-	virtual void ComponentTick_Implementation(float deltaTime) override;
+	// Use after physic required
+	virtual void TickComponent(float deltaTime, enum ELevelTick tickType, FActorComponentTickFunction* thisTickFunction) override;
 
 	bool IsHardCollision(const FVector& impactNormal, const FVector& currentVelocity) const;
 	void HandleSoftCollision(const FVector& impactNormal, const FVector& currentVelocity);

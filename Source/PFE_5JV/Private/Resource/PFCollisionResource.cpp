@@ -3,6 +3,14 @@
 #include "State/PFAfterCollisionState.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
+UPFCollisionResource::UPFCollisionResource()
+{
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = true;
+
+	PrimaryComponentTick.TickGroup = TG_PostPhysics;
+}
+
 bool UPFCollisionResource::RewindAfterCollision(float deltaTime)
 {
 	if (!DataPtr_)
@@ -71,9 +79,10 @@ void UPFCollisionResource::ComponentInit_Implementation(APFPlayerCharacter* owne
 	}
 }
 
-void UPFCollisionResource::ComponentTick_Implementation(float deltaTime)
+void UPFCollisionResource::TickComponent(float deltaTime, enum ELevelTick tickType,
+	FActorComponentTickFunction* thisTickFunction)
 {
-	Super::ComponentTick_Implementation(deltaTime);
+	Super::TickComponent(deltaTime, tickType, thisTickFunction);
 
 	CheckFlank(deltaTime);
 	CheckPredictiveCollision(deltaTime);
@@ -218,55 +227,63 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 	}
 
 	if (closestDistance == MAX_flt)
-		return;
+    {
+       CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, FVector::ZeroVector, deltaTime, DataPtr_->SmoothingTurn);
+       bIsInHardAvoid_ = false;
+       return;
+    }
 
-	// Flat Wall
-	if (bHitCenter && totalRepulsion.Length() < 0.2f)
-	{
-		if (!bHitRight) totalRepulsion = rightDir;
-		else if (!bHitUp) totalRepulsion = upDir;
-		else if (!bHitLeft) totalRepulsion = -rightDir;
-		else totalRepulsion = -upDir;
-	}
+    if (bHitCenter && totalRepulsion.Length() < 0.2f)
+    {
+       if (!bHitRight) totalRepulsion = rightDir;
+       else if (!bHitUp) totalRepulsion = upDir;
+       else if (!bHitLeft) totalRepulsion = -rightDir;
+       else totalRepulsion = -upDir;
+    }
 
-	totalRepulsion.Normalize();
-#if !UE_BUILD_SHIPPING
-	if (DataPtr_->bShowPredictiveDebug)
-	{
-		DrawDebugDirectionalArrow(OwnerWorld, startPos, startPos + (totalRepulsion * 400.f), 120.f, FColor::Purple, false, -1.f, 0, 5.f);
-	}
-#endif
+    totalRepulsion.Normalize();
 
-	// Hard Avoid
-	if (closestDistance < DataPtr_->AvoidDistance)
-	{
-		PhysicResource_->CurrentForwardVelocity_ *= DataPtr_->SlowPercentageDuringAvoidance;
-		PhysicResource_->AddVelocity(totalRepulsion * DataPtr_->AvoidForce);
-		
-		float escapePitch = totalRepulsion.Rotation().Pitch;
-		PhysicResource_->HardSetPitchRotationVisual(escapePitch);
+    CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, totalRepulsion, deltaTime, DataPtr_->SmoothingTurn);
 
-		float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw, totalRepulsion.Rotation().Yaw);
-		PhysicResource_->SetYawRotationVelocity(targetYawOffset * DataPtr_->AvoidForceRot);
-		return;
-	}
+    float avoidExitThreshold = DataPtr_->AvoidDistance * 1.15f;
+    
+    if (closestDistance < DataPtr_->AvoidDistance)
+    {
+       bIsInHardAvoid_ = true;
+    }
+    else if (closestDistance > avoidExitThreshold)
+    {
+       bIsInHardAvoid_ = false;
+    }
 
-	// Assist
-	float distanceRatio = (closestDistance - DataPtr_->AvoidDistance) / (DataPtr_->AssistDistance - DataPtr_->AvoidDistance);
-	float intensity = 1.0f - distanceRatio;
-	intensity = FMath::Clamp(intensity, 0.0f, 1.0f);
-	
-	float forceMultiplier = DataPtr_->AssistForceCurve->GetFloatValue(intensity);
-	PhysicResource_->AddVelocity(totalRepulsion * (DataPtr_->AssistForce * forceMultiplier));
+    if (bIsInHardAvoid_)
+    {
+       PhysicResource_->CurrentForwardVelocity_ *= DataPtr_->SlowPercentageDuringAvoidance;
+       PhysicResource_->AddVelocity(CurrentRepulsion_ * DataPtr_->AvoidForce);
+       
+       float escapePitch = CurrentRepulsion_.Rotation().Pitch;
+       PhysicResource_->HardSetPitchRotationVisual(escapePitch);
 
-	float turnMultiplier  = DataPtr_->AssistTurnCurve->GetFloatValue(intensity);
-	
-	float targetPitchOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Pitch, totalRepulsion.Rotation().Pitch);
-	float pitchNudge = targetPitchOffset * turnMultiplier * DataPtr_->AssistTurnSpeed;
-	PhysicResource_->AddAssistPitch(pitchNudge);
+       float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw, CurrentRepulsion_.Rotation().Yaw);
+       PhysicResource_->SetYawRotationVelocity(targetYawOffset * DataPtr_->AvoidForceRot);
+       return;
+    }
 
-	float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw, totalRepulsion.Rotation().Yaw);
-	PhysicResource_->SetYawRotationVelocity(targetYawOffset * turnMultiplier * DataPtr_->AssistTurnSpeed);
+    // Assist Logic
+    float distanceRatio = (closestDistance - DataPtr_->AvoidDistance) / (DataPtr_->AssistDistance - DataPtr_->AvoidDistance);
+    float intensity = FMath::Clamp(1.0f - distanceRatio, 0.0f, 1.0f);
+    
+    float forceMultiplier = DataPtr_->AssistForceCurve->GetFloatValue(intensity);
+    PhysicResource_->AddVelocity(CurrentRepulsion_ * (DataPtr_->AssistForce * forceMultiplier));
+
+    float turnMultiplier  = DataPtr_->AssistTurnCurve->GetFloatValue(intensity);
+    
+    float targetPitchOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Pitch, CurrentRepulsion_.Rotation().Pitch);
+    float pitchNudge = targetPitchOffset * turnMultiplier * DataPtr_->AssistTurnSpeed;
+    PhysicResource_->AddAssistPitch(pitchNudge);
+
+    float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw, CurrentRepulsion_.Rotation().Yaw);
+    PhysicResource_->SetYawRotationVelocity(targetYawOffset * turnMultiplier * DataPtr_->AssistTurnSpeed);
 }
 
 void UPFCollisionResource::DrawDebugWhiskerCone(const FVector& StartPos, const FVector& EndPos,
