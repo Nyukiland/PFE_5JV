@@ -59,6 +59,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist")
 	TObjectPtr<UCurveFloat> AssistTurnCurve;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist")
+	float MinSpeedMultiplier = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist")
+	float MaxSpeedMultiplier = 2;
 
 	// -------------------------------------------------------------------
 	// Avoid

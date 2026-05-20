@@ -176,6 +176,15 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 	if (velocity.IsNearlyZero() || TimeSavedOnImpact_ != 0)
 		return;
 
+	float speedPercentage = PhysicResource_->GetForwardVelocityPercentage();
+    
+	// Lerp between the data asset multipliers using the speed percentage
+	float speedMultiplier = FMath::Lerp(DataPtr_->MinSpeedMultiplier, DataPtr_->MaxSpeedMultiplier, speedPercentage);
+
+	float dynamicAssistDistance = DataPtr_->AssistDistance * speedMultiplier;
+	float dynamicAssistDistanceSides = DataPtr_->AssistDistanceSides * speedMultiplier;
+	float dynamicAvoidDistance = DataPtr_->AvoidDistance * speedMultiplier;
+	
 	FVector startPos = PhysicRoot->GetComponentLocation();
 	FVector forwardDir = ForwardRootPtr_->GetForwardVector();
 	FVector rightDir = ForwardRootPtr_->GetRightVector();
@@ -207,7 +216,7 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 	for (int i = 0; i < rayDirs.Num(); ++i)
 	{
 		FHitResult hit;
-		float assistDistance = i == 0? DataPtr_->AssistDistance : DataPtr_->AssistDistanceSides;
+		float assistDistance = i == 0? dynamicAssistDistance : dynamicAssistDistanceSides;
 		FVector endPos = startPos + (rayDirs[i] * assistDistance);
 
 		bool bHit = OwnerWorld->SweepSingleByChannel(hit, startPos, endPos, FQuat::Identity,
@@ -244,8 +253,7 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
     totalRepulsion.Normalize();
 
     CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, totalRepulsion, deltaTime, DataPtr_->SmoothingTurn);
-
-    float avoidExitThreshold = DataPtr_->AvoidDistance * 1.15f;
+	float avoidExitThreshold = dynamicAvoidDistance * 1.15f;
     
     if (closestDistance < DataPtr_->AvoidDistance)
     {
@@ -259,13 +267,13 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
     if (bIsInHardAvoid_)
     {
        PhysicResource_->CurrentForwardVelocity_ *= DataPtr_->SlowPercentageDuringAvoidance;
-       PhysicResource_->AddVelocity(CurrentRepulsion_ * DataPtr_->AvoidForce);
+       PhysicResource_->AddVelocity(CurrentRepulsion_ * DataPtr_->AvoidForce * speedMultiplier);
        
        float escapePitch = CurrentRepulsion_.Rotation().Pitch;
        PhysicResource_->HardSetPitchRotationVisual(escapePitch);
 
        float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw, CurrentRepulsion_.Rotation().Yaw);
-       PhysicResource_->SetYawRotationVelocity(targetYawOffset * DataPtr_->AvoidForceRot);
+       PhysicResource_->SetYawRotationVelocity(targetYawOffset * DataPtr_->AvoidForceRot * speedMultiplier);
        return;
     }
 
@@ -274,16 +282,16 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
     float intensity = FMath::Clamp(1.0f - distanceRatio, 0.0f, 1.0f);
     
     float forceMultiplier = DataPtr_->AssistForceCurve->GetFloatValue(intensity);
-    PhysicResource_->AddVelocity(CurrentRepulsion_ * (DataPtr_->AssistForce * forceMultiplier));
+    PhysicResource_->AddVelocity(CurrentRepulsion_ * (DataPtr_->AssistForce * forceMultiplier * speedMultiplier));
 
     float turnMultiplier  = DataPtr_->AssistTurnCurve->GetFloatValue(intensity);
     
     float targetPitchOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Pitch, CurrentRepulsion_.Rotation().Pitch);
-    float pitchNudge = targetPitchOffset * turnMultiplier * DataPtr_->AssistTurnSpeed;
+    float pitchNudge = targetPitchOffset * turnMultiplier * DataPtr_->AssistTurnSpeed * speedMultiplier;
     PhysicResource_->AddAssistPitch(pitchNudge);
 
     float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw, CurrentRepulsion_.Rotation().Yaw);
-    PhysicResource_->SetYawRotationVelocity(targetYawOffset * turnMultiplier * DataPtr_->AssistTurnSpeed);
+    PhysicResource_->SetYawRotationVelocity(targetYawOffset * turnMultiplier * DataPtr_->AssistTurnSpeed * speedMultiplier);
 }
 
 void UPFCollisionResource::DrawDebugWhiskerCone(const FVector& StartPos, const FVector& EndPos,
