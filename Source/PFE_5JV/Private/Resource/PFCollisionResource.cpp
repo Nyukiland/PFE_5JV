@@ -80,7 +80,7 @@ void UPFCollisionResource::ComponentInit_Implementation(APFPlayerCharacter* owne
 }
 
 void UPFCollisionResource::TickComponent(float deltaTime, enum ELevelTick tickType,
-	FActorComponentTickFunction* thisTickFunction)
+										FActorComponentTickFunction* thisTickFunction)
 {
 	Super::TickComponent(deltaTime, tickType, thisTickFunction);
 
@@ -133,30 +133,31 @@ void UPFCollisionResource::CheckFlank(float deltaTime)
 
 	float flankTraceLength = DataPtr_->FlankDetectionDist;
 	FVector startPos = PhysicRoot->GetComponentLocation() +
-		(PhysicResource_->CurrentForwardVelocity_.Length() * DataPtr_->FlankPredictionDist * ForwardRootPtr_->GetForwardVector());
+	(PhysicResource_->CurrentForwardVelocity_.Length() * DataPtr_->FlankPredictionDist * ForwardRootPtr_->
+		GetForwardVector());
 
 	FVector rightEnd = startPos + (ForwardRootPtr_->GetRightVector() * flankTraceLength);
-	FVector leftEnd  = startPos + (-ForwardRootPtr_->GetRightVector() * flankTraceLength);
-	FVector upEnd    = startPos + (ForwardRootPtr_->GetUpVector() * flankTraceLength);
-	FVector downEnd  = startPos + (-ForwardRootPtr_->GetUpVector() * flankTraceLength);
+	FVector leftEnd = startPos + (-ForwardRootPtr_->GetRightVector() * flankTraceLength);
+	FVector upEnd = startPos + (ForwardRootPtr_->GetUpVector() * flankTraceLength);
+	FVector downEnd = startPos + (-ForwardRootPtr_->GetUpVector() * flankTraceLength);
 
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(Owner);
 
 	bHitRight = OwnerWorld->LineTraceTestByChannel(startPos, rightEnd, ECC_WorldStatic, QueryParams);
-	bHitLeft  = OwnerWorld->LineTraceTestByChannel(startPos, leftEnd, ECC_WorldStatic, QueryParams);
-	bHitUp    = OwnerWorld->LineTraceTestByChannel(startPos, upEnd, ECC_WorldStatic, QueryParams);
-	bHitDown  = OwnerWorld->LineTraceTestByChannel(startPos, downEnd, ECC_WorldStatic, QueryParams);
+	bHitLeft = OwnerWorld->LineTraceTestByChannel(startPos, leftEnd, ECC_WorldStatic, QueryParams);
+	bHitUp = OwnerWorld->LineTraceTestByChannel(startPos, upEnd, ECC_WorldStatic, QueryParams);
+	bHitDown = OwnerWorld->LineTraceTestByChannel(startPos, downEnd, ECC_WorldStatic, QueryParams);
 
 #if !UE_BUILD_SHIPPING
 	if (DataPtr_->bShowPredictiveDebug && OwnerWorld)
 	{
 		DrawDebugSphere(OwnerWorld, startPos, 15.f, 8, FColor::Cyan, false, -1.f);
-        
+
 		DrawDebugLine(OwnerWorld, startPos, rightEnd, bHitRight ? FColor::Red : FColor::Green, false, -1.f, 0, 2.f);
-		DrawDebugLine(OwnerWorld, startPos, leftEnd,  bHitLeft  ? FColor::Red : FColor::Green, false, -1.f, 0, 2.f);
-		DrawDebugLine(OwnerWorld, startPos, upEnd,    bHitUp    ? FColor::Red : FColor::Green, false, -1.f, 0, 2.f);
-		DrawDebugLine(OwnerWorld, startPos, downEnd,  bHitDown  ? FColor::Red : FColor::Green, false, -1.f, 0, 2.f);
+		DrawDebugLine(OwnerWorld, startPos, leftEnd, bHitLeft ? FColor::Red : FColor::Green, false, -1.f, 0, 2.f);
+		DrawDebugLine(OwnerWorld, startPos, upEnd, bHitUp ? FColor::Red : FColor::Green, false, -1.f, 0, 2.f);
+		DrawDebugLine(OwnerWorld, startPos, downEnd, bHitDown ? FColor::Red : FColor::Green, false, -1.f, 0, 2.f);
 	}
 #endif
 }
@@ -177,14 +178,14 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 		return;
 
 	float speedPercentage = PhysicResource_->GetForwardVelocityPercentage();
-    
+
 	// Lerp between the data asset multipliers using the speed percentage
 	float speedMultiplier = FMath::Lerp(DataPtr_->MinSpeedMultiplier, DataPtr_->MaxSpeedMultiplier, speedPercentage);
 
 	float dynamicAssistDistance = DataPtr_->AssistDistance * speedMultiplier;
 	float dynamicAssistDistanceSides = DataPtr_->AssistDistanceSides * speedMultiplier;
 	float dynamicAvoidDistance = DataPtr_->AvoidDistance * speedMultiplier;
-	
+
 	FVector startPos = PhysicRoot->GetComponentLocation();
 	FVector forwardDir = ForwardRootPtr_->GetForwardVector();
 	FVector rightDir = ForwardRootPtr_->GetRightVector();
@@ -216,13 +217,13 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 	for (int i = 0; i < rayDirs.Num(); ++i)
 	{
 		FHitResult hit;
-		float assistDistance = i == 0? dynamicAssistDistance : dynamicAssistDistanceSides;
+		float assistDistance = i == 0 ? dynamicAssistDistance : dynamicAssistDistanceSides;
 		FVector endPos = startPos + (rayDirs[i] * assistDistance);
 
 		bool bHit = OwnerWorld->SweepSingleByChannel(hit, startPos, endPos, FQuat::Identity,
-								  ECC_WorldStatic, sweepShape, queryParams);
+													ECC_WorldStatic, sweepShape, queryParams);
 		DrawDebugWhiskerCone(startPos, endPos, bHit, hit);
-		
+
 		if (!bHit)
 		{
 			continue;
@@ -236,66 +237,76 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 	}
 
 	if (closestDistance == MAX_flt)
-    {
-       CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, FVector::ZeroVector, deltaTime, DataPtr_->SmoothingTurn);
-       bIsInHardAvoid_ = false;
-       return;
-    }
+	{
+		CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, FVector::ZeroVector, deltaTime,
+											DataPtr_->SmoothingTurn);
+		bIsInHardAvoid_ = false;
+		return;
+	}
 
-    if (bHitCenter && totalRepulsion.Length() < 0.2f)
-    {
-       if (!bHitRight) totalRepulsion = rightDir;
-       else if (!bHitUp) totalRepulsion = upDir;
-       else if (!bHitLeft) totalRepulsion = -rightDir;
-       else totalRepulsion = -upDir;
-    }
+	if (bHitCenter && totalRepulsion.Length() < 0.2f)
+	{
+		if (!bHitRight) totalRepulsion = rightDir;
+		else if (!bHitUp) totalRepulsion = upDir;
+		else if (!bHitLeft) totalRepulsion = -rightDir;
+		else totalRepulsion = -upDir;
+	}
 
-    totalRepulsion.Normalize();
+	totalRepulsion.Normalize();
 
-    CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, totalRepulsion, deltaTime, DataPtr_->SmoothingTurn);
+	CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, totalRepulsion, deltaTime, DataPtr_->SmoothingTurn);
 	float avoidExitThreshold = dynamicAvoidDistance * 1.15f;
-    
-    if (closestDistance < DataPtr_->AvoidDistance)
-    {
-       bIsInHardAvoid_ = true;
-    }
-    else if (closestDistance > avoidExitThreshold)
-    {
-       bIsInHardAvoid_ = false;
-    }
 
-    if (bIsInHardAvoid_)
-    {
-       PhysicResource_->CurrentForwardVelocity_ *= DataPtr_->SlowPercentageDuringAvoidance;
-       PhysicResource_->AddVelocity(CurrentRepulsion_ * DataPtr_->AvoidForce * speedMultiplier);
-       
-       float escapePitch = CurrentRepulsion_.Rotation().Pitch;
-       PhysicResource_->HardSetPitchRotationVisual(escapePitch);
+	if (closestDistance < DataPtr_->AvoidDistance)
+	{
+		bIsInHardAvoid_ = true;
+	}
+	else if (closestDistance > avoidExitThreshold)
+	{
+		bIsInHardAvoid_ = false;
+	}
 
-       float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw, CurrentRepulsion_.Rotation().Yaw);
-       PhysicResource_->SetYawRotationVelocity(targetYawOffset * DataPtr_->AvoidForceRot * speedMultiplier);
-       return;
-    }
+	if (bIsInHardAvoid_)
+	{
+		PhysicResource_->AddForwardVelocity(-DataPtr_->SlowForceAvoid * deltaTime, false);
 
-    // Assist Logic
-    float distanceRatio = (closestDistance - DataPtr_->AvoidDistance) / (DataPtr_->AssistDistance - DataPtr_->AvoidDistance);
-    float intensity = FMath::Clamp(1.0f - distanceRatio, 0.0f, 1.0f);
-    
-    float forceMultiplier = DataPtr_->AssistForceCurve->GetFloatValue(intensity);
-    PhysicResource_->AddVelocity(CurrentRepulsion_ * (DataPtr_->AssistForce * forceMultiplier * speedMultiplier));
+		PhysicResource_->AddVelocity(CurrentRepulsion_ * DataPtr_->AvoidForce);
 
-    float turnMultiplier  = DataPtr_->AssistTurnCurve->GetFloatValue(intensity);
-    
-    float targetPitchOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Pitch, CurrentRepulsion_.Rotation().Pitch);
-    float pitchNudge = targetPitchOffset * turnMultiplier * DataPtr_->AssistTurnSpeed * speedMultiplier;
-    PhysicResource_->AddAssistPitch(pitchNudge);
+		float targetPitchOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Pitch,
+																CurrentRepulsion_.Rotation().Pitch);
+		PhysicResource_->AddAssistPitch(targetPitchOffset * DataPtr_->AvoidForceRot);
 
-    float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw, CurrentRepulsion_.Rotation().Yaw);
-    PhysicResource_->SetYawRotationVelocity(targetYawOffset * turnMultiplier * DataPtr_->AssistTurnSpeed * speedMultiplier);
+		float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw,
+															CurrentRepulsion_.Rotation().Yaw);
+		PhysicResource_->SetYawRotationVelocity(targetYawOffset * DataPtr_->AvoidForceRot);
+		return;
+	}
+
+	// Assist Logic
+	float distanceRatio = (closestDistance - DataPtr_->AvoidDistance) / (DataPtr_->AssistDistance - DataPtr_->
+		AvoidDistance);
+	float intensity = FMath::Clamp(1.0f - distanceRatio, 0.0f, 1.0f);
+
+	PhysicResource_->AddForwardVelocity(-DataPtr_->SlowForceAssist * deltaTime, false);
+
+	float forceMultiplier = DataPtr_->AssistForceCurve->GetFloatValue(intensity);
+	PhysicResource_->AddVelocity(CurrentRepulsion_ * (DataPtr_->AssistForce * forceMultiplier * speedMultiplier));
+
+	float turnMultiplier = DataPtr_->AssistTurnCurve->GetFloatValue(intensity);
+
+	float targetPitchOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Pitch,
+															CurrentRepulsion_.Rotation().Pitch);
+	float pitchNudge = targetPitchOffset * turnMultiplier * DataPtr_->AssistTurnSpeed * speedMultiplier;
+	PhysicResource_->AddAssistPitch(pitchNudge);
+
+	float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw,
+														CurrentRepulsion_.Rotation().Yaw);
+	PhysicResource_->SetYawRotationVelocity(
+		targetYawOffset * turnMultiplier * DataPtr_->AssistTurnSpeed * speedMultiplier);
 }
 
 void UPFCollisionResource::DrawDebugWhiskerCone(const FVector& StartPos, const FVector& EndPos,
-	bool bHit, const FHitResult& HitResult)
+												bool bHit, const FHitResult& HitResult)
 {
 #if !UE_BUILD_SHIPPING
 	if (!DataPtr_ || !DataPtr_->bShowPredictiveDebug || !OwnerWorld)
@@ -307,7 +318,8 @@ void UPFCollisionResource::DrawDebugWhiskerCone(const FVector& StartPos, const F
 	if (bHit)
 	{
 		DrawDebugPoint(OwnerWorld, HitResult.ImpactPoint, 10.f, FColor::Red, false, -1.f);
-		DrawDebugLine(OwnerWorld, HitResult.ImpactPoint, HitResult.ImpactPoint + (HitResult.ImpactNormal * 150.f), FColor::Yellow, false, -1.f, 0, 3.f);
+		DrawDebugLine(OwnerWorld, HitResult.ImpactPoint, HitResult.ImpactPoint + (HitResult.ImpactNormal * 150.f),
+					FColor::Yellow, false, -1.f, 0, 3.f);
 	}
 #endif
 }

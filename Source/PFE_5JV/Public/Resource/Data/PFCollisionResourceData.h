@@ -53,6 +53,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist",
 		meta = (ClampMin = 0))
 	float SmoothingTurn = 5;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist")
+	float SlowForceAssist = 0.95f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist")
 	TObjectPtr<UCurveFloat> AssistForceCurve;
@@ -81,10 +84,8 @@ public:
 		meta = (ToolTip = "How fast the bird physically yaws away during an emergency avoid."))
 	float AvoidForceRot = 5;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Avoid",
-		meta = (ClampMin = 0, ClampMax = 1, ToolTip =
-			"Percentage to slow down forward momentum during an emergency avoid (1 = no slowdown)."))
-	float SlowPercentageDuringAvoidance = 0.8f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist")
+	float SlowForceAvoid = 0.95f;
 
 	// -------------------------------------------------------------------
 	// Hard Impact
