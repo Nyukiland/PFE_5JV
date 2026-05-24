@@ -128,7 +128,6 @@ bool UPFRollAbility::PreRollCheck(float deltatTime)
 
 	TimerRoll_ = 0;
 	bIsRollComplete_ = false;
-	PrevQuat_ = VisualResourcePtr_->GetBirdVisualRotation().Quaternion();
 	TimerPreRoll_ = -1;
 	return true;
 }

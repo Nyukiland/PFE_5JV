@@ -1,10 +1,5 @@
 #include "Resource/PFVisualResource.h"
 
-FRotator UPFVisualResource::GetBirdVisualRotation() const
-{
-	return BirdVisualPtr_->GetRelativeRotation();
-}
-
 void UPFVisualResource::AddToRollRotation(float rotationToAdd, int priority)
 {
 	if (priority > RollPriority_ || FMath::Abs(rotationToAdd) < 1)
@@ -38,9 +33,9 @@ void UPFVisualResource::ProcessRollRotation(float deltaTime)
 
 	CurrentRollValue_ = FRotator::NormalizeAxis(CurrentRollValue_);
 
-	FRotator birdRot = BirdVisualPtr_->GetRelativeRotation();
+	FRotator birdRot = BirdVisualRootPtr_->GetRelativeRotation();
 	birdRot.Roll = CurrentRollValue_;
-	BirdVisualPtr_->SetRelativeRotation(birdRot);
+	BirdVisualRootPtr_->SetRelativeRotation(birdRot);
 
 	RollRotation_ = 0.f;
 	RollPriority_ = 1000;
@@ -51,7 +46,7 @@ void UPFVisualResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 {
 	Super::ComponentInit_Implementation(ownerObj);
 
-	BaseBirdVisuRotator_ = BirdVisualPtr_->GetRelativeRotation();
+	BaseBirdVisuRotator_ = BirdVisualRootPtr_->GetRelativeRotation();
 }
 
 void UPFVisualResource::ComponentTick_Implementation(float deltaTime)
