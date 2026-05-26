@@ -1,6 +1,5 @@
 #include "Resource/PFProximityResource.h"
 
-#include "Engine/OverlapResult.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
 void UPFProximityResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
@@ -8,7 +7,7 @@ void UPFProximityResource::ComponentInit_Implementation(APFPlayerCharacter* owne
 	Super::ComponentInit_Implementation(ownerObj);
 
 	// Si aucune direction n'est configurée, on injecte les 6 directions cardinales par défaut
-	if (DirectionalTraces.Num() == 0)
+	if (!DownTrace.IsInit)
 	{
 		InitDefaultDirectionalTraces();
 	}
@@ -37,9 +36,9 @@ void UPFProximityResource::OverlapMultiByChannel()
     ValidBrushSizes.Empty();
 
     StartPosition = Owner->GetActorLocation()
-                  + (BrushForwardOffset * Owner->GetActorForwardVector());
+                  + (DataPtr_->BrushForwardOffset * Owner->GetActorForwardVector());
 
-    const FCollisionShape Sphere = FCollisionShape::MakeSphere(BrushSphereDistance);
+    const FCollisionShape Sphere = FCollisionShape::MakeSphere(DataPtr_->BrushSphereDistance);
 
     FCollisionQueryParams QueryParams;
     QueryParams.AddIgnoredActor(Owner);
@@ -50,7 +49,7 @@ void UPFProximityResource::OverlapMultiByChannel()
         StartPosition,
         StartPosition + FVector(0.f, 0.f, 0.1f),
         FQuat::Identity,
-        ProximitySweepConfig.CollisionChannel,
+        DataPtr_->ProximitySweepConfig.CollisionChannel,
         Sphere,
         QueryParams
     );
@@ -61,15 +60,7 @@ void UPFProximityResource::OverlapMultiByChannel()
         if (!HitActor)
             continue;
 
-        // Filtre 1 : doit être un Landscape
-        // if (!HitActor->IsA<Landscape>())
-        //     continue;
-
-        // Filtre 2 : doit avoir le composant assigné dans l'éditeur (BP_PaintableSurface)
-        if (!PaintableSurfaceClass || !HitActor->FindComponentByClass(PaintableSurfaceClass))
-            continue;
-
-        // Filtre 3 : AddUnique sur l'acteur
+        // Filtre : AddUnique sur l'acteur
         bool bAlreadyAdded = ValidHitResults.ContainsByPredicate([&](const FHitResult& Existing)
         {
             return Existing.GetActor() == HitActor;
@@ -80,8 +71,8 @@ void UPFProximityResource::OverlapMultiByChannel()
         // Calcul BrushSize
         float Distance = FVector::Dist(Hit.ImpactPoint, StartPosition);
         float BrushSize = FMath::GetMappedRangeValueClamped(
-            FVector2D(BrushSphereDistance, 0.f),
-            FVector2D(BrushSizesMinMax.X, BrushSizesMinMax.Y),
+            FVector2D(DataPtr_->BrushSphereDistance, 0.f),
+            FVector2D(DataPtr_->BrushSizesMinMax.X, DataPtr_->BrushSizesMinMax.Y),
             Distance
         );
 
@@ -89,11 +80,11 @@ void UPFProximityResource::OverlapMultiByChannel()
         ValidHitResults.Add(Hit);
     }
 
-    if (ProximitySweepConfig.bDrawDebug)
+    if (DataPtr_->ProximitySweepConfig.bDrawDebug)
     {
         const FColor Color = ValidHitResults.Num() > 0 ? FColor::Red : FColor::Green;
-        DrawDebugSphere(GetWorld(), StartPosition, BrushSphereDistance,
-            16, Color, false, ProximitySweepConfig.DebugDrawDuration);
+        DrawDebugSphere(GetWorld(), StartPosition, DataPtr_->BrushSphereDistance,
+            16, Color, false, DataPtr_->ProximitySweepConfig.DebugDrawDuration);
     }
 }
 
@@ -105,50 +96,43 @@ float UPFProximityResource::OverlapAnyTestByChannel() const
     FCollisionQueryParams QueryParams;
     QueryParams.AddIgnoredActor(Owner);
 
-    float CurrentRadius = ClosestObstacleConfig.InitialRadius;
+    float CurrentRadius = DataPtr_->ClosestObstacleConfig.InitialRadius;
 
-    while (CurrentRadius > ClosestObstacleConfig.MinRadius)
+    while (CurrentRadius > DataPtr_->ClosestObstacleConfig.MinRadius)
     {
         const FCollisionShape Sphere = FCollisionShape::MakeSphere(CurrentRadius);
 
         bool bHit = GetWorld()->OverlapAnyTestByChannel(
             StartPosition,
             FQuat::Identity,
-            ClosestObstacleConfig.CollisionChannel,
+            DataPtr_->ClosestObstacleConfig.CollisionChannel,
             Sphere,
             QueryParams
         );
 
-        if (ClosestObstacleConfig.bDrawDebug)
+        if (DataPtr_->ClosestObstacleConfig.bDrawDebug)
         {
             const FColor Color = bHit ? FColor::Red : FColor::Green;
             DrawDebugSphere(GetWorld(), StartPosition, CurrentRadius,
-                16, Color, false, ClosestObstacleConfig.DebugDrawDuration);
+                16, Color, false, DataPtr_->ClosestObstacleConfig.DebugDrawDuration);
         }
 
         if (!bHit)
             return CurrentRadius; // Le rayon au moment où on ne touche plus rien = distance exacte
 
-        CurrentRadius -= ClosestObstacleConfig.RadiusStep;
+        CurrentRadius -= DataPtr_->ClosestObstacleConfig.RadiusStep;
     }
 
     // L'obstacle est extrêmement proche (en dessous de MinRadius)
-    return ClosestObstacleConfig.MinRadius;
+    return DataPtr_->ClosestObstacleConfig.MinRadius;
 }
 
 // ─────────────────────────────────────────────────────────
 //  3. DetectAllDirections — raycast dans toutes les directions
 // ─────────────────────────────────────────────────────────
-TArray<FDirectionalTraceResult> UPFProximityResource::DetectAllDirections() const
+FDirectionalTraceResult UPFProximityResource::DetectBottom() const
 {
-    TArray<FDirectionalTraceResult> Results;
-    Results.Reserve(DirectionalTraces.Num());
-
-    for (const FDirectionalTraceConfig& Config : DirectionalTraces)
-    {
-        Results.Add(LineTraceSingleByChannel(Config));
-    }
-
+    FDirectionalTraceResult Results = LineTraceSingleByChannel(DownTrace);
     return Results;
 }
 
@@ -205,25 +189,13 @@ FDirectionalTraceResult UPFProximityResource::LineTraceSingleByChannel(const FDi
 // ─────────────────────────────────────────────────────────
 void UPFProximityResource::InitDefaultDirectionalTraces()
 {
-    const TArray<TPair<FString, FVector>> DefaultDirections = {
-        { TEXT("Down"),     FVector( 0,  0, -1) },
-        // { TEXT("Up"),       FVector( 0,  0,  1) },
-        // { TEXT("Forward"),  FVector( 1,  0,  0) },
-        // { TEXT("Backward"), FVector(-1,  0,  0) },
-        // { TEXT("Right"),    FVector( 0,  1,  0) },
-        // { TEXT("Left"),     FVector( 0, -1,  0) },
-    };
-
-    for (const auto& [Label, Dir] : DefaultDirections)
-    {
-        FDirectionalTraceConfig Config;
-        Config.DirectionLabel    = Label;
-        Config.LocalDirection    = Dir;
-        Config.TraceLength       = 1000.f;
-        Config.CollisionChannel  = ECC_WorldStatic;
-        Config.bDrawDebug        = false;
-        Config.DebugDrawDuration = 0.1f;
-
-        DirectionalTraces.Add(Config);
-    }
+    FDirectionalTraceConfig Config;
+    Config.DirectionLabel    = TEXT("Down");
+    Config.LocalDirection    = FVector( 0,  0, -1);
+    Config.TraceLength       = 1000.f;
+    Config.CollisionChannel  = ECC_WorldStatic;
+    Config.bDrawDebug        = false;
+    Config.DebugDrawDuration = 0.1f;
+    Config.IsInit = true;
+    DownTrace = Config;
 }
