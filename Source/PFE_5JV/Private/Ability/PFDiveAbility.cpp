@@ -191,6 +191,17 @@ float UPFDiveAbility::GetDivingValue()
 	return HighestInput_;
 }
 
+float UPFDiveAbility::GetMaxDivingAngle() const
+{
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[DiveAbility] Bad set up on Data"))
+		return 0;
+	}
+
+	return DataPtr_->MaxRotationPitch;
+}
+
 void UPFDiveAbility::AutoDive(float deltaTime)
 {
 	if (!DataPtr_ || !PhysicResourcePtr_)

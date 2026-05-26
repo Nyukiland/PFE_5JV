@@ -184,6 +184,7 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 
 	float dynamicAssistDistance = DataPtr_->AssistDistance * speedMultiplier;
 	float dynamicAssistDistanceSides = DataPtr_->AssistDistanceSides * speedMultiplier;
+	float dynamicAssistDistanceDiagonal = DataPtr_->AssistDistanceDiagonal * speedMultiplier;
 	float dynamicAvoidDistance = DataPtr_->AvoidDistance * speedMultiplier;
 
 	FVector startPos = PhysicRoot->GetComponentLocation();
@@ -205,6 +206,19 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 		forwardDir.RotateAngleAxis(-angle, -rightDir + upDir)
 	};
 
+	TArray<float> rayDist =
+	{
+		dynamicAssistDistance,
+		dynamicAssistDistanceSides,
+		dynamicAssistDistanceSides,
+		dynamicAssistDistanceSides,
+		dynamicAssistDistanceSides,
+		dynamicAssistDistanceDiagonal,
+		dynamicAssistDistanceDiagonal,
+		dynamicAssistDistanceDiagonal,
+		dynamicAssistDistanceDiagonal
+	};
+
 	FVector totalRepulsion = FVector::ZeroVector;
 	float closestDistance = MAX_flt;
 	bool bHitCenter = false;
@@ -217,7 +231,7 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 	for (int i = 0; i < rayDirs.Num(); ++i)
 	{
 		FHitResult hit;
-		float assistDistance = i == 0 ? dynamicAssistDistance : dynamicAssistDistanceSides;
+		float assistDistance = rayDist[i];
 		FVector endPos = startPos + (rayDirs[i] * assistDistance);
 
 		bool bHit = OwnerWorld->SweepSingleByChannel(hit, startPos, endPos, FQuat::Identity,

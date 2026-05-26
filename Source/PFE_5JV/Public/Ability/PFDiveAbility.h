@@ -91,6 +91,9 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="Dive")
     float GetDivingValue();
+
+    UFUNCTION(BlueprintCallable, Category="Dive")
+    float GetMaxDivingAngle() const;
     
     UFUNCTION(BlueprintCallable, Category="AutoDive")
     void AutoDive(float deltaTime);

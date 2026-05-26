@@ -135,18 +135,22 @@ void UPFCameraResource::ManageCameraOffset(float deltaTime)
 	float targetHeight = DataPtr_->BaseZOffset;
 	float heightLerpToUse = DataPtr_->OffsetGoToBaseLerpSpeed;
 
-	float wingBeatValue = WingBeatAbilityPtr_->GetCurrentWingBeatPercentage();
-	if (wingBeatValue > 0)
+	float valuePitch = PhysicResourcePtr_->CurrentPitchValue_;
+	
+	if (valuePitch > 0)
 	{
-		float percentage = DataPtr_->WingBeatOffsetCurve->GetFloatValue(wingBeatValue);
+		float percentage = valuePitch / WingBeatAbilityPtr_->GetMaxWingBeatAngle();
+		percentage = FMath::Clamp(percentage, 0.0f, 1.0f);
+		percentage = DataPtr_->WingBeatOffsetCurve->GetFloatValue(percentage);
 		targetHeight = FMath::Lerp(DataPtr_->BaseZOffset, DataPtr_->WingBeatZOffset, percentage);
 		heightLerpToUse = DataPtr_->OffsetGoToWingBeatLerpSpeed;
 	}
 
-	float diveValue = DiveAbilityPtr_->GetDivingValue();
-	if (diveValue > 0)
+	if (valuePitch >= 0)
 	{
-		float percentage = DataPtr_->WingBeatOffsetCurve->GetFloatValue(diveValue);
+		float percentage = valuePitch / DiveAbilityPtr_->GetMaxDivingAngle();
+		percentage = FMath::Clamp(percentage, 0.0f, 1.0f);
+		percentage = DataPtr_->WingBeatOffsetCurve->GetFloatValue(percentage);
 		targetHeight = FMath::Lerp(DataPtr_->BaseZOffset, DataPtr_->DiveZOffset, percentage);
 		heightLerpToUse = DataPtr_->OffsetGoToDiveLerpSpeed;
 	}
@@ -224,18 +228,22 @@ void UPFCameraResource::ManageTrueCameraPitch(float deltaTime)
 	float targetPitch = DataPtr_->BaseCamRotation;
 	float lerpToUse = DataPtr_->CamRotLerpSpeedToBase;
 
-	float wingBeatValue = WingBeatAbilityPtr_->GetCurrentWingBeatPercentage();
-	if (wingBeatValue > 0)
+	float valuePitch = PhysicResourcePtr_->CurrentPitchValue_;
+	
+	if (valuePitch > 0)
 	{
-		float percentage = DataPtr_->WingBeatCamRotCurve->GetFloatValue(wingBeatValue);
+		float percentage = valuePitch / WingBeatAbilityPtr_->GetMaxWingBeatAngle();
+		percentage = FMath::Clamp(percentage, 0.0f, 1.0f);
+		percentage = DataPtr_->WingBeatCamRotCurve->GetFloatValue(percentage);
 		targetPitch = FMath::Lerp(DataPtr_->BaseCamRotation, DataPtr_->WingBeatCamRotation, percentage);
 		lerpToUse = DataPtr_->CamRotLerpSpeedToWingBeat;
 	}
 
-	float diveValue = DiveAbilityPtr_->GetDivingValue();
-	if (diveValue > 0)
+	if (valuePitch >= 0)
 	{
-		float percentage = DataPtr_->DiveCamRotCurve->GetFloatValue(diveValue);
+		float percentage = valuePitch / DiveAbilityPtr_->GetMaxDivingAngle();
+		percentage = FMath::Clamp(percentage, 0.0f, 1.0f);
+		percentage = DataPtr_->DiveCamRotCurve->GetFloatValue(percentage);
 		targetPitch = FMath::Lerp(DataPtr_->BaseCamRotation, DataPtr_->DiveCamRotation, percentage);
 		lerpToUse = DataPtr_->CamRotLerpSpeedToDive;
 	}

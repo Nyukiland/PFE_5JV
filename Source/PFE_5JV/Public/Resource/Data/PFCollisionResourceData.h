@@ -43,6 +43,10 @@ public:
 	float AssistDistanceSides = 1750;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist",
+		meta = (ToolTip = "Distance at which the bird starts gently steering away from obstacles on sides."))
+	float AssistDistanceDiagonal = 1500;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist",
 		meta = (ToolTip = "How much velocity is applied to slide the bird away."))
 	float AssistForce = 1500;
 

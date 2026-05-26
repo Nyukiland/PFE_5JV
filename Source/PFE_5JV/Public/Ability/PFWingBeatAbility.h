@@ -58,6 +58,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="WingBeat")
 	float GetCurrentWingBeatPercentage();
+
+	UFUNCTION(Blueprintable, Category="WingBeat")
+	float GetMaxWingBeatAngle() const;
 	
 private:
 	void DebugHeight();
