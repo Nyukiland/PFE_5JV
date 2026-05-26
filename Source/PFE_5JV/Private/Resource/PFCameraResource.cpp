@@ -146,11 +146,11 @@ void UPFCameraResource::ManageCameraOffset(float deltaTime)
 		heightLerpToUse = DataPtr_->OffsetGoToWingBeatLerpSpeed;
 	}
 
-	if (valuePitch >= 0)
+	if (valuePitch <= 0)
 	{
 		float percentage = valuePitch / DiveAbilityPtr_->GetMaxDivingAngle();
 		percentage = FMath::Clamp(percentage, 0.0f, 1.0f);
-		percentage = DataPtr_->WingBeatOffsetCurve->GetFloatValue(percentage);
+		percentage = DataPtr_->DiveOffsetCurve->GetFloatValue(percentage);
 		targetHeight = FMath::Lerp(DataPtr_->BaseZOffset, DataPtr_->DiveZOffset, percentage);
 		heightLerpToUse = DataPtr_->OffsetGoToDiveLerpSpeed;
 	}
@@ -239,7 +239,7 @@ void UPFCameraResource::ManageTrueCameraPitch(float deltaTime)
 		lerpToUse = DataPtr_->CamRotLerpSpeedToWingBeat;
 	}
 
-	if (valuePitch >= 0)
+	if (valuePitch <= 0)
 	{
 		float percentage = valuePitch / DiveAbilityPtr_->GetMaxDivingAngle();
 		percentage = FMath::Clamp(percentage, 0.0f, 1.0f);
