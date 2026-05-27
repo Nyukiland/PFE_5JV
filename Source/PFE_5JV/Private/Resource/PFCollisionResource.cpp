@@ -178,8 +178,6 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 		return;
 
 	float speedPercentage = PhysicResource_->GetForwardVelocityPercentage();
-
-	// Lerp between the data asset multipliers using the speed percentage
 	float speedMultiplier = FMath::Lerp(DataPtr_->MinSpeedMultiplier, DataPtr_->MaxSpeedMultiplier, speedPercentage);
 
 	float dynamicAssistDistance = DataPtr_->AssistDistance * speedMultiplier;
@@ -193,7 +191,8 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 	FVector upDir = ForwardRootPtr_->GetUpVector();
 
 	float angle = DataPtr_->ConeAngle;
-	TArray<FVector> rayDirs =
+
+	FVector rayDirs[9] =
 	{
 		forwardDir,
 		forwardDir.RotateAngleAxis(angle, rightDir),
@@ -206,7 +205,7 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 		forwardDir.RotateAngleAxis(-angle, -rightDir + upDir)
 	};
 
-	TArray<float> rayDist =
+	float rayDist[9] =
 	{
 		dynamicAssistDistance,
 		dynamicAssistDistanceSides,
@@ -220,26 +219,39 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 	};
 
 	FVector totalRepulsion = FVector::ZeroVector;
+	FVector firstOpenDir = FVector::ZeroVector;
+
 	float closestDistance = MAX_flt;
 	bool bHitCenter = false;
+	int openRayCount = 0;
 
 	FCollisionQueryParams queryParams;
 	queryParams.AddIgnoredActor(Owner);
 	FCollisionShape sweepShape = FCollisionShape::MakeSphere(DataPtr_->PreshotSphereSize * 0.5f);
 
-	// Check all ray
-	for (int i = 0; i < rayDirs.Num(); ++i)
+	for (int i = 0; i < 9; ++i)
 	{
 		FHitResult hit;
 		float assistDistance = rayDist[i];
 		FVector endPos = startPos + (rayDirs[i] * assistDistance);
+		bool bHit = false;
 
-		bool bHit = OwnerWorld->SweepSingleByChannel(hit, startPos, endPos, FQuat::Identity,
-													ECC_WorldStatic, sweepShape, queryParams);
+		if (i == 0)
+		{
+			bHit = OwnerWorld->SweepSingleByChannel(hit, startPos, endPos, FQuat::Identity, ECC_WorldStatic, sweepShape,
+													queryParams);
+		}
+		else
+		{
+			bHit = OwnerWorld->LineTraceSingleByChannel(hit, startPos, endPos, ECC_WorldStatic, queryParams);
+		}
+
 		DrawDebugWhiskerCone(startPos, endPos, bHit, hit);
 
 		if (!bHit)
 		{
+			if (openRayCount == 0) firstOpenDir = rayDirs[i];
+			openRayCount++;
 			continue;
 		}
 
@@ -258,17 +270,26 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 		return;
 	}
 
+	FVector combinedSteering = forwardDir + totalRepulsion;
+
 	if (bHitCenter && totalRepulsion.Length() < 0.2f)
 	{
-		if (!bHitRight) totalRepulsion = rightDir;
-		else if (!bHitUp) totalRepulsion = upDir;
-		else if (!bHitLeft) totalRepulsion = -rightDir;
-		else totalRepulsion = -upDir;
+		if (openRayCount > 0)
+		{
+			combinedSteering = firstOpenDir;
+		}
+		else
+		{
+			if (!bHitRight) combinedSteering = rightDir;
+			else if (!bHitUp) combinedSteering = upDir;
+			else if (!bHitLeft) combinedSteering = -rightDir;
+			else combinedSteering = -upDir;
+		}
 	}
 
-	totalRepulsion.Normalize();
+	combinedSteering.Normalize();
 
-	CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, totalRepulsion, deltaTime, DataPtr_->SmoothingTurn);
+	CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, combinedSteering, deltaTime, DataPtr_->SmoothingTurn);
 	float avoidExitThreshold = dynamicAvoidDistance * 1.15f;
 
 	if (closestDistance < DataPtr_->AvoidDistance)
