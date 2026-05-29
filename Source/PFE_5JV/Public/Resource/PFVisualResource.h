@@ -33,6 +33,8 @@ protected:
 	int BirdVisuPriority_;
 
 	float CurrentRollValue_;
+	bool bIsContinuousRoll_;
+	float ContinuousRollStep_;
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Visual")
