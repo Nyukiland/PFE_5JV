@@ -64,6 +64,20 @@ public:
 	}
 };
 
+UENUM()
+enum class ERayDir : uint8
+{
+	Forward,
+	Right,
+	Left,
+	Top,
+	Bottom,
+	TopRight,
+	TopLeft,
+	BottomRight,
+	BottomLeft,
+};
+
 UCLASS(Abstract, Blueprintable)
 class PFE_5JV_API UPFCollisionResource : public UPFResource
 {
@@ -80,6 +94,7 @@ public:
 	bool bHitLeft;
 	bool bHitUp; 
 	bool bHitDown;  
+
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
@@ -107,11 +122,16 @@ protected:
 	FVector CurrentRepulsion_ = FVector::ZeroVector;
 	bool bIsInHardAvoid_ = false;
 	
+	bool RayDirHits_[9];
+	
 public:
 	UPFCollisionResource();
 	
 	UFUNCTION(BlueprintCallable, Category = "Collision")
 	bool RewindAfterCollision(float deltaTime);
+	
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	bool HasHitDirection(ERayDir Direction) const;
 	
 	virtual FString GetInfo_Implementation() override;
 	

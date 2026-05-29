@@ -46,6 +46,19 @@ bool UPFCollisionResource::RewindAfterCollision(float deltaTime)
 	return false;
 }
 
+bool UPFCollisionResource::HasHitDirection(ERayDir Direction) const
+{
+	uint8 index = static_cast<uint8>(Direction);
+    
+	if (index < 9) 
+	{
+		return RayDirHits_[index];
+	}
+    
+	UE_LOG(LogTemp, Warning, TEXT("[CollisionResource] Invalid Ray Direction requested!"));
+	return false;
+}
+
 FString UPFCollisionResource::GetInfo_Implementation()
 {
 	FString text = TEXT("<hb>Collision:</>");
@@ -248,6 +261,8 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 
 		DrawDebugWhiskerCone(startPos, endPos, bHit, hit);
 
+		RayDirHits_[i] = bHit;
+		
 		if (!bHit)
 		{
 			if (openRayCount == 0) firstOpenDir = rayDirs[i];

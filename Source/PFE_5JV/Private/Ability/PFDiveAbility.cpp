@@ -146,7 +146,7 @@ void UPFDiveAbility::DiveHaptics()
 
 void UPFDiveAbility::DiveRoll(float deltaTime)
 {
-	if (!DataPtr_ || !VisualResourcePtr_)
+	if (!DataPtr_ || !VisualResourcePtr_ || !CollisionResource_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[DiveAbility] Bad set up on Data"))
 		return;
@@ -163,6 +163,12 @@ void UPFDiveAbility::DiveRoll(float deltaTime)
 
 	if (!IsDiving())
 		return;
+	
+	if (CollisionResource_->HasHitDirection(ERayDir::Bottom))
+	{
+		TimerWaitToRollDive_ = 0;
+		return;
+	}
 
 	TimerWaitToRollDive_ += deltaTime;
 
