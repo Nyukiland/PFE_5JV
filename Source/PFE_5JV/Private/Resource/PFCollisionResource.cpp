@@ -190,13 +190,15 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 	if (velocity.IsNearlyZero() || TimeSavedOnImpact_ != 0)
 		return;
 
+	float distanceThisFrame = velocity.Length() * deltaTime;
+
 	float speedPercentage = PhysicResource_->GetForwardVelocityPercentage();
 	float speedMultiplier = FMath::Lerp(DataPtr_->MinSpeedMultiplier, DataPtr_->MaxSpeedMultiplier, speedPercentage);
 
-	float dynamicAssistDistance = DataPtr_->AssistDistance * speedMultiplier;
-	float dynamicAssistDistanceSides = DataPtr_->AssistDistanceSides * speedMultiplier;
-	float dynamicAssistDistanceDiagonal = DataPtr_->AssistDistanceDiagonal * speedMultiplier;
-	float dynamicAvoidDistance = DataPtr_->AvoidDistance * speedMultiplier;
+	float dynamicAssistDistance = distanceThisFrame + (DataPtr_->AssistDistance * speedMultiplier);
+	float dynamicAssistDistanceSides = distanceThisFrame + (DataPtr_->AssistDistanceSides * speedMultiplier);
+	float dynamicAssistDistanceDiagonal = distanceThisFrame + (DataPtr_->AssistDistanceDiagonal * speedMultiplier);
+	float dynamicAvoidDistance = distanceThisFrame + (DataPtr_->AvoidDistance * speedMultiplier);
 
 	FVector startPos = PhysicRoot->GetComponentLocation();
 	FVector forwardDir = ForwardRootPtr_->GetForwardVector();
