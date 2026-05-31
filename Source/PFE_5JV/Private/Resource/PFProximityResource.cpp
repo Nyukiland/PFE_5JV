@@ -1,201 +1,212 @@
 #include "Resource/PFProximityResource.h"
-
 #include "StateMachine/PFPlayerCharacter.h"
 
 void UPFProximityResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 {
 	Super::ComponentInit_Implementation(ownerObj);
 
-	// Si aucune direction n'est configurée, on injecte les 6 directions cardinales par défaut
-	if (!DownTrace.IsInit)
-	{
-		InitDefaultDirectionalTraces();
-	}
+	OwnerWorldPtr_ = Owner->GetWorld();
 }
 
 void UPFProximityResource::ComponentTick_Implementation(float deltaTime)
 {
 	Super::ComponentTick_Implementation(deltaTime);
 
-    // OLD METHOD :
-	// CheckCollisions();
-
-	OverlapMultiByChannel();
-	// float ClosestDist = OverlapAnyTestByChannel();
-	// TArray<FDirectionalTraceResult> DirectionResults = DetectAllDirections();
+	CheckCollisionInFront();
+	CheckClosestHit();
+	CheckBelowHit();
 }
 
-void UPFProximityResource::CheckCollisions_Implementation(){}
-
-// ─────────────────────────────────────────────────────────
-//  1. OverlapMultiByChannel — détection sphérique globale
-// ─────────────────────────────────────────────────────────
-void UPFProximityResource::OverlapMultiByChannel()
+void UPFProximityResource::CheckCollisionInFront()
 {
-    ValidHitResults.Empty();
-    ValidBrushSizes.Empty();
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ProximityResource] DataPtr_ is null!"));
+		return;
+	}
 
-    StartPosition = Owner->GetActorLocation()
-                  + (DataPtr_->BrushForwardOffset * Owner->GetActorForwardVector());
+	FVector startPosition = Owner->GetActorLocation() + (DataPtr_->ForwardSphereDistance * PhysicRoot->
+		GetForwardVector());
+	const FCollisionShape sphere = FCollisionShape::MakeSphere(DataPtr_->ForwardSphereSize);
 
-    const FCollisionShape Sphere = FCollisionShape::MakeSphere(DataPtr_->BrushSphereDistance);
+	FCollisionQueryParams queryParams;
+	queryParams.AddIgnoredActor(Owner);
+	queryParams.bTraceComplex = true;
+	queryParams.bReturnFaceIndex = true;
 
-    FCollisionQueryParams QueryParams;
-    QueryParams.AddIgnoredActor(Owner);
+	ValidHitResults.Empty();
 
-    TArray<FHitResult> HitResults;
-    GetWorld()->SweepMultiByChannel(
-        HitResults,
-        StartPosition,
-        StartPosition + FVector(0.f, 0.f, 0.1f),
-        FQuat::Identity,
-        DataPtr_->ProximitySweepConfig.CollisionChannel,
-        Sphere,
-        QueryParams
-    );
+	OwnerWorldPtr_->SweepMultiByChannel(ValidHitResults, startPosition, startPosition + FVector(0.f, 0.f, 0.1f),
+										FQuat::Identity, ECC_Visibility, sphere, queryParams);
 
-    for (const FHitResult& Hit : HitResults)
-    {
-        AActor* HitActor = Hit.GetActor();
-        if (!HitActor)
-            continue;
+#if !UE_BUILD_SHIPPING
 
-        // Filtre : AddUnique sur l'acteur
-        bool bAlreadyAdded = ValidHitResults.ContainsByPredicate([&](const FHitResult& Existing)
-        {
-            return Existing.GetActor() == HitActor;
-        });
-        if (bAlreadyAdded)
-            continue;
+	if (!DataPtr_->bisDrawDebugForward)
+	{
+		return;
+	}
+	
+	DrawDebugSphere(OwnerWorldPtr_, startPosition, DataPtr_->ForwardSphereSize, 16, FColor::Cyan, false, -1.f);
 
-        // Calcul BrushSize
-        float Distance = FVector::Dist(Hit.ImpactPoint, StartPosition);
-        float BrushSize = FMath::GetMappedRangeValueClamped(
-            FVector2D(DataPtr_->BrushSphereDistance, 0.f),
-            FVector2D(DataPtr_->BrushSizesMinMax.X, DataPtr_->BrushSizesMinMax.Y),
-            Distance
-        );
-
-        ValidBrushSizes.Add(BrushSize);
-        ValidHitResults.Add(Hit);
-    }
-
-    if (DataPtr_->ProximitySweepConfig.bDrawDebug)
-    {
-        const FColor Color = ValidHitResults.Num() > 0 ? FColor::Red : FColor::Green;
-        DrawDebugSphere(GetWorld(), StartPosition, DataPtr_->BrushSphereDistance,
-            16, Color, false, DataPtr_->ProximitySweepConfig.DebugDrawDuration);
-    }
+	for (const FHitResult& hit : ValidHitResults)
+	{
+		if (hit.bBlockingHit || hit.bStartPenetrating)
+		{
+			DrawDebugLine(OwnerWorldPtr_, startPosition, hit.ImpactPoint, FColor::Green, false, -1.f, 0, 2.f);
+			DrawDebugPoint(OwnerWorldPtr_, hit.ImpactPoint, 10.f, FColor::Red, false, -1.f);
+			DrawDebugLine(OwnerWorldPtr_, hit.ImpactPoint, hit.ImpactPoint + (hit.ImpactNormal * 150.f), FColor::Yellow,
+						false, -1.f, 0, 3.f);
+		}
+	}
+#endif
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  2. OverlapAnyTestByChannel — distance exacte par shrink progressif du rayon
-// ─────────────────────────────────────────────────────────────────────────────
-float UPFProximityResource::OverlapAnyTestByChannel() const
+void UPFProximityResource::CheckClosestHit()
 {
-    FCollisionQueryParams QueryParams;
-    QueryParams.AddIgnoredActor(Owner);
-
-    float CurrentRadius = DataPtr_->ClosestObstacleConfig.InitialRadius;
-
-    while (CurrentRadius > DataPtr_->ClosestObstacleConfig.MinRadius)
+    if (!DataPtr_)
     {
-        const FCollisionShape Sphere = FCollisionShape::MakeSphere(CurrentRadius);
-
-        bool bHit = GetWorld()->OverlapAnyTestByChannel(
-            StartPosition,
-            FQuat::Identity,
-            DataPtr_->ClosestObstacleConfig.CollisionChannel,
-            Sphere,
-            QueryParams
-        );
-
-        if (DataPtr_->ClosestObstacleConfig.bDrawDebug)
-        {
-            const FColor Color = bHit ? FColor::Red : FColor::Green;
-            DrawDebugSphere(GetWorld(), StartPosition, CurrentRadius,
-                16, Color, false, DataPtr_->ClosestObstacleConfig.DebugDrawDuration);
-        }
-
-        if (!bHit)
-            return CurrentRadius; // Le rayon au moment où on ne touche plus rien = distance exacte
-
-        CurrentRadius -= DataPtr_->ClosestObstacleConfig.RadiusStep;
+       UE_LOG(LogTemp, Error, TEXT("[ProximityResource] DataPtr_ is null!"));
+       return;
     }
 
-    // L'obstacle est extrêmement proche (en dessous de MinRadius)
-    return DataPtr_->ClosestObstacleConfig.MinRadius;
-}
+    FVector startPosition = Owner->GetActorLocation(); 
+    float currentRadius = DataPtr_->BaseClosestSphereSize;
+    float stepSize = DataPtr_->ClosestSphereDetectionStep;
+    float minRadius = DataPtr_->SmallestClosestSphereSize;
 
-// ─────────────────────────────────────────────────────────
-//  3. DetectAllDirections — raycast dans toutes les directions
-// ─────────────────────────────────────────────────────────
-FDirectionalTraceResult UPFProximityResource::DetectBottom() const
-{
-    FDirectionalTraceResult Results = LineTraceSingleByChannel(DownTrace);
-    return Results;
-}
+    FCollisionQueryParams queryParams;
+    queryParams.AddIgnoredActor(Owner);
+    queryParams.bTraceComplex = true; 
 
-// ─────────────────────────────────────────────────────────
-//  4. LineTraceSingleByChannel — raycast dans une direction
-// ─────────────────────────────────────────────────────────
-FDirectionalTraceResult UPFProximityResource::LineTraceSingleByChannel(const FDirectionalTraceConfig& Config) const
-{
-    FDirectionalTraceResult Result;
+    FHitResult bestHit;
+    bestHit.TraceStart = startPosition;
+    bestHit.TraceEnd = startPosition;
+    bestHit.Location = startPosition;
+    bestHit.bBlockingHit = false;
+    bestHit.Distance = currentRadius; 
 
-    if (!Owner || !GetWorld())
-        return Result;
-    
-    const FVector TraceStart = Owner->GetActorLocation();
-    const FVector TraceEnd   = TraceStart + FVector(0.f, 0.f, -1.f) * Config.TraceLength;
+    bool bHasAnyHit = false;
 
-    FCollisionQueryParams QueryParams;
-    QueryParams.AddIgnoredActor(Owner);
-
-    FHitResult HitResult;
-    const bool bHit = GetWorld()->LineTraceSingleByChannel(
-        HitResult,
-        TraceStart,
-        TraceEnd,
-        Config.CollisionChannel,
-        QueryParams
-    );
-
-    if (bHit)
+    while (currentRadius >= minRadius)
     {
-        Result.bHit        = true;
-        Result.Distance    = HitResult.Distance;
-        Result.ImpactPoint = HitResult.ImpactPoint;
-        Result.ImpactNormal= HitResult.ImpactNormal;
-        Result.HitActor    = HitResult.GetActor();
-    }
+        TArray<FHitResult> currentHits;
+        FCollisionShape sphere = FCollisionShape::MakeSphere(currentRadius);
 
-    if (Config.bDrawDebug)
-    {
-        const FColor Color = bHit ? FColor::Red : FColor::Green;
-        DrawDebugLine(GetWorld(), TraceStart, bHit ? HitResult.ImpactPoint : TraceEnd,
-            Color, false, Config.DebugDrawDuration, 0, 2.f);
+        bool bHit = OwnerWorldPtr_->SweepMultiByChannel(currentHits, startPosition, startPosition + FVector(0.f, 0.f, 0.1f), 
+            FQuat::Identity, ECC_Visibility, sphere, queryParams);
 
         if (bHit)
-            DrawDebugSphere(GetWorld(), HitResult.ImpactPoint,
-                10.f, 8, FColor::Yellow, false, Config.DebugDrawDuration);
+        {
+            bHasAnyHit = true;
+
+            for (const FHitResult& hit : currentHits)
+            {
+                if (hit.bBlockingHit || hit.bStartPenetrating)
+                {
+                    bestHit = hit;
+                    break; 
+                }
+            }
+
+            currentRadius -= stepSize;
+        }
+        else
+        {
+            break; 
+        }
     }
 
-    return Result;
+    if (bHasAnyHit)
+    {
+        if (bestHit.bStartPenetrating && bestHit.ImpactPoint.IsNearlyZero())
+        {
+            bestHit.ImpactPoint = bestHit.Location; 
+            bestHit.ImpactNormal = (startPosition - bestHit.ImpactPoint).GetSafeNormal(); 
+        }
+
+        bestHit.Distance = FVector::Dist(startPosition, bestHit.ImpactPoint);
+    }
+
+    ClosestHitResult = bestHit;
+
+#if !UE_BUILD_SHIPPING
+
+    if (!DataPtr_->bisDrawDebugClosest)
+    {
+       return;
+    }
+    
+    FColor sphereColor = ClosestHitResult.bBlockingHit ? FColor::Orange : FColor::Red;
+    
+    float debugRadius = ClosestHitResult.bBlockingHit ? (currentRadius + stepSize) : DataPtr_->BaseClosestSphereSize;
+    DrawDebugSphere(OwnerWorldPtr_, startPosition, debugRadius, 16, sphereColor, false, -1.f);
+
+    if (ClosestHitResult.bBlockingHit)
+    {
+        DrawDebugPoint(OwnerWorldPtr_, ClosestHitResult.ImpactPoint, 12.f, FColor::Magenta, false, -1.f);
+        DrawDebugLine(OwnerWorldPtr_, startPosition, ClosestHitResult.ImpactPoint, FColor::Orange, false, -1.f, 0, 1.5f);
+        DrawDebugLine(OwnerWorldPtr_, ClosestHitResult.ImpactPoint, ClosestHitResult.ImpactPoint + (ClosestHitResult.ImpactNormal * 50.f), FColor::Cyan, false, -1.f, 0, 2.f);
+    }
+#endif
 }
 
-// ─────────────────────────────────────────────────────────
-//  5. InitDefaultDirectionalTraces — initialisation des directions
-// ─────────────────────────────────────────────────────────
-void UPFProximityResource::InitDefaultDirectionalTraces()
+void UPFProximityResource::CheckBelowHit()
 {
-    FDirectionalTraceConfig Config;
-    Config.DirectionLabel    = TEXT("Down");
-    Config.LocalDirection    = FVector( 0,  0, -1);
-    Config.TraceLength       = 1000.f;
-    Config.CollisionChannel  = ECC_WorldStatic;
-    Config.bDrawDebug        = false;
-    Config.DebugDrawDuration = 0.1f;
-    Config.IsInit = true;
-    DownTrace = Config;
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ProximityResource] DataPtr_ is null!"));
+		return;
+	}
+
+	FVector startPos = PhysicRoot->GetComponentLocation();
+	FVector endPos = startPos + (ForwardRootPtr_->GetUpVector() * -DataPtr_->BelowRayDistance);
+
+	FCollisionQueryParams queryParams;
+	queryParams.AddIgnoredActor(Owner);
+	queryParams.bTraceComplex = true;
+
+	bool bHit = OwnerWorldPtr_->
+		LineTraceSingleByChannel(HitBelowResult, startPos, endPos, ECC_Visibility, queryParams);
+
+#if !UE_BUILD_SHIPPING
+
+	if (!DataPtr_->bisDrawDebugBelow)
+	{
+		return;
+	}
+	
+	FColor RayColor = bHit ? FColor::Red : FColor::Green;
+
+	DrawDebugLine(OwnerWorldPtr_, startPos, bHit ? HitBelowResult.ImpactPoint : endPos, RayColor, false, -1.f, 0, 2.f);
+
+	if (bHit)
+	{
+		DrawDebugPoint(OwnerWorldPtr_, HitBelowResult.ImpactPoint, 10.f, FColor::Red, false, -1.f);
+		DrawDebugLine(OwnerWorldPtr_, HitBelowResult.ImpactPoint,
+					HitBelowResult.ImpactPoint + (HitBelowResult.ImpactNormal * 50.f), FColor::Yellow, false, -1.f, 0,
+					2.f);
+	}
+#endif
+}
+
+float UPFProximityResource::GetMaxClosestDistance() const
+{
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ProximityResource] DataPtr_ is null!"));
+		return 0;
+	}
+
+	return DataPtr_->BaseClosestSphereSize;
+}
+
+float UPFProximityResource::GetMaxDistanceWithBelow() const
+{
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ProximityResource] DataPtr_ is null!"));
+		return 0;
+	}
+
+	return DataPtr_->BelowRayDistance;
 }

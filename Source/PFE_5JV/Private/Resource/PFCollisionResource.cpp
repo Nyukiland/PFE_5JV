@@ -157,10 +157,10 @@ void UPFCollisionResource::CheckFlank(float deltaTime)
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(Owner);
 
-	bHitRight = OwnerWorld->LineTraceTestByChannel(startPos, rightEnd, ECC_WorldStatic, QueryParams);
-	bHitLeft = OwnerWorld->LineTraceTestByChannel(startPos, leftEnd, ECC_WorldStatic, QueryParams);
-	bHitUp = OwnerWorld->LineTraceTestByChannel(startPos, upEnd, ECC_WorldStatic, QueryParams);
-	bHitDown = OwnerWorld->LineTraceTestByChannel(startPos, downEnd, ECC_WorldStatic, QueryParams);
+	bHitRight = OwnerWorld->LineTraceTestByChannel(startPos, rightEnd, ECC_Visibility, QueryParams);
+	bHitLeft = OwnerWorld->LineTraceTestByChannel(startPos, leftEnd, ECC_Visibility, QueryParams);
+	bHitUp = OwnerWorld->LineTraceTestByChannel(startPos, upEnd, ECC_Visibility, QueryParams);
+	bHitDown = OwnerWorld->LineTraceTestByChannel(startPos, downEnd, ECC_Visibility, QueryParams);
 
 #if !UE_BUILD_SHIPPING
 	if (DataPtr_->bShowPredictiveDebug && OwnerWorld)
@@ -253,12 +253,12 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 
 		if (i == 0)
 		{
-			bHit = OwnerWorld->SweepSingleByChannel(hit, startPos, endPos, FQuat::Identity, ECC_WorldStatic, sweepShape,
+			bHit = OwnerWorld->SweepSingleByChannel(hit, startPos, endPos, FQuat::Identity, ECC_Visibility, sweepShape,
 													queryParams);
 		}
 		else
 		{
-			bHit = OwnerWorld->LineTraceSingleByChannel(hit, startPos, endPos, ECC_WorldStatic, queryParams);
+			bHit = OwnerWorld->LineTraceSingleByChannel(hit, startPos, endPos, ECC_Visibility, queryParams);
 		}
 
 		DrawDebugWhiskerCone(startPos, endPos, bHit, hit);
