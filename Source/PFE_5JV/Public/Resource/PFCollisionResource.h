@@ -145,6 +145,9 @@ protected:
 
 	void CheckFlank(float deltaTime);
 	void CheckPredictiveCollision(float deltaTime);
+	void FirePredictiveRays(const FVector& StartPos, const FVector* RayDirs, const float* RayDist, FVector& OutTotalRepulsion, FVector& OutFirstOpenDir, float& OutClosestDistance, bool& bOutHitCenter, int& OutOpenRayCount);
+	void UpdateSteeringRepulsion(float DeltaTime, const FVector& ForwardDir, const FVector& RightDir, const FVector& UpDir, const FVector& TotalRepulsion, const FVector& FirstOpenDir, bool bHitCenter, int OpenRayCount);
+	void ApplyPredictiveForces(float DeltaTime, float ClosestDistance, float DynamicAvoidDistance, float SpeedMultiplier);
 	void DrawDebugWhiskerCone(const FVector& StartPos, const FVector& EndPos, bool bHit, const FHitResult& HitResult);
 	
 	void RecordInfoForRollBack(float deltaTime);
