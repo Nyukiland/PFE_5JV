@@ -177,7 +177,8 @@ void UPFCollisionResource::CheckFlank(float deltaTime)
 
 void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 {
-	if (!PhysicResource_ || !DataPtr_ || !DataPtr_->AssistTurnCurve || !DataPtr_->AssistForceCurve)
+	if (!PhysicResource_ || !DataPtr_ || !DataPtr_->AssistTurnCurve
+		|| !DataPtr_->AssistForceCurve || !DataPtr_->AssistSpeedMultiplierCurve)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad Set up"))
 		return;
@@ -190,6 +191,7 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 
 	float distanceThisFrame = velocity.Length() * deltaTime;
 	float speedPercentage = PhysicResource_->GetForwardVelocityPercentage();
+	speedPercentage = DataPtr_->AssistSpeedMultiplierCurve->GetFloatValue(speedPercentage);
 	float speedMultiplier = FMath::Lerp(DataPtr_->MinSpeedMultiplier, DataPtr_->MaxSpeedMultiplier, speedPercentage);
 
 	float dynamicAssistDistance = distanceThisFrame + (DataPtr_->AssistDistance * speedMultiplier);
