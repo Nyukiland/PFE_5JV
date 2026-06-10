@@ -106,6 +106,9 @@ protected:
 	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = "Collision")
 	bool bCanRecord_ = true;
 
+	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = "Collision")
+	bool bIsHelperActive_ = true;
+	
 	UPROPERTY()
 	TObjectPtr<UWorld> OwnerWorld;
 	
@@ -134,6 +137,12 @@ public:
 	bool HasHitDirection(ERayDir Direction) const;
 	
 	virtual FString GetInfo_Implementation() override;
+	
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	void ChangeHelperActive(bool newActive);
+
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	bool GetHelperActive() const;
 	
 protected:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;

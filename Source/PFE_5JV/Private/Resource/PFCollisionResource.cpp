@@ -69,6 +69,16 @@ FString UPFCollisionResource::GetInfo_Implementation()
 	return text;
 }
 
+void UPFCollisionResource::ChangeHelperActive(bool newActive)
+{
+	bIsHelperActive_ = newActive;
+}
+
+bool UPFCollisionResource::GetHelperActive() const
+{
+	return bIsHelperActive_;
+}
+
 void UPFCollisionResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 {
 	Super::ComponentInit_Implementation(ownerObj);
@@ -97,8 +107,11 @@ void UPFCollisionResource::TickComponent(float deltaTime, enum ELevelTick tickTy
 {
 	Super::TickComponent(deltaTime, tickType, thisTickFunction);
 
-	CheckFlank(deltaTime);
-	CheckPredictiveCollision(deltaTime);
+	if (bIsHelperActive_)
+	{
+		CheckFlank(deltaTime);
+		CheckPredictiveCollision(deltaTime);
+	}
 	RecordInfoForRollBack(deltaTime);
 	RecordInfoForPlayTest();
 }
