@@ -65,6 +65,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sphere check")
 	float SphereDetectionSize = 100;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sphere check")
+	float CollisionPushSpeed = 50;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sphere check")
+	float MinCameraDistance = 100;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sphere check")
+	float SquishedHeightOffset = 50;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sphere check")
+	float SquishedSideOffset = 100;
+	
 	// Rotation Stuff
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Base Rotation")
 	float MaxYawAngle = 30.f;
@@ -102,4 +114,13 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "True Cam Rotation")
 	TObjectPtr<UCurveFloat> WingBeatCamRotCurve;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ground")
+	float GroundPitch;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ground")
+	float GroundZOffset = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ground")
+	float GroundAvoidanceLerpSpeed = 1;
 };

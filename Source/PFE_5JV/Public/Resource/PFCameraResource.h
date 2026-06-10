@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "PFPhysicResource.h"
+#include "PFProximityResource.h"
 #include "Ability/PFDiveAbility.h"
 #include "Ability/Data/PFGlideAbilityData.h"
 #include "Data/PFCameraResourceData.h"
@@ -34,6 +35,9 @@ public:
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
     TObjectPtr<UPFWingBeatAbility> WingBeatAbilityPtr_;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|References")
+    TObjectPtr<UPFProximityResource> ProximityResourcePtr_;
 
     // Comp in bp link
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Camera|Components")

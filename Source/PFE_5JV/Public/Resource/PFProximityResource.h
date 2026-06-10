@@ -13,6 +13,12 @@ class PFE_5JV_API UPFProximityResource : public UPFResource
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 	virtual void ComponentTick_Implementation(float deltaTime) override;
+
+	UFUNCTION(BlueprintCallable, Category = "Proximity")
+	float GetMaxClosestDistance() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Proximity")
+	float GetMaxDistanceWithBelow() const;
 	
 protected:
 	
@@ -25,12 +31,6 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Proximity")
 	void CheckBelowHit();
 
-	UFUNCTION(BlueprintCallable, Category = "Proximity")
-	float GetMaxClosestDistance() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Proximity")
-	float GetMaxDistanceWithBelow() const;
-	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Proximity")
 	TArray<FHitResult> ValidHitResults;
