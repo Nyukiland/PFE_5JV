@@ -30,6 +30,9 @@ APFPainter* APFPainter::GetPainter(UObject* WorldContext)
 			return nullptr;
 		}
 
+		if (World && World->GetName() == "L_Menus")
+			return Instance;
+
 		for (TActorIterator<APFPainter> It(World); It; ++It)
 		{
 			if (*It && IsValid(*It))
@@ -38,7 +41,7 @@ APFPainter* APFPainter::GetPainter(UObject* WorldContext)
 				return Instance;
 			}
 		}
-
+		
 		UE_LOG(LogTemp, Error, TEXT("[Painter] The instance of painter has not been placed on the scene"));
 		
 		if (!Instance)
