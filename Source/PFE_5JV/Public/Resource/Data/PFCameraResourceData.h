@@ -122,5 +122,8 @@ public:
 	float GroundZOffset = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ground")
+	TObjectPtr<UCurveFloat> GroundProximitySpeedCurve;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ground")
 	float GroundAvoidanceLerpSpeed = 1;
 };

@@ -77,7 +77,7 @@ bool UPFCameraResource::CheckValidity() const
 	}
 
 	if (!DataPtr_->DistanceCurve || !DataPtr_->DiveOffsetCurve
-		|| !DataPtr_->TurnOffsetCurve || !DataPtr_->WingBeatOffsetCurve)
+		|| !DataPtr_->TurnOffsetCurve || !DataPtr_->WingBeatOffsetCurve || !DataPtr_->GroundProximitySpeedCurve)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[UPFCameraResource] The Data Curve in CameraResource blueprint is NULL"))
 		return false;
@@ -171,8 +171,9 @@ void UPFCameraResource::ManageCameraOffset(float deltaTime)
 		float groundAlpha = 1.0f - FMath::Clamp(currentDist / maxDist, 0.0f, 1.0f);
 
 		float groundTargetHeight = DataPtr_->BaseZOffset + DataPtr_->GroundZOffset;
-        
-		targetHeight = FMath::Lerp(targetHeight, groundTargetHeight, groundAlpha);
+
+		float speedPercent = DataPtr_->GroundProximitySpeedCurve->GetFloatValue(PhysicResourcePtr_->GetForwardVelocityPercentage());
+		targetHeight = FMath::Lerp(targetHeight, groundTargetHeight, groundAlpha * speedPercent);
         
 		heightLerpToUse = FMath::Max(heightLerpToUse, DataPtr_->GroundAvoidanceLerpSpeed);
 	}
@@ -287,7 +288,8 @@ void UPFCameraResource::ManageTrueCameraPitch(float deltaTime)
         
 		float groundAlpha = 1.0f - FMath::Clamp(currentDist / maxDist, 0.0f, 1.0f);
 
-		targetPitch = FMath::Lerp(targetPitch, DataPtr_->GroundPitch, groundAlpha);
+		float speedPercent = DataPtr_->GroundProximitySpeedCurve->GetFloatValue(PhysicResourcePtr_->GetForwardVelocityPercentage());
+		targetPitch = FMath::Lerp(targetPitch, DataPtr_->GroundPitch, groundAlpha * speedPercent);
 		lerpToUse = FMath::Max(lerpToUse, DataPtr_->GroundAvoidanceLerpSpeed);
 	}
 
