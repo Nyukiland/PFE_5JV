@@ -30,9 +30,6 @@ APFPainter* APFPainter::GetPainter(UObject* WorldContext)
 			return nullptr;
 		}
 
-		if (World && World->GetName() == "L_Menus")
-			return Instance;
-
 		for (TActorIterator<APFPainter> It(World); It; ++It)
 		{
 			if (*It && IsValid(*It))
