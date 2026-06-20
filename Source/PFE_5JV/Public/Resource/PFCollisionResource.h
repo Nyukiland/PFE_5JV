@@ -1,10 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PFPhysicResource.h"
 #include "Data/PFCollisionResourceData.h"
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFCollisionResource.generated.h"
+
+class UPFPhysicResource;
+class UPFTurnAbility;
+class UPFDiveAbility;
+class UPFWingBeatAbility;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerCollision);
 
@@ -101,7 +105,16 @@ protected:
 	TObjectPtr<UPFCollisionResourceData> DataPtr_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
-	TObjectPtr<UPFPhysicResource> PhysicResource_;
+	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	TObjectPtr<UPFTurnAbility> TurnAbilityPtr_;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	TObjectPtr<UPFDiveAbility> DiveAbilityPtr_;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	TObjectPtr<UPFWingBeatAbility> WingBeatAbilityPtr_;
 
 	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = "Collision")
 	bool bCanRecord_ = true;
@@ -152,10 +165,12 @@ protected:
 	bool IsHardCollision(const FVector& impactNormal, const FVector& currentVelocity) const;
 	void HandleSoftCollision(const FVector& impactNormal, const FVector& currentVelocity);
 
+	FVector GetPlayerIntendedDirection() const;
 	void CheckFlank(float deltaTime);
-	void CheckPredictiveCollision(float deltaTime);
-	void FirePredictiveRays(const FVector& StartPos, const FVector* RayDirs, const float* RayDist, FVector& OutTotalRepulsion, FVector& OutFirstOpenDir, float& OutClosestDistance, bool& bOutHitCenter, int& OutOpenRayCount);
-	void UpdateSteeringRepulsion(float DeltaTime, const FVector& ForwardDir, const FVector& RightDir, const FVector& UpDir, const FVector& TotalRepulsion, const FVector& FirstOpenDir, bool bHitCenter, int OpenRayCount);
+	void CheckPredictiveCollision(float deltaTime, const FVector& playerDesiredDir);
+	void FirePredictiveRays(const FVector& startPos, const FVector* rayDirs, const float* rayDist, const FVector& playerDesiredDir,
+		FVector& outTotalRepulsion, FVector& outFirstOpenDir, float& outClosestDistance, bool& bOutHitCenter, int& outOpenRayCount);
+	void UpdateSteeringRepulsion(float deltaTime, const FVector& forwardDir, const FVector& totalRepulsion, const FVector& bestDir, bool bHitCenter);
 	void ApplyPredictiveForces(float DeltaTime, float ClosestDistance, float DynamicAvoidDistance, float SpeedMultiplier);
 	void DrawDebugWhiskerCone(const FVector& StartPos, const FVector& EndPos, bool bHit, const FHitResult& HitResult);
 	

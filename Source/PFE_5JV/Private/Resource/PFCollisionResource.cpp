@@ -1,5 +1,9 @@
 #include "Resource/PFCollisionResource.h"
 
+#include "Ability/PFDiveAbility.h"
+#include "Ability/PFTurnAbility.h"
+#include "Ability/PFWingBeatAbility.h"
+#include "Resource/PFPhysicResource.h"
 #include "State/PFAfterCollisionState.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
@@ -22,8 +26,8 @@ bool UPFCollisionResource::RewindAfterCollision(float deltaTime)
 	if (StoredCollisionInfoList_.Num() == 0)
 		return false;
 
-	PhysicResource_->SetKinematic(true);
-	PhysicResource_->StopAllMotion();
+	PhysicResourcePtr_->SetKinematic(true);
+	PhysicResourcePtr_->StopAllMotion();
 
 	FStoredCollisionInfo stored = StoredCollisionInfoList_.Last();
 	float time = TimeSavedList_.Last();
@@ -36,9 +40,9 @@ bool UPFCollisionResource::RewindAfterCollision(float deltaTime)
 
 	if (TimeSavedOnImpact_ - time > DataPtr_->DurationOfRewind || StoredCollisionInfoList_.Num() == 0)
 	{
-		PhysicResource_->SetKinematic(false);
-		PhysicResource_->AddForwardVelocity(stored.ForwardForce * DataPtr_->SlowPercentageAfterSideCollision, false);
-		PhysicResource_->AddVelocity(stored.GlobalForce * DataPtr_->SlowPercentageAfterSideCollision, false);
+		PhysicResourcePtr_->SetKinematic(false);
+		PhysicResourcePtr_->AddForwardVelocity(stored.ForwardForce * DataPtr_->SlowPercentageAfterSideCollision, false);
+		PhysicResourcePtr_->AddVelocity(stored.GlobalForce * DataPtr_->SlowPercentageAfterSideCollision, false);
 		TimeSavedOnImpact_ = 0;
 		return true;
 	}
@@ -83,7 +87,10 @@ void UPFCollisionResource::ComponentInit_Implementation(APFPlayerCharacter* owne
 {
 	Super::ComponentInit_Implementation(ownerObj);
 
-	PhysicResource_ = Owner->GetStateComponent<UPFPhysicResource>();
+	PhysicResourcePtr_ = Owner->GetStateComponent<UPFPhysicResource>();
+	TurnAbilityPtr_ = Owner->GetStateComponent<UPFTurnAbility>();
+	DiveAbilityPtr_ = Owner->GetStateComponent<UPFDiveAbility>();
+	WingBeatAbilityPtr_ = Owner->GetStateComponent<UPFWingBeatAbility>();
 
 	OwnerWorld = Owner->GetWorld();
 
@@ -109,8 +116,9 @@ void UPFCollisionResource::TickComponent(float deltaTime, enum ELevelTick tickTy
 
 	if (bIsHelperActive_)
 	{
+		FVector playerDesiredDir = GetPlayerIntendedDirection();
 		CheckFlank(deltaTime);
-		CheckPredictiveCollision(deltaTime);
+		CheckPredictiveCollision(deltaTime, playerDesiredDir);
 	}
 	RecordInfoForRollBack(deltaTime);
 	RecordInfoForPlayTest();
@@ -146,12 +154,45 @@ void UPFCollisionResource::HandleSoftCollision(const FVector& impactNormal, cons
 		PhysicRoot->SetWorldRotation(yawOnlyRotation);
 	}
 
-	PhysicResource_->CurrentForwardVelocity_ *= DataPtr_->SlowPercentageAfterSideCollision;
+	PhysicResourcePtr_->CurrentForwardVelocity_ *= DataPtr_->SlowPercentageAfterSideCollision;
+}
+
+FVector UPFCollisionResource::GetPlayerIntendedDirection() const
+{
+	if (!PhysicResourcePtr_ || !TurnAbilityPtr_ || !DiveAbilityPtr_ || !WingBeatAbilityPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] abilities or resources not fetch properly"));
+		return ForwardRootPtr_->GetForwardVector();
+	}
+	
+	float TargetPitchAxis = 0.0f;
+
+		float TargetYawAxis = TurnAbilityPtr_->RotationValue_;
+
+	if (WingBeatAbilityPtr_->IsCurrentlyGoingUp())
+	{
+		TargetPitchAxis = WingBeatAbilityPtr_->GetCurrentWingBeatPercentage();
+	}
+	else if (DiveAbilityPtr_->IsDiving())
+	{
+		TargetPitchAxis = -DiveAbilityPtr_->GetDivingValue();
+	}
+
+	if (FMath::IsNearlyZero(TargetYawAxis) && FMath::IsNearlyZero(TargetPitchAxis))
+	{
+		return ForwardRootPtr_->GetForwardVector();
+	}
+
+	const float MaxIntentYawAngle = 45.0f;
+	const float MaxIntentPitchAngle = 45.0f;
+
+	FRotator IntentLocalRotation = FRotator(-TargetPitchAxis * MaxIntentPitchAngle, TargetYawAxis * MaxIntentYawAngle, 0.0f);
+	return IntentLocalRotation.RotateVector(ForwardRootPtr_->GetForwardVector()).GetSafeNormal();
 }
 
 void UPFCollisionResource::CheckFlank(float deltaTime)
 {
-	if (!PhysicResource_ || !DataPtr_)
+	if (!PhysicResourcePtr_ || !DataPtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad Set up"))
 		return;
@@ -159,7 +200,7 @@ void UPFCollisionResource::CheckFlank(float deltaTime)
 
 	float flankTraceLength = DataPtr_->FlankDetectionDist;
 	FVector startPos = PhysicRoot->GetComponentLocation() +
-	(PhysicResource_->CurrentForwardVelocity_.Length() * DataPtr_->FlankPredictionDist * ForwardRootPtr_->
+	(PhysicResourcePtr_->CurrentForwardVelocity_.Length() * DataPtr_->FlankPredictionDist * ForwardRootPtr_->
 		GetForwardVector());
 
 	FVector rightEnd = startPos + (ForwardRootPtr_->GetRightVector() * flankTraceLength);
@@ -188,22 +229,18 @@ void UPFCollisionResource::CheckFlank(float deltaTime)
 #endif
 }
 
-void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
+void UPFCollisionResource::CheckPredictiveCollision(float deltaTime, const FVector& playerDesiredDir)
 {
-	if (!PhysicResource_ || !DataPtr_ || !DataPtr_->AssistTurnCurve
-		|| !DataPtr_->AssistForceCurve || !DataPtr_->AssistSpeedMultiplierCurve)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad Set up"))
-		return;
-	}
+	if (!PhysicResourcePtr_ || !DataPtr_ || !DataPtr_->AssistTurnCurve
+		|| !DataPtr_->AssistForceCurve || !DataPtr_->AssistSpeedMultiplierCurve) return;
 
-	FVector velocity = PhysicResource_->GetCurrentVelocity();
+	FVector velocity = PhysicResourcePtr_->GetCurrentVelocity();
 
-	if (velocity.IsNearlyZero() || TimeSavedOnImpact_ != 0)
+	if (velocity.IsNearlyZero() || !FMath::IsNearlyZero(TimeSavedOnImpact_))
 		return;
 
 	float distanceThisFrame = velocity.Length() * deltaTime;
-	float speedPercentage = PhysicResource_->GetForwardVelocityPercentage();
+	float speedPercentage = PhysicResourcePtr_->GetForwardVelocityPercentage();
 	speedPercentage = DataPtr_->AssistSpeedMultiplierCurve->GetFloatValue(speedPercentage);
 	float speedMultiplier = FMath::Lerp(DataPtr_->MinSpeedMultiplier, DataPtr_->MaxSpeedMultiplier, speedPercentage);
 
@@ -245,104 +282,109 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 	};
 
 	FVector totalRepulsion;
-	FVector firstOpenDir;
+	FVector bestEscapeDir;
 	float closestDistance;
 	bool bHitCenter;
 	int openRayCount;
 
-	FirePredictiveRays(startPos, rayDirs, rayDist, totalRepulsion, firstOpenDir, closestDistance, bHitCenter,
-						openRayCount);
+	FirePredictiveRays(startPos, rayDirs, rayDist, playerDesiredDir, totalRepulsion, bestEscapeDir, closestDistance, bHitCenter, openRayCount);
 
 	if (closestDistance == MAX_flt)
 	{
-		CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, FVector::ZeroVector, deltaTime,
-											DataPtr_->SmoothingTurn);
+		CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, FVector::ZeroVector, deltaTime, DataPtr_->SmoothingTurn);
 		bIsInHardAvoid_ = false;
 		return;
 	}
 
-	UpdateSteeringRepulsion(deltaTime, forwardDir, rightDir, upDir, totalRepulsion, firstOpenDir, bHitCenter,
-							openRayCount);
-
+	UpdateSteeringRepulsion(deltaTime, forwardDir, totalRepulsion, bestEscapeDir, bHitCenter);
 	ApplyPredictiveForces(deltaTime, closestDistance, dynamicAvoidDistance, speedMultiplier);
 }
 
-void UPFCollisionResource::FirePredictiveRays(const FVector& StartPos, const FVector* RayDirs, const float* RayDist,
-											FVector& OutTotalRepulsion, FVector& OutFirstOpenDir,
-											float& OutClosestDistance, bool& bOutHitCenter, int& OutOpenRayCount)
+void UPFCollisionResource::FirePredictiveRays(const FVector& startPos, const FVector* rayDirs, const float* rayDist,
+											  const FVector& playerDesiredDir, FVector& outTotalRepulsion, 
+											  FVector& OutBestDir, float& outClosestDistance, 
+											  bool& bOutHitCenter, int& outOpenRayCount)
 {
-	OutTotalRepulsion = FVector::ZeroVector;
-	OutFirstOpenDir = FVector::ZeroVector;
-	OutClosestDistance = MAX_flt;
+	outTotalRepulsion = FVector::ZeroVector;
+	OutBestDir = rayDirs[0]; 
+	outClosestDistance = MAX_flt;
 	bOutHitCenter = false;
-	OutOpenRayCount = 0;
+	outOpenRayCount = 0;
 
 	FCollisionQueryParams queryParams;
 	queryParams.AddIgnoredActor(Owner);
 	FCollisionShape sweepShape = FCollisionShape::MakeSphere(DataPtr_->PreshotSphereSize * 0.5f);
 
+	float bestRayScore = -MAX_flt;
+
 	for (int i = 0; i < 9; ++i)
 	{
 		FHitResult hit;
-		float assistDistance = RayDist[i];
-		FVector endPos = StartPos + (RayDirs[i] * assistDistance);
+		float assistDistance = rayDist[i];
+		FVector endPos = startPos + (rayDirs[i] * assistDistance);
 		bool bHit = false;
 
 		if (i == 0)
 		{
-			bHit = OwnerWorld->SweepSingleByChannel(hit, StartPos, endPos, FQuat::Identity, ECC_Visibility, sweepShape,
-													queryParams);
+			bHit = OwnerWorld->SweepSingleByChannel(hit, startPos, endPos, FQuat::Identity, ECC_Visibility, sweepShape, queryParams);
+			if (bHit) bOutHitCenter = true;
 		}
 		else
 		{
-			bHit = OwnerWorld->LineTraceSingleByChannel(hit, StartPos, endPos, ECC_Visibility, queryParams);
+			bHit = OwnerWorld->LineTraceSingleByChannel(hit, startPos, endPos, ECC_Visibility, queryParams);
 		}
 
-		DrawDebugWhiskerCone(StartPos, endPos, bHit, hit);
+		DrawDebugWhiskerCone(startPos, endPos, bHit, hit);
 		RayDirHits_[i] = bHit;
+
+		// Context Scoring
+		float safetyScore = bHit ? (hit.Distance / assistDistance) : 1.0f;
+		float intentScore = FVector::DotProduct(rayDirs[i], playerDesiredDir);
+		
+		// Adjust weights here or expose them to your Data Asset
+		float totalScore = (safetyScore * 2.0f) + (intentScore * 1.0f); 
 
 		if (!bHit)
 		{
-			if (OutOpenRayCount == 0) OutFirstOpenDir = RayDirs[i];
-			OutOpenRayCount++;
-			continue;
-		}
-
-		if (i == 0) bOutHitCenter = true;
-		if (hit.Distance < OutClosestDistance) OutClosestDistance = hit.Distance;
-
-		float weight = 1.0f - (hit.Distance / assistDistance);
-		OutTotalRepulsion += hit.ImpactNormal * weight;
-	}
-}
-
-void UPFCollisionResource::UpdateSteeringRepulsion(float DeltaTime, const FVector& ForwardDir, const FVector& RightDir,
-													const FVector& UpDir, const FVector& TotalRepulsion,
-													const FVector& FirstOpenDir, bool bHitCenter, int OpenRayCount)
-{
-	FVector combinedSteering = ForwardDir + TotalRepulsion;
-
-	if (bHitCenter && TotalRepulsion.Length() < 0.2f)
-	{
-		if (OpenRayCount > 0)
-		{
-			combinedSteering = FirstOpenDir;
+			outOpenRayCount++;
 		}
 		else
 		{
-			if (!bHitRight) combinedSteering = RightDir;
-			else if (!bHitUp) combinedSteering = UpDir;
-			else if (!bHitLeft) combinedSteering = -RightDir;
-			else combinedSteering = -UpDir;
+			if (hit.Distance < outClosestDistance) outClosestDistance = hit.Distance;
+			
+			float weight = 1.0f - safetyScore;
+			outTotalRepulsion += hit.ImpactNormal * weight;
 		}
+
+		// Evaluate peripheral rays for escape
+		if (i > 0 && totalScore > bestRayScore)
+		{
+			bestRayScore = totalScore;
+			OutBestDir = rayDirs[i];
+		}
+	}
+}
+
+void UPFCollisionResource::UpdateSteeringRepulsion(float deltaTime, const FVector& forwardDir, 
+												   const FVector& totalRepulsion, const FVector& bestDir, 
+												   bool bHitCenter)
+{
+	FVector combinedSteering = forwardDir;
+
+	if (bHitCenter)
+	{
+		combinedSteering = bestDir;
+	}
+	else if (totalRepulsion.Length() > 0.1f)
+	{
+		combinedSteering = forwardDir + totalRepulsion;
 	}
 
 	combinedSteering.Normalize();
-	CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, combinedSteering, DeltaTime, DataPtr_->SmoothingTurn);
+	CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, combinedSteering, deltaTime, DataPtr_->SmoothingTurn);
 }
 
-void UPFCollisionResource::ApplyPredictiveForces(float DeltaTime, float ClosestDistance, float DynamicAvoidDistance,
-												float SpeedMultiplier)
+void UPFCollisionResource::ApplyPredictiveForces(float DeltaTime, float ClosestDistance, float DynamicAvoidDistance, float SpeedMultiplier)
 {
 	float avoidExitThreshold = DynamicAvoidDistance * 1.15f;
 
@@ -357,40 +399,33 @@ void UPFCollisionResource::ApplyPredictiveForces(float DeltaTime, float ClosestD
 
 	if (bIsInHardAvoid_)
 	{
-		PhysicResource_->AddForwardVelocity(-DataPtr_->SlowForceAvoid * DeltaTime, false);
-		PhysicResource_->AddVelocity(CurrentRepulsion_ * DataPtr_->AvoidForce);
+		PhysicResourcePtr_->AddForwardVelocity(-DataPtr_->SlowForceAvoid * DeltaTime, false);
+		PhysicResourcePtr_->AddVelocity(CurrentRepulsion_ * DataPtr_->AvoidForce);
 
-		float targetPitchOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Pitch,
-																CurrentRepulsion_.Rotation().Pitch);
-		PhysicResource_->AddAssistPitch(targetPitchOffset * DataPtr_->AvoidForceRot);
+		float targetPitchOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Pitch, CurrentRepulsion_.Rotation().Pitch);
+		PhysicResourcePtr_->AddAssistPitch(targetPitchOffset * DataPtr_->AvoidForceRot);
 
-		float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw,
-															CurrentRepulsion_.Rotation().Yaw);
-		PhysicResource_->SetYawRotationVelocity(targetYawOffset * DataPtr_->AvoidForceRot);
+		float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw, CurrentRepulsion_.Rotation().Yaw);
+		PhysicResourcePtr_->SetYawRotationVelocity(targetYawOffset * DataPtr_->AvoidForceRot);
 		return;
 	}
 
-	// Assist Logic
-	float distanceRatio = (ClosestDistance - DataPtr_->AvoidDistance) / (DataPtr_->AssistDistance - DataPtr_->
-		AvoidDistance);
+	float distanceRatio = (ClosestDistance - DataPtr_->AvoidDistance) / (DataPtr_->AssistDistance - DataPtr_->AvoidDistance);
 	float intensity = FMath::Clamp(1.0f - distanceRatio, 0.0f, 1.0f);
 
-	PhysicResource_->AddForwardVelocity(-DataPtr_->SlowForceAssist * DeltaTime, false);
+	PhysicResourcePtr_->AddForwardVelocity(-DataPtr_->SlowForceAssist * DeltaTime, false);
 
 	float forceMultiplier = DataPtr_->AssistForceCurve->GetFloatValue(intensity);
-	PhysicResource_->AddVelocity(CurrentRepulsion_ * (DataPtr_->AssistForce * forceMultiplier * SpeedMultiplier));
+	PhysicResourcePtr_->AddVelocity(CurrentRepulsion_ * (DataPtr_->AssistForce * forceMultiplier * SpeedMultiplier));
 
 	float turnMultiplier = DataPtr_->AssistTurnCurve->GetFloatValue(intensity);
 
-	float targetPitchOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Pitch,
-															CurrentRepulsion_.Rotation().Pitch);
+	float targetPitchOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Pitch, CurrentRepulsion_.Rotation().Pitch);
 	float pitchNudge = targetPitchOffset * turnMultiplier * DataPtr_->AssistTurnSpeed * SpeedMultiplier;
-	PhysicResource_->AddAssistPitch(pitchNudge);
+	PhysicResourcePtr_->AddAssistPitch(pitchNudge);
 
-	float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw,
-														CurrentRepulsion_.Rotation().Yaw);
-	PhysicResource_->SetYawRotationVelocity(
-		targetYawOffset * turnMultiplier * DataPtr_->AssistTurnSpeed * SpeedMultiplier);
+	float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw, CurrentRepulsion_.Rotation().Yaw);
+	PhysicResourcePtr_->SetYawRotationVelocity(targetYawOffset * turnMultiplier * DataPtr_->AssistTurnSpeed * SpeedMultiplier);
 }
 
 void UPFCollisionResource::DrawDebugWhiskerCone(const FVector& StartPos, const FVector& EndPos,
@@ -414,7 +449,7 @@ void UPFCollisionResource::DrawDebugWhiskerCone(const FVector& StartPos, const F
 
 void UPFCollisionResource::RecordInfoForRollBack(float deltaTime)
 {
-	if (!DataPtr_ || !PhysicResource_)
+	if (!DataPtr_ || !PhysicResourcePtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad set up on data"));
 		return;
@@ -426,12 +461,12 @@ void UPFCollisionResource::RecordInfoForRollBack(float deltaTime)
 	if (!bCanRecord_ || TimeSavedOnImpact_ != 0)
 		return;
 
-	float forwardVelo = PhysicResource_->CurrentForwardVelocity_.Length();
+	float forwardVelo = PhysicResourcePtr_->CurrentForwardVelocity_.Length();
 	FVector position = PhysicRoot->GetComponentLocation();
 
 	FStoredCollisionInfo collisionInfo =
 		FStoredCollisionInfo(forwardVelo,
-							PhysicResource_->CurrentGlobalVelocity_,
+							PhysicResourcePtr_->CurrentGlobalVelocity_,
 							position, PhysicRoot->GetComponentRotation());
 
 	float time = TimeSavedList_.Num() == 0 ? 0.f : TimeSavedList_.Last() + deltaTime;
@@ -447,7 +482,7 @@ void UPFCollisionResource::RecordInfoForRollBack(float deltaTime)
 
 void UPFCollisionResource::RecordInfoForPlayTest()
 {
-	if (!DataPtr_ || !PhysicResource_)
+	if (!DataPtr_ || !PhysicResourcePtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad set up on data"));
 		return;
@@ -456,7 +491,7 @@ void UPFCollisionResource::RecordInfoForPlayTest()
 	if (!bCanRecord_)
 		return;
 
-	float forwardVelo = PhysicResource_->CurrentForwardVelocity_.Length();
+	float forwardVelo = PhysicResourcePtr_->CurrentForwardVelocity_.Length();
 	FVector position = PhysicRoot->GetComponentLocation();
 
 	FStoredPlaytestInfo playtestInfo =
@@ -469,13 +504,13 @@ void UPFCollisionResource::RecordInfoForPlayTest()
 void UPFCollisionResource::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 								FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (!DataPtr_ || !PhysicResource_)
+	if (!DataPtr_ || !PhysicResourcePtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad set up on data"));
 		return;
 	}
 
-	FVector Velocity = PhysicResource_->GetCurrentVelocity();
+	FVector Velocity = PhysicResourcePtr_->GetCurrentVelocity();
 
 	if (IsHardCollision(Hit.ImpactNormal, Velocity))
 	{
