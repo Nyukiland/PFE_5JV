@@ -159,7 +159,7 @@ void UPFProximityResource::CheckBelowHit()
 	}
 
 	FVector startPos = PhysicRoot->GetComponentLocation();
-	FVector endPos = startPos + (ForwardRootPtr_->GetUpVector() * -DataPtr_->BelowRayDistance);
+	FVector endPos = startPos + (ForwardRootPtr->GetUpVector() * -DataPtr_->BelowRayDistance);
 
 	FCollisionQueryParams queryParams;
 	queryParams.AddIgnoredActor(Owner);

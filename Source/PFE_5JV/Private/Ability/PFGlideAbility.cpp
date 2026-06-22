@@ -38,7 +38,7 @@ void UPFGlideAbility::MovementBasedJoystick()
 	if (!DataPtr_->bUseJoystickMovement)
 		return;
 
-	FVector rightVector = ForwardRootPtr_->GetRightVector();
+	FVector rightVector = ForwardRootPtr->GetRightVector();
 	PhysicResourcePtr_->AddVelocity(Input_.X * DataPtr_->RightForce * rightVector);
 
 	float pitchValue = Input_.Y * DataPtr_->PitchForce;

@@ -19,7 +19,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TObjectPtr<UPrimitiveComponent> PhysicRoot;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	TObjectPtr<USceneComponent> ForwardRootPtr_;
+	TObjectPtr<USceneComponent> ForwardRootPtr;
 	
 public:	
 	UPFStateComponent();

@@ -233,7 +233,7 @@ void UPFPhysicResource::ProcessVelocity(const float deltaTime)
 	velocityForward = velocityForward.GetClampedToSize(MinVelocity_, MaxAbsoluteVelocity_);
 	CurrentForwardVelocity_ = velocityForward;
 
-	velocity += ForwardRootPtr_->GetForwardVector() * velocityForward.Length();
+	velocity += ForwardRootPtr->GetForwardVector() * velocityForward.Length();
 
 	PhysicRoot->SetPhysicsLinearVelocity(velocity);
 }
@@ -277,7 +277,7 @@ void UPFPhysicResource::ProcessOverrideVelocity()
 {
 	if (FMath::Abs(CurrentOverrideForwardVelocity_) > 0.1f)
 	{
-		PhysicRoot->SetPhysicsLinearVelocity(ForwardRootPtr_->GetForwardVector() * CurrentOverrideForwardVelocity_);
+		PhysicRoot->SetPhysicsLinearVelocity(ForwardRootPtr->GetForwardVector() * CurrentOverrideForwardVelocity_);
 		CurrentOverrideForwardVelocity_ = 0;
 	}
 }
@@ -351,7 +351,7 @@ void UPFPhysicResource::HardSetPitchRotationVisual(float rotation)
 
 	FRotator newRot = FRotator::ZeroRotator;
 	newRot.Pitch = CurrentPitchValue_;
-	ForwardRootPtr_->SetRelativeRotation(newRot);
+	ForwardRootPtr->SetRelativeRotation(newRot);
 }
 
 void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
@@ -377,7 +377,7 @@ void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
 
 	FRotator newRot = FRotator::ZeroRotator;
 	newRot.Pitch = CurrentPitchValue_;
-	ForwardRootPtr_->SetRelativeRotation(newRot);
+	ForwardRootPtr->SetRelativeRotation(newRot);
 
 	bIsFlipped = FMath::FindDeltaAngleDegrees(CurrentPitchValue_, 180) < 90;
 	

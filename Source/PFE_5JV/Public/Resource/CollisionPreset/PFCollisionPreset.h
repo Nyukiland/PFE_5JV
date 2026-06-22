@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "StateMachine/PFPlayerCharacter.h"
 #include "UObject/NoExportTypes.h"
 #include "PFCollisionPreset.generated.h"
 
@@ -12,8 +13,11 @@ class PFE_5JV_API UPFCollisionPreset : public UObject
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(visibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UPFCollisionResource> CollisionResourcePtr_;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<APFPlayerCharacter> OwnerPtr_;
 	
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Collision Preset")

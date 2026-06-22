@@ -33,7 +33,7 @@ void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 		return;
 	}
 
-	CurrentPitch_ = ForwardRootPtr_->GetRelativeRotation().Pitch;
+	CurrentPitch_ = ForwardRootPtr->GetRelativeRotation().Pitch;
 	CurrentYaw_ = PhysicRoot->GetRelativeRotation().Yaw;
 	DistanceCurrentOffset_ = DataPtr_->BaseDistanceWithPlayer;
 	HeightCurrentOffset_ = DataPtr_->BaseZOffset;
@@ -124,7 +124,7 @@ bool UPFCameraResource::CheckValidity() const
 
 void UPFCameraResource::ManageCameraOffset(float deltaTime)
 {
-	FVector pos = ForwardRootPtr_->GetComponentLocation();
+	FVector pos = ForwardRootPtr->GetComponentLocation();
 
 	// Turn
 	float turnValue = TurnAbilityPtr_->TurnValue();
@@ -181,8 +181,8 @@ void UPFCameraResource::ManageCameraOffset(float deltaTime)
 	HeightCurrentOffset_ = FMath::FInterpTo(HeightCurrentOffset_, targetHeight, deltaTime, heightLerpToUse);
 	
 	// Apply in absolute because main component
-	pos += TurnCurrentOffset_ * ForwardRootPtr_->GetRightVector();
-	pos += HeightCurrentOffset_ * ForwardRootPtr_->GetUpVector();
+	pos += TurnCurrentOffset_ * ForwardRootPtr->GetRightVector();
+	pos += HeightCurrentOffset_ * ForwardRootPtr->GetUpVector();
 	CameraPositionPtr_->SetWorldLocation(pos);
 }
 
@@ -228,7 +228,7 @@ void UPFCameraResource::ManageCameraDistance(float deltaTime)
 
 void UPFCameraResource::ManageCameraPitch(float deltaTime)
 {
-	float targetPitch = ForwardRootPtr_->GetRelativeRotation().Pitch;
+	float targetPitch = ForwardRootPtr->GetRelativeRotation().Pitch;
 	
 	float delta = FMath::FindDeltaAngleDegrees(CurrentPitch_, targetPitch);
 	delta = FMath::Clamp(delta, -DataPtr_->MaxPitchAngle, DataPtr_->MaxPitchAngle);
