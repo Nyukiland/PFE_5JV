@@ -15,4 +15,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Paint")
 	float BrushMaxDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Paint")
+	FVector2D BrushSizeLandscape;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Paint")
+	float BrushMaxDistanceLandscape;
 };
