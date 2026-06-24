@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PFStrictCollisionData.h"
 #include "Resource/PFPhysicResource.h"
 #include "Resource/CollisionPreset/PFCollisionPreset.h"
 #include "PFStrictCollisionPreset.generated.h"
@@ -12,7 +13,7 @@ class PFE_5JV_API UPFStrictCollisionPreset : public UPFCollisionPreset
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TObjectPtr<UPFStrictCollisionPreset> CollisionPresetPtr_;
+	TObjectPtr<UPFStrictCollisionData> DataPtr_;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;

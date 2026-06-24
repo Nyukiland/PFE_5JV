@@ -7,74 +7,58 @@
 UCLASS(BlueprintType, Blueprintable)
 class PFE_5JV_API UPFHardAvoidanceData : public UDataAsset
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Detection",
-		meta = (ClampMin = 0, ClampMax = 90, ToolTip = "The angle spread of the 9 predictive raycasts."))
-	float ConeAngle = 30;
-	
-		// -------------------------------------------------------------------
-	// Assist
+    // Ray
+    UPROPERTY(EditAnywhere, Category = "Ray")
+    float ConeAngle = 35.0f;
+    UPROPERTY(EditAnywhere, Category = "Ray")
+    float PreshotSphereSize = 50.0f;
+    UPROPERTY(EditAnywhere, Category = "Ray")
+    float CriticalBrakeDistance = 800.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist",
-		meta = (ToolTip = "Distance at which the bird starts gently steering away from obstacles."))
-	float AssistDistance = 2000;
+    // Distances
+    UPROPERTY(EditAnywhere, Category = "Distances")
+    float AssistDistance = 2000.f;
+    UPROPERTY(EditAnywhere, Category = "Distances")
+    float AssistDistanceSides = 1500.f;
+    UPROPERTY(EditAnywhere, Category = "Distances")
+    float AssistDistanceDiagonal = 1750.f;
+    UPROPERTY(EditAnywhere, Category = "Distances")
+    float AvoidDistance = 800.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist",
-		meta = (ToolTip = "Distance at which the bird starts gently steering away from obstacles on sides."))
-	float AssistDistanceSides = 1750;
+    // Multipliers
+    UPROPERTY(EditAnywhere, Category = "Speed")
+    float MinSpeedMultiplier = 1.0f;
+    UPROPERTY(EditAnywhere, Category = "Speed")
+    float MaxSpeedMultiplier = 2.5f;
+    UPROPERTY(EditAnywhere, Category = "Speed")
+    TObjectPtr<UCurveFloat> AssistSpeedMultiplierCurve;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist",
-		meta = (ToolTip = "Distance at which the bird starts gently steering away from obstacles on sides."))
-	float AssistDistanceDiagonal = 1500;
+    // Forces
+    UPROPERTY(EditAnywhere, Category = "Forces")
+    float AvoidForce = 500.f;
+    UPROPERTY(EditAnywhere, Category = "Forces")
+    float AvoidForceRot = 10.f;
+    UPROPERTY(EditAnywhere, Category = "Forces")
+    float AssistForce = 250.f;
+    UPROPERTY(EditAnywhere, Category = "Forces")
+    float AssistTurnSpeed = 5.f;
+    UPROPERTY(EditAnywhere, Category = "Forces")
+    float SlowForceAvoid = 1000.f;
+    UPROPERTY(EditAnywhere, Category = "Forces")
+    float SlowForceAssist = 500.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist",
-		meta = (ToolTip = "How much velocity is applied to slide the bird away."))
-	float AssistForce = 1500;
+    // Curves
+    UPROPERTY(EditAnywhere, Category = "Curves")
+    TObjectPtr<UCurveFloat> AssistTurnCurve;
+    UPROPERTY(EditAnywhere, Category = "Curves")
+    TObjectPtr<UCurveFloat> AssistForceCurve;
+    UPROPERTY(EditAnywhere, Category = "Curves")
+    float SmoothingTurn = 5.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist",
-		meta = (ToolTip = "How fast the bird's nose visually pitches/yaws away during an assist."))
-	float AssistTurnSpeed = 5;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist",
-		meta = (ClampMin = 0))
-	float SmoothingTurn = 5;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist")
-	float SlowForceAssist = 0.95f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist")
-	TObjectPtr<UCurveFloat> AssistForceCurve;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist")
-	TObjectPtr<UCurveFloat> AssistTurnCurve;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist")
-	float MinSpeedMultiplier = 1;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist")
-	float MaxSpeedMultiplier = 2;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist")
-	TObjectPtr<UCurveFloat> AssistSpeedMultiplierCurve;
-
-	// -------------------------------------------------------------------
-	// Avoid
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Avoid",
-		meta = (ToolTip = "Distance at which the system takes over and forcefully stops a crash."))
-	float AvoidDistance = 800;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Avoid",
-		meta = (ToolTip = "The strength of the emergency push away from the wall."))
-	float AvoidForce = 3000;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Avoid",
-		meta = (ToolTip = "How fast the bird physically yaws away during an emergency avoid."))
-	float AvoidForceRot = 5;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision|Assist")
-	float SlowForceAvoid = 0.95f;
-	
+    // Debug
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    bool ShowDebug = false;
 };

@@ -23,20 +23,20 @@ void UPFStrictCollisionPreset::OnHitReaction_Implementation(const FHitResult& hi
 
 	FVector currentVelocity = PhysicResourcePtr_->GetCurrentVelocity();
 
-	if (currentVelocity.IsNearlyZero(10.f))
-	{
-		return;
-	}
+	// Offset
+	float nudgeOffset = 15.0f; 
+	FVector safeLocation = CollisionResourcePtr_->PhysicRoot->GetComponentLocation() + (hit.ImpactNormal * nudgeOffset);
+	CollisionResourcePtr_->PhysicRoot->SetWorldLocation(safeLocation, false, nullptr, ETeleportType::TeleportPhysics);
 
+	// Redirection
 	FVector reflectedVelocity = currentVelocity.MirrorByVector(hit.ImpactNormal);
-
 	FRotator bounceRotation = reflectedVelocity.GetSafeNormal().Rotation();
 
 	FRotator yawOnlyRotation = FRotator(0.f, bounceRotation.Yaw, 0.f);
 	PhysicResourcePtr_->PhysicRoot->SetWorldRotation(yawOnlyRotation);
-
-	FRotator pitchOnlyRotation = FRotator(bounceRotation.Pitch, 0.f, 0.f);
-	PhysicResourcePtr_->ForwardRootPtr->SetRelativeRotation(pitchOnlyRotation);
-
+	
 	PhysicResourcePtr_->HardSetPitchRotationVisual(bounceRotation.Pitch);
+
+	// Slow
+	PhysicResourcePtr_->AddForwardVelocity(DataPtr_->SlowOnCollision, true, true);
 }

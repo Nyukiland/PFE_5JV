@@ -7,9 +7,7 @@
 #include "PFCollisionResource.generated.h"
 
 class UPFPhysicResource;
-class UPFTurnAbility;
-class UPFDiveAbility;
-class UPFWingBeatAbility;
+
 
 USTRUCT()
 struct FStoredPlaytestInfo
