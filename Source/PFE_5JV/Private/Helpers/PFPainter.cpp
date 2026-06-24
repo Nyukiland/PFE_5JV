@@ -38,7 +38,7 @@ APFPainter* APFPainter::GetPainter(UObject* WorldContext)
 				return Instance;
 			}
 		}
-
+		
 		UE_LOG(LogTemp, Error, TEXT("[Painter] The instance of painter has not been placed on the scene"));
 		
 		if (!Instance)

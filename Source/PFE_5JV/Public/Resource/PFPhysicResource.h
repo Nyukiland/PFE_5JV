@@ -152,6 +152,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void AddToPitchRotationVisual(float rotationToAdd, int priority);
 
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void AddAssistPitch(float offset);
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")

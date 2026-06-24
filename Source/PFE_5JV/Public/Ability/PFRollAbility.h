@@ -37,7 +37,6 @@ protected:
 	float TimerPreRoll_;
 	int RotationDir_;
 	bool bIsRollComplete_ = true;
-	FQuat PrevQuat_;
 	
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;

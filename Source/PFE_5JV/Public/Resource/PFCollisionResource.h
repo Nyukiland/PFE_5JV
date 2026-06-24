@@ -64,6 +64,20 @@ public:
 	}
 };
 
+UENUM()
+enum class ERayDir : uint8
+{
+	Forward,
+	Right,
+	Left,
+	Top,
+	Bottom,
+	TopRight,
+	TopLeft,
+	BottomRight,
+	BottomLeft,
+};
+
 UCLASS(Abstract, Blueprintable)
 class PFE_5JV_API UPFCollisionResource : public UPFResource
 {
@@ -80,6 +94,7 @@ public:
 	bool bHitLeft;
 	bool bHitUp; 
 	bool bHitDown;  
+
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
@@ -91,6 +106,9 @@ protected:
 	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = "Collision")
 	bool bCanRecord_ = true;
 
+	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = "Collision")
+	bool bIsHelperActive_ = true;
+	
 	UPROPERTY()
 	TObjectPtr<UWorld> OwnerWorld;
 	
@@ -104,22 +122,41 @@ protected:
 	TArray<FStoredPlaytestInfo> GameInfoList_;
 
 	float TimeSavedOnImpact_ = 0;
+	FVector CurrentRepulsion_ = FVector::ZeroVector;
+	bool bIsInHardAvoid_ = false;
+	
+	bool RayDirHits_[9];
 	
 public:
+	UPFCollisionResource();
+	
 	UFUNCTION(BlueprintCallable, Category = "Collision")
 	bool RewindAfterCollision(float deltaTime);
 	
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	bool HasHitDirection(ERayDir Direction) const;
+	
 	virtual FString GetInfo_Implementation() override;
+	
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	void ChangeHelperActive(bool newActive);
+
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	bool GetHelperActive() const;
 	
 protected:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
-	virtual void ComponentTick_Implementation(float deltaTime) override;
+	// Use after physic required
+	virtual void TickComponent(float deltaTime, enum ELevelTick tickType, FActorComponentTickFunction* thisTickFunction) override;
 
 	bool IsHardCollision(const FVector& impactNormal, const FVector& currentVelocity) const;
 	void HandleSoftCollision(const FVector& impactNormal, const FVector& currentVelocity);
 
 	void CheckFlank(float deltaTime);
 	void CheckPredictiveCollision(float deltaTime);
+	void FirePredictiveRays(const FVector& StartPos, const FVector* RayDirs, const float* RayDist, FVector& OutTotalRepulsion, FVector& OutFirstOpenDir, float& OutClosestDistance, bool& bOutHitCenter, int& OutOpenRayCount);
+	void UpdateSteeringRepulsion(float DeltaTime, const FVector& ForwardDir, const FVector& RightDir, const FVector& UpDir, const FVector& TotalRepulsion, const FVector& FirstOpenDir, bool bHitCenter, int OpenRayCount);
+	void ApplyPredictiveForces(float DeltaTime, float ClosestDistance, float DynamicAvoidDistance, float SpeedMultiplier);
 	void DrawDebugWhiskerCone(const FVector& StartPos, const FVector& EndPos, bool bHit, const FHitResult& HitResult);
 	
 	void RecordInfoForRollBack(float deltaTime);

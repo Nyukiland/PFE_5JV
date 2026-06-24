@@ -1,242 +1,212 @@
 #include "Resource/PFProximityResource.h"
-
-#include "Engine/OverlapResult.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
 void UPFProximityResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 {
 	Super::ComponentInit_Implementation(ownerObj);
 
-	// Si aucune direction n'est configurée, on injecte les 6 directions cardinales par défaut
-	if (DirectionalTraces.Num() == 0)
-	{
-		InitDefaultDirectionalTraces();
-	}
+	OwnerWorldPtr_ = Owner->GetWorld();
 }
 
 void UPFProximityResource::ComponentTick_Implementation(float deltaTime)
 {
 	Super::ComponentTick_Implementation(deltaTime);
 
-    // OLD METHOD :
-	// CheckCollisions();
-
-	OverlapMultiByChannel();
-	// float ClosestDist = OverlapAnyTestByChannel();
-	// TArray<FDirectionalTraceResult> DirectionResults = DetectAllDirections();
+	CheckCollisionInFront();
+	CheckClosestHit();
+	CheckBelowHit();
 }
 
-void UPFProximityResource::CheckCollisions_Implementation(){}
-
-// ─────────────────────────────────────────────────────────
-//  1. OverlapMultiByChannel — détection sphérique globale
-// ─────────────────────────────────────────────────────────
-void UPFProximityResource::OverlapMultiByChannel()
+void UPFProximityResource::CheckCollisionInFront()
 {
-    ValidHitResults.Empty();
-    ValidBrushSizes.Empty();
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ProximityResource] DataPtr_ is null!"));
+		return;
+	}
 
-    StartPosition = Owner->GetActorLocation()
-                  + (BrushForwardOffset * Owner->GetActorForwardVector());
+	FVector startPosition = Owner->GetActorLocation() + (DataPtr_->ForwardSphereDistance * PhysicRoot->
+		GetForwardVector());
+	const FCollisionShape sphere = FCollisionShape::MakeSphere(DataPtr_->ForwardSphereSize);
 
-    const FCollisionShape Sphere = FCollisionShape::MakeSphere(BrushSphereDistance);
+	FCollisionQueryParams queryParams;
+	queryParams.AddIgnoredActor(Owner);
+	queryParams.bTraceComplex = true;
+	queryParams.bReturnFaceIndex = true;
 
-    FCollisionQueryParams QueryParams;
-    QueryParams.AddIgnoredActor(Owner);
+	ValidHitResults.Empty();
 
-    TArray<FHitResult> HitResults;
-    GetWorld()->SweepMultiByChannel(
-        HitResults,
-        StartPosition,
-        StartPosition + FVector(0.f, 0.f, 0.1f),
-        FQuat::Identity,
-        ProximitySweepConfig.CollisionChannel,
-        Sphere,
-        QueryParams
-    );
+	OwnerWorldPtr_->SweepMultiByChannel(ValidHitResults, startPosition, startPosition + FVector(0.f, 0.f, 0.1f),
+										FQuat::Identity, ECC_Visibility, sphere, queryParams);
 
-    for (const FHitResult& Hit : HitResults)
-    {
-        AActor* HitActor = Hit.GetActor();
-        if (!HitActor)
-            continue;
+#if !UE_BUILD_SHIPPING
 
-        // Filtre 1 : doit être un Landscape
-        // if (!HitActor->IsA<landscap>())
-        //     continue;
+	if (!DataPtr_->bisDrawDebugForward)
+	{
+		return;
+	}
+	
+	DrawDebugSphere(OwnerWorldPtr_, startPosition, DataPtr_->ForwardSphereSize, 16, FColor::Cyan, false, -1.f);
 
-        // Filtre 2 : doit avoir le composant assigné dans l'éditeur (BP_PaintableSurface)
-        if (!PaintableSurfaceClass || !HitActor->FindComponentByClass(PaintableSurfaceClass))
-            continue;
-
-        // Filtre 3 : AddUnique sur l'acteur
-        bool bAlreadyAdded = ValidHitResults.ContainsByPredicate([&](const FHitResult& Existing)
-        {
-            return Existing.GetActor() == HitActor;
-        });
-        if (bAlreadyAdded)
-            continue;
-
-        // Calcul BrushSize
-        float Distance = FVector::Dist(Hit.ImpactPoint, StartPosition);
-        float BrushSize = FMath::GetMappedRangeValueClamped(
-            FVector2D(BrushSphereDistance, 0.f),
-            FVector2D(BrushSizesMinMax.X, BrushSizesMinMax.Y),
-            Distance
-        );
-
-        ValidBrushSizes.Add(BrushSize);
-        ValidHitResults.Add(Hit);
-    }
-
-    if (ProximitySweepConfig.bDrawDebug)
-    {
-        const FColor Color = ValidHitResults.Num() > 0 ? FColor::Red : FColor::Green;
-        DrawDebugSphere(GetWorld(), StartPosition, BrushSphereDistance,
-            16, Color, false, ProximitySweepConfig.DebugDrawDuration);
-    }
+	for (const FHitResult& hit : ValidHitResults)
+	{
+		if (hit.bBlockingHit || hit.bStartPenetrating)
+		{
+			DrawDebugLine(OwnerWorldPtr_, startPosition, hit.ImpactPoint, FColor::Green, false, -1.f, 0, 2.f);
+			DrawDebugPoint(OwnerWorldPtr_, hit.ImpactPoint, 10.f, FColor::Red, false, -1.f);
+			DrawDebugLine(OwnerWorldPtr_, hit.ImpactPoint, hit.ImpactPoint + (hit.ImpactNormal * 150.f), FColor::Yellow,
+						false, -1.f, 0, 3.f);
+		}
+	}
+#endif
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  2. OverlapAnyTestByChannel — distance exacte par shrink progressif du rayon
-// ─────────────────────────────────────────────────────────────────────────────
-float UPFProximityResource::OverlapAnyTestByChannel() const
+void UPFProximityResource::CheckClosestHit()
 {
-    const FVector Origin = Owner->GetActorLocation();
-
-    FCollisionQueryParams QueryParams;
-    QueryParams.AddIgnoredActor(Owner);
-
-    float CurrentRadius = ClosestObstacleConfig.InitialRadius;
-
-    // On commence au rayon max et on réduit jusqu'à ne plus avoir de collision
-    while (CurrentRadius > ClosestObstacleConfig.MinRadius)
+    if (!DataPtr_)
     {
-        const FCollisionShape Sphere = FCollisionShape::MakeSphere(CurrentRadius);
-
-        const bool bHasOverlap = GetWorld()->OverlapAnyTestByChannel(
-            Origin,
-            FQuat::Identity,
-            ClosestObstacleConfig.CollisionChannel,
-            Sphere,
-            QueryParams
-        );
-
-        if (ClosestObstacleConfig.bDrawDebug)
-        {
-            const FColor Color = bHasOverlap ? FColor::Orange : FColor::Cyan;
-            DrawDebugSphere(
-                GetWorld(),
-                Origin,
-                CurrentRadius,
-                12,
-                Color,
-                false,
-                ClosestObstacleConfig.DebugDrawDuration
-            );
-        }
-
-        if (!bHasOverlap)
-        {
-            // Ce rayon ne touche plus rien : la distance à l'obstacle est ici
-            return CurrentRadius;
-        }
-
-        CurrentRadius -= ClosestObstacleConfig.RadiusStep;
+       UE_LOG(LogTemp, Error, TEXT("[ProximityResource] DataPtr_ is null!"));
+       return;
     }
 
-    // On est au minimum : l'obstacle est très proche ou en collision directe
-    return ClosestObstacleConfig.MinRadius;
-}
+    FVector startPosition = Owner->GetActorLocation(); 
+    float currentRadius = DataPtr_->BaseClosestSphereSize;
+    float stepSize = DataPtr_->ClosestSphereDetectionStep;
+    float minRadius = DataPtr_->SmallestClosestSphereSize;
 
-// ─────────────────────────────────────────────────────────
-//  3. DetectAllDirections — raycast dans toutes les directions
-// ─────────────────────────────────────────────────────────
-TArray<FDirectionalTraceResult> UPFProximityResource::DetectAllDirections() const
-{
-    TArray<FDirectionalTraceResult> Results;
-    Results.Reserve(DirectionalTraces.Num());
+    FCollisionQueryParams queryParams;
+    queryParams.AddIgnoredActor(Owner);
+    queryParams.bTraceComplex = true; 
 
-    for (const FDirectionalTraceConfig& Config : DirectionalTraces)
+    FHitResult bestHit;
+    bestHit.TraceStart = startPosition;
+    bestHit.TraceEnd = startPosition;
+    bestHit.Location = startPosition;
+    bestHit.bBlockingHit = false;
+    bestHit.Distance = currentRadius; 
+
+    bool bHasAnyHit = false;
+
+    while (currentRadius >= minRadius)
     {
-        Results.Add(LineTraceSingleByChannel(Config));
-    }
+        TArray<FHitResult> currentHits;
+        FCollisionShape sphere = FCollisionShape::MakeSphere(currentRadius);
 
-    return Results;
-}
-
-// ─────────────────────────────────────────────────────────
-//  4. LineTraceSingleByChannel — raycast dans une direction
-// ─────────────────────────────────────────────────────────
-FDirectionalTraceResult UPFProximityResource::LineTraceSingleByChannel(const FDirectionalTraceConfig& Config) const
-{
-    FDirectionalTraceResult Result;
-
-    const FVector Start = Owner->GetActorLocation();
-
-    // La direction est en espace local → on la convertit en world space
-    const FVector WorldDirection = Owner->GetActorTransform().TransformVectorNoScale(Config.LocalDirection.GetSafeNormal());
-    const FVector End = Start + WorldDirection * Config.TraceLength;
-
-    FCollisionQueryParams QueryParams;
-    QueryParams.AddIgnoredActor(Owner);
-
-    FHitResult HitResult;
-    const bool bHit = GetWorld()->LineTraceSingleByChannel(
-        HitResult,
-        Start,
-        End,
-        Config.CollisionChannel,
-        QueryParams
-    );
-
-    if (bHit)
-    {
-        Result.bHit       = true;
-        Result.Distance   = HitResult.Distance;
-        Result.ImpactPoint  = HitResult.ImpactPoint;
-        Result.ImpactNormal = HitResult.ImpactNormal;
-        Result.HitActor   = HitResult.GetActor();
-    }
-
-    if (Config.bDrawDebug)
-    {
-        const FColor Color = bHit ? FColor::Red : FColor::Green;
-        DrawDebugLine(GetWorld(), Start, End, Color, false, Config.DebugDrawDuration, 0, 1.5f);
+        bool bHit = OwnerWorldPtr_->SweepMultiByChannel(currentHits, startPosition, startPosition + FVector(0.f, 0.f, 0.1f), 
+            FQuat::Identity, ECC_Visibility, sphere, queryParams);
 
         if (bHit)
         {
-            DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 8.f, 8, FColor::Yellow, false, Config.DebugDrawDuration);
+            bHasAnyHit = true;
+
+            for (const FHitResult& hit : currentHits)
+            {
+                if (hit.bBlockingHit || hit.bStartPenetrating)
+                {
+                    bestHit = hit;
+                    break; 
+                }
+            }
+
+            currentRadius -= stepSize;
+        }
+        else
+        {
+            break; 
         }
     }
 
-    return Result;
+    if (bHasAnyHit)
+    {
+        if (bestHit.bStartPenetrating && bestHit.ImpactPoint.IsNearlyZero())
+        {
+            bestHit.ImpactPoint = bestHit.Location; 
+            bestHit.ImpactNormal = (startPosition - bestHit.ImpactPoint).GetSafeNormal(); 
+        }
+
+        bestHit.Distance = FVector::Dist(startPosition, bestHit.ImpactPoint);
+    }
+
+    ClosestHitResult = bestHit;
+
+#if !UE_BUILD_SHIPPING
+
+    if (!DataPtr_->bisDrawDebugClosest)
+    {
+       return;
+    }
+    
+    FColor sphereColor = ClosestHitResult.bBlockingHit ? FColor::Orange : FColor::Red;
+    
+    float debugRadius = ClosestHitResult.bBlockingHit ? (currentRadius + stepSize) : DataPtr_->BaseClosestSphereSize;
+    DrawDebugSphere(OwnerWorldPtr_, startPosition, debugRadius, 16, sphereColor, false, -1.f);
+
+    if (ClosestHitResult.bBlockingHit)
+    {
+        DrawDebugPoint(OwnerWorldPtr_, ClosestHitResult.ImpactPoint, 12.f, FColor::Magenta, false, -1.f);
+        DrawDebugLine(OwnerWorldPtr_, startPosition, ClosestHitResult.ImpactPoint, FColor::Orange, false, -1.f, 0, 1.5f);
+        DrawDebugLine(OwnerWorldPtr_, ClosestHitResult.ImpactPoint, ClosestHitResult.ImpactPoint + (ClosestHitResult.ImpactNormal * 50.f), FColor::Cyan, false, -1.f, 0, 2.f);
+    }
+#endif
 }
 
-// ─────────────────────────────────────────────────────────
-//  5. InitDefaultDirectionalTraces — initialisation des directions
-// ─────────────────────────────────────────────────────────
-void UPFProximityResource::InitDefaultDirectionalTraces()
+void UPFProximityResource::CheckBelowHit()
 {
-    const TArray<TPair<FString, FVector>> DefaultDirections = {
-        { TEXT("Down"),     FVector( 0,  0, -1) },
-        // { TEXT("Up"),       FVector( 0,  0,  1) },
-        // { TEXT("Forward"),  FVector( 1,  0,  0) },
-        // { TEXT("Backward"), FVector(-1,  0,  0) },
-        // { TEXT("Right"),    FVector( 0,  1,  0) },
-        // { TEXT("Left"),     FVector( 0, -1,  0) },
-    };
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ProximityResource] DataPtr_ is null!"));
+		return;
+	}
 
-    for (const auto& [Label, Dir] : DefaultDirections)
-    {
-        FDirectionalTraceConfig Config;
-        Config.DirectionLabel    = Label;
-        Config.LocalDirection    = Dir;
-        Config.TraceLength       = 1000.f;
-        Config.CollisionChannel  = ECC_WorldStatic;
-        Config.bDrawDebug        = false;
-        Config.DebugDrawDuration = 0.1f;
+	FVector startPos = PhysicRoot->GetComponentLocation();
+	FVector endPos = startPos + (ForwardRootPtr_->GetUpVector() * -DataPtr_->BelowRayDistance);
 
-        DirectionalTraces.Add(Config);
-    }
+	FCollisionQueryParams queryParams;
+	queryParams.AddIgnoredActor(Owner);
+	queryParams.bTraceComplex = true;
+
+	bool bHit = OwnerWorldPtr_->
+		LineTraceSingleByChannel(HitBelowResult, startPos, endPos, ECC_Visibility, queryParams);
+
+#if !UE_BUILD_SHIPPING
+
+	if (!DataPtr_->bisDrawDebugBelow)
+	{
+		return;
+	}
+	
+	FColor RayColor = bHit ? FColor::Red : FColor::Green;
+
+	DrawDebugLine(OwnerWorldPtr_, startPos, bHit ? HitBelowResult.ImpactPoint : endPos, RayColor, false, -1.f, 0, 2.f);
+
+	if (bHit)
+	{
+		DrawDebugPoint(OwnerWorldPtr_, HitBelowResult.ImpactPoint, 10.f, FColor::Red, false, -1.f);
+		DrawDebugLine(OwnerWorldPtr_, HitBelowResult.ImpactPoint,
+					HitBelowResult.ImpactPoint + (HitBelowResult.ImpactNormal * 50.f), FColor::Yellow, false, -1.f, 0,
+					2.f);
+	}
+#endif
+}
+
+float UPFProximityResource::GetMaxClosestDistance() const
+{
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ProximityResource] DataPtr_ is null!"));
+		return 0;
+	}
+
+	return DataPtr_->BaseClosestSphereSize;
+}
+
+float UPFProximityResource::GetMaxDistanceWithBelow() const
+{
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ProximityResource] DataPtr_ is null!"));
+		return 0;
+	}
+
+	return DataPtr_->BelowRayDistance;
 }

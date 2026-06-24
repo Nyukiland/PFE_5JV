@@ -19,10 +19,7 @@ class PFE_5JV_API UPFVisualResource : public UPFResource
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Visual")
-	TObjectPtr<UPrimitiveComponent> BirdVisualPtr_;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Visual")
-	TObjectPtr<UPrimitiveComponent> BirdMeshObjectPtr_;
+	TObjectPtr<UPrimitiveComponent> BirdVisualRootPtr_;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Visual")
@@ -36,11 +33,10 @@ protected:
 	int BirdVisuPriority_;
 
 	float CurrentRollValue_;
+	bool bIsContinuousRoll_;
+	float ContinuousRollStep_;
 	
 public:
-	UFUNCTION(BlueprintCallable, Category = "Visual")
-	FRotator GetBirdVisualRotation() const;
-	
 	UFUNCTION(BlueprintCallable, Category = "Visual")
 	void AddToRollRotation(float rotationToAdd, int priority);
 	

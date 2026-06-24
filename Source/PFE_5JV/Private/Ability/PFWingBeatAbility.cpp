@@ -147,6 +147,17 @@ float UPFWingBeatAbility::GetCurrentWingBeatPercentage()
 	return CurrentRot_ / DataPtr_->MaxWingBeatRotation;
 }
 
+float UPFWingBeatAbility::GetMaxWingBeatAngle() const
+{
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[WingBeatAbility] Bad set up on data"));
+		return 0;
+	}
+
+	return DataPtr_->MaxWingBeatRotation;
+}
+
 void UPFWingBeatAbility::DebugHeight()
 {
 	if (Owner->ForwardRootPtr->GetComponentLocation().Z > CurrentHeight_)

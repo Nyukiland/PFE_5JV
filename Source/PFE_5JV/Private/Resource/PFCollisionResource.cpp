@@ -3,6 +3,14 @@
 #include "State/PFAfterCollisionState.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
+UPFCollisionResource::UPFCollisionResource()
+{
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = true;
+
+	PrimaryComponentTick.TickGroup = TG_PostPhysics;
+}
+
 bool UPFCollisionResource::RewindAfterCollision(float deltaTime)
 {
 	if (!DataPtr_)
@@ -38,6 +46,19 @@ bool UPFCollisionResource::RewindAfterCollision(float deltaTime)
 	return false;
 }
 
+bool UPFCollisionResource::HasHitDirection(ERayDir Direction) const
+{
+	uint8 index = static_cast<uint8>(Direction);
+
+	if (index < 9)
+	{
+		return RayDirHits_[index];
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[CollisionResource] Invalid Ray Direction requested!"));
+	return false;
+}
+
 FString UPFCollisionResource::GetInfo_Implementation()
 {
 	FString text = TEXT("<hb>Collision:</>");
@@ -46,6 +67,16 @@ FString UPFCollisionResource::GetInfo_Implementation()
 	text += TEXT("\n <b>Hit Up: </>") + FString::Printf(TEXT("%i"), bHitUp);
 	text += TEXT("\n <b>Hit Down: </>") + FString::Printf(TEXT("%i"), bHitDown);
 	return text;
+}
+
+void UPFCollisionResource::ChangeHelperActive(bool newActive)
+{
+	bIsHelperActive_ = newActive;
+}
+
+bool UPFCollisionResource::GetHelperActive() const
+{
+	return bIsHelperActive_;
 }
 
 void UPFCollisionResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
@@ -71,12 +102,16 @@ void UPFCollisionResource::ComponentInit_Implementation(APFPlayerCharacter* owne
 	}
 }
 
-void UPFCollisionResource::ComponentTick_Implementation(float deltaTime)
+void UPFCollisionResource::TickComponent(float deltaTime, enum ELevelTick tickType,
+										FActorComponentTickFunction* thisTickFunction)
 {
-	Super::ComponentTick_Implementation(deltaTime);
+	Super::TickComponent(deltaTime, tickType, thisTickFunction);
 
-	CheckFlank(deltaTime);
-	CheckPredictiveCollision(deltaTime);
+	if (bIsHelperActive_)
+	{
+		CheckFlank(deltaTime);
+		CheckPredictiveCollision(deltaTime);
+	}
 	RecordInfoForRollBack(deltaTime);
 	RecordInfoForPlayTest();
 }
@@ -124,37 +159,39 @@ void UPFCollisionResource::CheckFlank(float deltaTime)
 
 	float flankTraceLength = DataPtr_->FlankDetectionDist;
 	FVector startPos = PhysicRoot->GetComponentLocation() +
-		(PhysicResource_->CurrentForwardVelocity_.Length() * DataPtr_->FlankPredictionDist * ForwardRootPtr_->GetForwardVector());
+	(PhysicResource_->CurrentForwardVelocity_.Length() * DataPtr_->FlankPredictionDist * ForwardRootPtr_->
+		GetForwardVector());
 
 	FVector rightEnd = startPos + (ForwardRootPtr_->GetRightVector() * flankTraceLength);
-	FVector leftEnd  = startPos + (-ForwardRootPtr_->GetRightVector() * flankTraceLength);
-	FVector upEnd    = startPos + (ForwardRootPtr_->GetUpVector() * flankTraceLength);
-	FVector downEnd  = startPos + (-ForwardRootPtr_->GetUpVector() * flankTraceLength);
+	FVector leftEnd = startPos + (-ForwardRootPtr_->GetRightVector() * flankTraceLength);
+	FVector upEnd = startPos + (ForwardRootPtr_->GetUpVector() * flankTraceLength);
+	FVector downEnd = startPos + (-ForwardRootPtr_->GetUpVector() * flankTraceLength);
 
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(Owner);
 
-	bHitRight = OwnerWorld->LineTraceTestByChannel(startPos, rightEnd, ECC_WorldStatic, QueryParams);
-	bHitLeft  = OwnerWorld->LineTraceTestByChannel(startPos, leftEnd, ECC_WorldStatic, QueryParams);
-	bHitUp    = OwnerWorld->LineTraceTestByChannel(startPos, upEnd, ECC_WorldStatic, QueryParams);
-	bHitDown  = OwnerWorld->LineTraceTestByChannel(startPos, downEnd, ECC_WorldStatic, QueryParams);
+	bHitRight = OwnerWorld->LineTraceTestByChannel(startPos, rightEnd, ECC_Visibility, QueryParams);
+	bHitLeft = OwnerWorld->LineTraceTestByChannel(startPos, leftEnd, ECC_Visibility, QueryParams);
+	bHitUp = OwnerWorld->LineTraceTestByChannel(startPos, upEnd, ECC_Visibility, QueryParams);
+	bHitDown = OwnerWorld->LineTraceTestByChannel(startPos, downEnd, ECC_Visibility, QueryParams);
 
 #if !UE_BUILD_SHIPPING
 	if (DataPtr_->bShowPredictiveDebug && OwnerWorld)
 	{
 		DrawDebugSphere(OwnerWorld, startPos, 15.f, 8, FColor::Cyan, false, -1.f);
-        
+
 		DrawDebugLine(OwnerWorld, startPos, rightEnd, bHitRight ? FColor::Red : FColor::Green, false, -1.f, 0, 2.f);
-		DrawDebugLine(OwnerWorld, startPos, leftEnd,  bHitLeft  ? FColor::Red : FColor::Green, false, -1.f, 0, 2.f);
-		DrawDebugLine(OwnerWorld, startPos, upEnd,    bHitUp    ? FColor::Red : FColor::Green, false, -1.f, 0, 2.f);
-		DrawDebugLine(OwnerWorld, startPos, downEnd,  bHitDown  ? FColor::Red : FColor::Green, false, -1.f, 0, 2.f);
+		DrawDebugLine(OwnerWorld, startPos, leftEnd, bHitLeft ? FColor::Red : FColor::Green, false, -1.f, 0, 2.f);
+		DrawDebugLine(OwnerWorld, startPos, upEnd, bHitUp ? FColor::Red : FColor::Green, false, -1.f, 0, 2.f);
+		DrawDebugLine(OwnerWorld, startPos, downEnd, bHitDown ? FColor::Red : FColor::Green, false, -1.f, 0, 2.f);
 	}
 #endif
 }
 
 void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 {
-	if (!PhysicResource_ || !DataPtr_)
+	if (!PhysicResource_ || !DataPtr_ || !DataPtr_->AssistTurnCurve
+		|| !DataPtr_->AssistForceCurve || !DataPtr_->AssistSpeedMultiplierCurve)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Bad Set up"))
 		return;
@@ -165,13 +202,23 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 	if (velocity.IsNearlyZero() || TimeSavedOnImpact_ != 0)
 		return;
 
+	float distanceThisFrame = velocity.Length() * deltaTime;
+	float speedPercentage = PhysicResource_->GetForwardVelocityPercentage();
+	speedPercentage = DataPtr_->AssistSpeedMultiplierCurve->GetFloatValue(speedPercentage);
+	float speedMultiplier = FMath::Lerp(DataPtr_->MinSpeedMultiplier, DataPtr_->MaxSpeedMultiplier, speedPercentage);
+
+	float dynamicAssistDistance = distanceThisFrame + (DataPtr_->AssistDistance * speedMultiplier);
+	float dynamicAssistDistanceSides = distanceThisFrame + (DataPtr_->AssistDistanceSides * speedMultiplier);
+	float dynamicAssistDistanceDiagonal = distanceThisFrame + (DataPtr_->AssistDistanceDiagonal * speedMultiplier);
+	float dynamicAvoidDistance = distanceThisFrame + (DataPtr_->AvoidDistance * speedMultiplier);
+
 	FVector startPos = PhysicRoot->GetComponentLocation();
 	FVector forwardDir = ForwardRootPtr_->GetForwardVector();
 	FVector rightDir = ForwardRootPtr_->GetRightVector();
 	FVector upDir = ForwardRootPtr_->GetUpVector();
-
 	float angle = DataPtr_->ConeAngle;
-	TArray<FVector> rayDirs =
+
+	FVector rayDirs[9] =
 	{
 		forwardDir,
 		forwardDir.RotateAngleAxis(angle, rightDir),
@@ -184,87 +231,170 @@ void UPFCollisionResource::CheckPredictiveCollision(float deltaTime)
 		forwardDir.RotateAngleAxis(-angle, -rightDir + upDir)
 	};
 
-	FVector totalRepulsion = FVector::ZeroVector;
-	float closestDistance = MAX_flt;
-	bool bHitCenter = false;
+	float rayDist[9] =
+	{
+		dynamicAssistDistance,
+		dynamicAssistDistanceSides,
+		dynamicAssistDistanceSides,
+		dynamicAssistDistanceSides,
+		dynamicAssistDistanceSides,
+		dynamicAssistDistanceDiagonal,
+		dynamicAssistDistanceDiagonal,
+		dynamicAssistDistanceDiagonal,
+		dynamicAssistDistanceDiagonal
+	};
+
+	FVector totalRepulsion;
+	FVector firstOpenDir;
+	float closestDistance;
+	bool bHitCenter;
+	int openRayCount;
+
+	FirePredictiveRays(startPos, rayDirs, rayDist, totalRepulsion, firstOpenDir, closestDistance, bHitCenter,
+						openRayCount);
+
+	if (closestDistance == MAX_flt)
+	{
+		CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, FVector::ZeroVector, deltaTime,
+											DataPtr_->SmoothingTurn);
+		bIsInHardAvoid_ = false;
+		return;
+	}
+
+	UpdateSteeringRepulsion(deltaTime, forwardDir, rightDir, upDir, totalRepulsion, firstOpenDir, bHitCenter,
+							openRayCount);
+
+	ApplyPredictiveForces(deltaTime, closestDistance, dynamicAvoidDistance, speedMultiplier);
+}
+
+void UPFCollisionResource::FirePredictiveRays(const FVector& StartPos, const FVector* RayDirs, const float* RayDist,
+											FVector& OutTotalRepulsion, FVector& OutFirstOpenDir,
+											float& OutClosestDistance, bool& bOutHitCenter, int& OutOpenRayCount)
+{
+	OutTotalRepulsion = FVector::ZeroVector;
+	OutFirstOpenDir = FVector::ZeroVector;
+	OutClosestDistance = MAX_flt;
+	bOutHitCenter = false;
+	OutOpenRayCount = 0;
 
 	FCollisionQueryParams queryParams;
 	queryParams.AddIgnoredActor(Owner);
 	FCollisionShape sweepShape = FCollisionShape::MakeSphere(DataPtr_->PreshotSphereSize * 0.5f);
 
-	// Check all ray
-	for (int i = 0; i < rayDirs.Num(); ++i)
+	for (int i = 0; i < 9; ++i)
 	{
 		FHitResult hit;
-		FVector endPos = startPos + (rayDirs[i] * DataPtr_->AssistDistance);
+		float assistDistance = RayDist[i];
+		FVector endPos = StartPos + (RayDirs[i] * assistDistance);
+		bool bHit = false;
 
-		bool bHit = OwnerWorld->SweepSingleByChannel(hit, startPos, endPos, FQuat::Identity,
-								  ECC_WorldStatic, sweepShape, queryParams);
-		DrawDebugWhiskerCone(startPos, endPos, bHit, hit);
-		
+		if (i == 0)
+		{
+			bHit = OwnerWorld->SweepSingleByChannel(hit, StartPos, endPos, FQuat::Identity, ECC_Visibility, sweepShape,
+													queryParams);
+		}
+		else
+		{
+			bHit = OwnerWorld->LineTraceSingleByChannel(hit, StartPos, endPos, ECC_Visibility, queryParams);
+		}
+
+		DrawDebugWhiskerCone(StartPos, endPos, bHit, hit);
+		RayDirHits_[i] = bHit;
+
 		if (!bHit)
 		{
+			if (OutOpenRayCount == 0) OutFirstOpenDir = RayDirs[i];
+			OutOpenRayCount++;
 			continue;
 		}
 
-		if (i == 0) bHitCenter = true;
-		if (hit.Distance < closestDistance) closestDistance = hit.Distance;
+		if (i == 0) bOutHitCenter = true;
+		if (hit.Distance < OutClosestDistance) OutClosestDistance = hit.Distance;
 
-		float weight = 1.0f - (hit.Distance / DataPtr_->AssistDistance);
-		totalRepulsion += hit.ImpactNormal * weight;
+		float weight = 1.0f - (hit.Distance / assistDistance);
+		OutTotalRepulsion += hit.ImpactNormal * weight;
+	}
+}
+
+void UPFCollisionResource::UpdateSteeringRepulsion(float DeltaTime, const FVector& ForwardDir, const FVector& RightDir,
+													const FVector& UpDir, const FVector& TotalRepulsion,
+													const FVector& FirstOpenDir, bool bHitCenter, int OpenRayCount)
+{
+	FVector combinedSteering = ForwardDir + TotalRepulsion;
+
+	if (bHitCenter && TotalRepulsion.Length() < 0.2f)
+	{
+		if (OpenRayCount > 0)
+		{
+			combinedSteering = FirstOpenDir;
+		}
+		else
+		{
+			if (!bHitRight) combinedSteering = RightDir;
+			else if (!bHitUp) combinedSteering = UpDir;
+			else if (!bHitLeft) combinedSteering = -RightDir;
+			else combinedSteering = -UpDir;
+		}
 	}
 
-	if (closestDistance == MAX_flt)
-		return;
+	combinedSteering.Normalize();
+	CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, combinedSteering, DeltaTime, DataPtr_->SmoothingTurn);
+}
 
-	// Flat Wall
-	if (bHitCenter && totalRepulsion.Length() < 0.2f)
+void UPFCollisionResource::ApplyPredictiveForces(float DeltaTime, float ClosestDistance, float DynamicAvoidDistance,
+												float SpeedMultiplier)
+{
+	float avoidExitThreshold = DynamicAvoidDistance * 1.15f;
+
+	if (ClosestDistance < DataPtr_->AvoidDistance)
 	{
-		if (!bHitRight) totalRepulsion = rightDir;
-		else if (!bHitUp) totalRepulsion = upDir;
-		else if (!bHitLeft) totalRepulsion = -rightDir;
-		else totalRepulsion = -upDir;
+		bIsInHardAvoid_ = true;
+	}
+	else if (ClosestDistance > avoidExitThreshold)
+	{
+		bIsInHardAvoid_ = false;
 	}
 
-	totalRepulsion.Normalize();
-#if !UE_BUILD_SHIPPING
-	if (DataPtr_->bShowPredictiveDebug)
+	if (bIsInHardAvoid_)
 	{
-		DrawDebugDirectionalArrow(OwnerWorld, startPos, startPos + (totalRepulsion * 400.f), 120.f, FColor::Purple, false, -1.f, 0, 5.f);
-	}
-#endif
+		PhysicResource_->AddForwardVelocity(-DataPtr_->SlowForceAvoid * DeltaTime, false);
+		PhysicResource_->AddVelocity(CurrentRepulsion_ * DataPtr_->AvoidForce);
 
-	// Hard Avoid
-	if (closestDistance < DataPtr_->AvoidDistance)
-	{
-		PhysicResource_->CurrentForwardVelocity_ *= DataPtr_->SlowPercentageDuringAvoidance;
-		PhysicResource_->AddVelocity(totalRepulsion * DataPtr_->AvoidForce);
-		
-		float escapePitch = totalRepulsion.Rotation().Pitch;
-		PhysicResource_->HardSetPitchRotationVisual(escapePitch);
+		float targetPitchOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Pitch,
+																CurrentRepulsion_.Rotation().Pitch);
+		PhysicResource_->AddAssistPitch(targetPitchOffset * DataPtr_->AvoidForceRot);
 
-		float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw, totalRepulsion.Rotation().Yaw);
+		float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw,
+															CurrentRepulsion_.Rotation().Yaw);
 		PhysicResource_->SetYawRotationVelocity(targetYawOffset * DataPtr_->AvoidForceRot);
 		return;
 	}
 
-	// Assist
-	float distanceRatio = (closestDistance - DataPtr_->AvoidDistance) / (DataPtr_->AssistDistance - DataPtr_->AvoidDistance);
-	float intensity = 1.0f - distanceRatio;
-	intensity = FMath::Clamp(intensity, 0.0f, 1.0f);
-	
-	PhysicResource_->AddVelocity(totalRepulsion * (DataPtr_->AssistForce * intensity));
+	// Assist Logic
+	float distanceRatio = (ClosestDistance - DataPtr_->AvoidDistance) / (DataPtr_->AssistDistance - DataPtr_->
+		AvoidDistance);
+	float intensity = FMath::Clamp(1.0f - distanceRatio, 0.0f, 1.0f);
 
-	float targetPitchOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Pitch, totalRepulsion.Rotation().Pitch);
-	float pitchNudge = targetPitchOffset * intensity * DataPtr_->AssistTurnSpeed;
+	PhysicResource_->AddForwardVelocity(-DataPtr_->SlowForceAssist * DeltaTime, false);
+
+	float forceMultiplier = DataPtr_->AssistForceCurve->GetFloatValue(intensity);
+	PhysicResource_->AddVelocity(CurrentRepulsion_ * (DataPtr_->AssistForce * forceMultiplier * SpeedMultiplier));
+
+	float turnMultiplier = DataPtr_->AssistTurnCurve->GetFloatValue(intensity);
+
+	float targetPitchOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Pitch,
+															CurrentRepulsion_.Rotation().Pitch);
+	float pitchNudge = targetPitchOffset * turnMultiplier * DataPtr_->AssistTurnSpeed * SpeedMultiplier;
 	PhysicResource_->AddAssistPitch(pitchNudge);
 
-	float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw, totalRepulsion.Rotation().Yaw);
-	PhysicResource_->SetYawRotationVelocity(targetYawOffset * intensity * DataPtr_->AssistTurnSpeed);
+	float targetYawOffset = FMath::FindDeltaAngleDegrees(PhysicRoot->GetComponentRotation().Yaw,
+														CurrentRepulsion_.Rotation().Yaw);
+	PhysicResource_->SetYawRotationVelocity(
+		targetYawOffset * turnMultiplier * DataPtr_->AssistTurnSpeed * SpeedMultiplier);
 }
 
 void UPFCollisionResource::DrawDebugWhiskerCone(const FVector& StartPos, const FVector& EndPos,
-	bool bHit, const FHitResult& HitResult)
+												bool bHit, const FHitResult& HitResult)
 {
 #if !UE_BUILD_SHIPPING
 	if (!DataPtr_ || !DataPtr_->bShowPredictiveDebug || !OwnerWorld)
@@ -276,7 +406,8 @@ void UPFCollisionResource::DrawDebugWhiskerCone(const FVector& StartPos, const F
 	if (bHit)
 	{
 		DrawDebugPoint(OwnerWorld, HitResult.ImpactPoint, 10.f, FColor::Red, false, -1.f);
-		DrawDebugLine(OwnerWorld, HitResult.ImpactPoint, HitResult.ImpactPoint + (HitResult.ImpactNormal * 150.f), FColor::Yellow, false, -1.f, 0, 3.f);
+		DrawDebugLine(OwnerWorld, HitResult.ImpactPoint, HitResult.ImpactPoint + (HitResult.ImpactNormal * 150.f),
+					FColor::Yellow, false, -1.f, 0, 3.f);
 	}
 #endif
 }
