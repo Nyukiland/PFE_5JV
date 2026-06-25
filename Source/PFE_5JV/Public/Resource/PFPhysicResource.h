@@ -150,6 +150,9 @@ public:
 	void ProcessAngularVelocity(const float deltaTime);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	float GetYawAngularVelocity() const;
+
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void AddToPitchRotationVisual(float rotationToAdd, int priority);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
@@ -163,6 +166,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void ProcessPitchVisual(float deltaTime);
+	
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	float GetCurrentPitchRotation() const;
 	
 	void DoGravity(const float deltaTime);
 

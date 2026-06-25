@@ -317,6 +317,18 @@ void UPFPhysicResource::ProcessAngularVelocity(const float deltaTime)
 	PhysicRoot->SetPhysicsAngularVelocityInDegrees(velocity);
 }
 
+float UPFPhysicResource::GetYawAngularVelocity() const
+{
+	float yawVelo = 0;
+	
+	for (FVelocityToAdd velocity : AngularVelocities_)
+	{
+		yawVelo += velocity.Velocity.Z;
+	}
+
+	return yawVelo;
+}
+
 void UPFPhysicResource::AddToPitchRotationVisual(float rotationToAdd, int priority)
 {
 	if (priority > PitchPriority_ || FMath::Abs(rotationToAdd) < 1)
@@ -385,6 +397,11 @@ void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
 	PitchRotation_ = 0;
 	PitchPriority_ = 1000;
 	FramePitchAssistOffset_ = 0.f;
+}
+
+float UPFPhysicResource::GetCurrentPitchRotation() const
+{
+	return PitchRotation_;
 }
 
 void UPFPhysicResource::DoGravity(const float deltaTime)
