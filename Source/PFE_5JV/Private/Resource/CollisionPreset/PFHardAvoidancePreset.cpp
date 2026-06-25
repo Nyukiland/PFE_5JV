@@ -41,13 +41,11 @@ void UPFHardAvoidancePreset::PerformBlindRepulsion(float deltaTime, const FVecto
     FVector startPos = CollisionResourcePtr_->PhysicRoot->GetComponentLocation();
     FVector forwardDir = CollisionResourcePtr_->ForwardRootPtr->GetForwardVector();
 
-    // 1. Next-Frame Failsafe (Absolute Shield)
     if (CheckAbsoluteShield(deltaTime, currentVelocity, startPos, forwardDir))
     {
         return;
     }
 
-    // 2. Scale Ray Distances Based on Velocity
     float distanceThisFrame = currentVelocity.Length() * deltaTime;
     float speedPercentage = PhysicResourcePtr_->GetForwardVelocityPercentage();
     
@@ -65,7 +63,6 @@ void UPFHardAvoidancePreset::PerformBlindRepulsion(float deltaTime, const FVecto
 
     float rayDist[9] = { dynAssist, dynSides, dynSides, dynSides, dynSides, dynDiag, dynDiag, dynDiag, dynDiag };
 
-    // 3. Environment Sweeping
     FVector totalRepulsion;
     FVector firstOpenDir;
     float closestDistance;
@@ -73,8 +70,6 @@ void UPFHardAvoidancePreset::PerformBlindRepulsion(float deltaTime, const FVecto
     int openRayCount;
     
     CalculateDynamicRays(startPos, forwardDir, rayDist, totalRepulsion, firstOpenDir, closestDistance, bHitCenter, openRayCount);
-
-    // 4. Force Application
     ApplyPredictiveForces(deltaTime, forwardDir, totalRepulsion, firstOpenDir, closestDistance, dynAvoid, speedMultiplier, bHitCenter, openRayCount);
 }
 
@@ -161,7 +156,6 @@ void UPFHardAvoidancePreset::CalculateDynamicRays(const FVector& startPos, const
         if (i == 0) bOutHitCenter = true;
         if (hit.Distance < outClosestDistance) outClosestDistance = hit.Distance;
 
-        // Weight repulsion based on how deeply the ray penetrated the threshold
         float weight = 1.0f - (hit.Distance / rayDist[i]);
         outTotalRepulsion += hit.ImpactNormal * weight;
 
@@ -178,7 +172,6 @@ void UPFHardAvoidancePreset::ApplyPredictiveForces(float deltaTime, const FVecto
                                                    const FVector& firstOpenDir, float closestDistance, float dynamicAvoidDistance, 
                                                    float speedMultiplier, bool bHitCenter, int openRayCount)
 {
-    // The Early Exit (Prevents Ghost Steering)
     if (closestDistance == MAX_flt)
     {
         CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, forwardDir, deltaTime, DataPtr_->SmoothingTurn);
@@ -186,10 +179,8 @@ void UPFHardAvoidancePreset::ApplyPredictiveForces(float deltaTime, const FVecto
         return;
     }
 
-    // 1. Resolve Target Steering Vector
     FVector targetSteering = forwardDir + totalRepulsion;
 
-    // Center-hit fallback logic
     if (bHitCenter && totalRepulsion.Length() < 0.2f)
     {
         if (openRayCount > 0) 
@@ -211,13 +202,11 @@ void UPFHardAvoidancePreset::ApplyPredictiveForces(float deltaTime, const FVecto
     targetSteering.Normalize();
     CurrentRepulsion_ = FMath::VInterpTo(CurrentRepulsion_, targetSteering, deltaTime, DataPtr_->SmoothingTurn);
 
-    // 2. Evaluate State (Hard Avoid vs Assist)
     float avoidExitThreshold = dynamicAvoidDistance * 1.15f;
 
     if (closestDistance < DataPtr_->AvoidDistance) bIsInHardAvoid_ = true;
     else if (closestDistance > avoidExitThreshold) bIsInHardAvoid_ = false;
 
-    // 3. HARD AVOID ZONE (Maximum Override)
     if (bIsInHardAvoid_)
     {
        PhysicResourcePtr_->AddForwardVelocity(-DataPtr_->SlowForceAvoid * deltaTime, false);
@@ -231,7 +220,6 @@ void UPFHardAvoidancePreset::ApplyPredictiveForces(float deltaTime, const FVecto
        return;
     }
 
-    // 4. ASSIST ZONE (Gradual correction)
     if (!DataPtr_->AssistForceCurve || !DataPtr_->AssistTurnCurve) return;
 
     float distanceRatio = (closestDistance - DataPtr_->AvoidDistance) / (DataPtr_->AssistDistance - DataPtr_->AvoidDistance);
