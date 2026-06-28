@@ -23,24 +23,27 @@ public :
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 
 protected:
-	UPROPERTY(VisibleAnywhere, Category="FlowerSpawner|References")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
 	TObjectPtr<APFPlayerCharacter> OwnerPtr_;
 
-	UPROPERTY(VisibleAnywhere, Category="FlowerSpawner|References")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
 	TObjectPtr<UPFProximityResource> ProximityResourcePtr_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
 	TObjectPtr<UPFFlowerSpawnerResourceData> DataPtr_;
 
-	UPROPERTY(VisibleAnywhere, Category="FlowerSpawner|References")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
 	TObjectPtr<APFPainter> PainterPtr_;
 
-	UPROPERTY(VisibleAnywhere, Category="FlowerSpawner|References")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
 	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> BlueFlowerHISMPtr_;
 
-	UPROPERTY(VisibleAnywhere, Category="FlowerSpawner|References")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
 	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> RedFlowerHISMPtr_;
 
-	UPROPERTY(VisibleAnywhere, Category="FlowerSpawner|References")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
 	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> YellowFlowerHISMPtr_;
+
+private:
+	bool CheckValidity() const;
 };
