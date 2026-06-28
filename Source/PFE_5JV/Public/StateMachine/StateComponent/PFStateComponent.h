@@ -24,6 +24,8 @@ public:
 public:	
 	UPFStateComponent();
 
+	virtual int GetPriority() const;
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void ComponentEarlyInit();
 	virtual void ComponentEarlyInit_Implementation();

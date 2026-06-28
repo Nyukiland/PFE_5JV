@@ -7,6 +7,11 @@ UPFStateComponent::UPFStateComponent()
 
 }
 
+int UPFStateComponent::GetPriority() const
+{
+	return 0;
+}
+
 void UPFStateComponent::ComponentEarlyInit_Implementation()
 {
 	

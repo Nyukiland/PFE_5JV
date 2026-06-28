@@ -61,15 +61,14 @@ protected:
 	TArray<FStoredPlaytestInfo> GameInfoList_;
 	
 public:
-	UPFCollisionResource();
-
 	UFUNCTION(BlueprintCallable)
 	void ChangeCollisionPreset(TSubclassOf<UPFCollisionPreset> collisionPreset);
+
+	virtual int GetPriority() const override;
 	
 protected:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
-	// Use after physic required
-	virtual void TickComponent(float deltaTime, enum ELevelTick tickType, FActorComponentTickFunction* thisTickFunction) override;
+	virtual void ComponentTick_Implementation(float deltaTime) override;
 	
 	void CheckFlank(float deltaTime);
 	void RecordInfoForPlayTest();

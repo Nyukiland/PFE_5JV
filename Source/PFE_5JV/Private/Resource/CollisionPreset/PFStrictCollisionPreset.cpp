@@ -15,7 +15,7 @@ void UPFStrictCollisionPreset::OnHitReaction_Implementation(const FHitResult& hi
 {
 	Super::OnHitReaction_Implementation(hit);
 
-	if (!CollisionResourcePtr_ || !PhysicResourcePtr_)
+	if (!CollisionResourcePtr_ || !PhysicResourcePtr_ || !DataPtr_->CollisionOffset)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[StrictCollisionPreset] Missing resource references."));
 		return;
@@ -24,8 +24,7 @@ void UPFStrictCollisionPreset::OnHitReaction_Implementation(const FHitResult& hi
 	FVector currentVelocity = PhysicResourcePtr_->GetCurrentVelocity();
 
 	// Offset
-	float nudgeOffset = 15.0f; 
-	FVector safeLocation = CollisionResourcePtr_->PhysicRoot->GetComponentLocation() + (hit.ImpactNormal * nudgeOffset);
+	FVector safeLocation = CollisionResourcePtr_->PhysicRoot->GetComponentLocation() + (hit.ImpactNormal * DataPtr_->CollisionOffset);
 	CollisionResourcePtr_->PhysicRoot->SetWorldLocation(safeLocation, false, nullptr, ETeleportType::TeleportPhysics);
 
 	// Redirection

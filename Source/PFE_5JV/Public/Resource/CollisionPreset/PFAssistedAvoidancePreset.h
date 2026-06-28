@@ -21,14 +21,14 @@ private:
 	UPROPERTY()
 	TObjectPtr<UWorld> OwnerWorldPtr_;
 
+	FVector SmoothedSteering_ = FVector::ZeroVector;
+
 public:
 	virtual void InitPreset_Implementation(UPFCollisionResource* collisionResource) override;
 	virtual void OnTickActions_Implementation(float deltaTime) override;
 
 private:
 	void ProcessAssistedAvoidance(float deltaTime, const FVector& currentVelocity);
-    
-	void CalculatePlayerIntent(float& outTurnMagnitude, FVector& outIntentDir);
-	bool ProcessForwardShield(const FVector& startPos, const FVector& forwardDir, const FVector& currentVelocity);
-	void ProcessIntentSphere(float deltaTime, const FVector& startPos, const FVector& forwardDir, const FVector& intentDir, float turnMagnitude);
+	void CalculatePlayerIntent(FVector& outIntentDir);
+	void ApplySmoothSteering(const FVector& targetDir, float deltaTime);
 };

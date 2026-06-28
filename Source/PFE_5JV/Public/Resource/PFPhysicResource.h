@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Curves/CurveEvaluation.h"
 #include "Data/PFPhysicResourceData.h"
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFPhysicResource.generated.h"

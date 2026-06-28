@@ -3,14 +3,6 @@
 #include "Resource/PFPhysicResource.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
-UPFCollisionResource::UPFCollisionResource()
-{
-	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.bStartWithTickEnabled = true;
-
-	PrimaryComponentTick.TickGroup = TG_PostPhysics;
-}
-
 void UPFCollisionResource::ChangeCollisionPreset(TSubclassOf<UPFCollisionPreset> collisionPreset)
 {
 	if (!collisionPreset)
@@ -25,6 +17,11 @@ void UPFCollisionResource::ChangeCollisionPreset(TSubclassOf<UPFCollisionPreset>
 	{
 		CurrentPresetPtr_->InitPreset(this);
 	}
+}
+
+int UPFCollisionResource::GetPriority() const
+{
+	return 100;
 }
 
 void UPFCollisionResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
@@ -45,10 +42,9 @@ void UPFCollisionResource::ComponentInit_Implementation(APFPlayerCharacter* owne
 	ChangeCollisionPreset(DataPtr_->DefaultCollisionPreset);
 }
 
-void UPFCollisionResource::TickComponent(float deltaTime, enum ELevelTick tickType,
-										FActorComponentTickFunction* thisTickFunction)
+void UPFCollisionResource::ComponentTick_Implementation(float deltaTime)
 {
-	Super::TickComponent(deltaTime, tickType, thisTickFunction);
+	Super::ComponentTick_Implementation(deltaTime);
 
 	if (!CurrentPresetPtr_)
 	{

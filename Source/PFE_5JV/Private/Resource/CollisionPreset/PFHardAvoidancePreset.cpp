@@ -24,15 +24,6 @@ void UPFHardAvoidancePreset::OnTickActions_Implementation(float deltaTime)
     }
 
     FVector currentVelocity = PhysicResourcePtr_->GetCurrentVelocity();
-
-    if (currentVelocity.IsNearlyZero(5.f))
-    {
-        float internalSpeed = PhysicResourcePtr_->CurrentForwardVelocity_.Length();
-        currentVelocity = CollisionResourcePtr_->ForwardRootPtr->GetForwardVector() * internalSpeed;
-    }
-
-    if (currentVelocity.IsNearlyZero(5.f)) return;
-
     PerformBlindRepulsion(deltaTime, currentVelocity);
 }
 
@@ -156,8 +147,24 @@ void UPFHardAvoidancePreset::CalculateDynamicRays(const FVector& startPos, const
         if (i == 0) bOutHitCenter = true;
         if (hit.Distance < outClosestDistance) outClosestDistance = hit.Distance;
 
+        FVector effectiveNormal = hit.ImpactNormal;
+
+        if (i > 0)
+        {
+            FVector outwardDir = forwardDir * FVector::DotProduct(rayDirs[i], forwardDir);
+            outwardDir = rayDirs[i] - outwardDir;
+            outwardDir = outwardDir.GetSafeNormal();
+            float outwardDot = FVector::DotProduct(effectiveNormal, outwardDir);
+
+            if (outwardDot > 0.f)
+            {
+                effectiveNormal -= (2.f * outwardDot * outwardDir);
+                effectiveNormal.Normalize();
+            }
+        }
+
         float weight = 1.0f - (hit.Distance / rayDist[i]);
-        outTotalRepulsion += hit.ImpactNormal * weight;
+        outTotalRepulsion += effectiveNormal * weight;
 
 #if !UE_BUILD_SHIPPING
         if (DataPtr_->ShowDebug) 

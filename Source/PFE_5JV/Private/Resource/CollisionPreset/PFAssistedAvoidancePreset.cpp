@@ -1,131 +1,87 @@
 #include "Resource/CollisionPreset/PFAssistedAvoidancePreset.h"
 #include "Resource/PFCollisionResource.h"
+#include "Resource/PFPhysicResource.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
 void UPFAssistedAvoidancePreset::InitPreset_Implementation(UPFCollisionResource* collisionResource)
 {
-    Super::InitPreset_Implementation(collisionResource);
+	Super::InitPreset_Implementation(collisionResource);
 
-    if (OwnerPtr_)
-    {
-        PhysicResourcePtr_ = OwnerPtr_->GetStateComponent<UPFPhysicResource>();
-        OwnerWorldPtr_ = OwnerPtr_->GetWorld();
-    }
+	PhysicResourcePtr_ = OwnerPtr_->GetStateComponent<UPFPhysicResource>();
+	OwnerWorldPtr_ = OwnerPtr_->GetWorld();
 }
 
 void UPFAssistedAvoidancePreset::OnTickActions_Implementation(float deltaTime)
 {
-    Super::OnTickActions_Implementation(deltaTime);
+	Super::OnTickActions_Implementation(deltaTime);
 
-    if (!DataPtr_ || !PhysicResourcePtr_ || !CollisionResourcePtr_ || !OwnerWorldPtr_)
-    {
-        return;
-    }
+	if (!DataPtr_ || !PhysicResourcePtr_ || !CollisionResourcePtr_ || !OwnerWorldPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[AssistedAvoidancePreset] Error In set up, either couldn't get a var or data is null"))
+		return;
+	}
 
-    FVector currentVelocity = PhysicResourcePtr_->GetCurrentVelocity();
-    ProcessAssistedAvoidance(deltaTime, currentVelocity);
+	ProcessAssistedAvoidance(deltaTime, PhysicResourcePtr_->GetCurrentVelocity());
 }
 
 void UPFAssistedAvoidancePreset::ProcessAssistedAvoidance(float deltaTime, const FVector& currentVelocity)
 {
     FVector startPos = CollisionResourcePtr_->PhysicRoot->GetComponentLocation();
-    FVector forwardDir = CollisionResourcePtr_->ForwardRootPtr->GetForwardVector();
+    FVector intentDir;
+    CalculatePlayerIntent(intentDir);
 
-    if (ProcessForwardShield(startPos, forwardDir, currentVelocity))
+    FCollisionQueryParams queryParams;
+    queryParams.AddIgnoredActor(CollisionResourcePtr_->GetOwner());
+
+    FHitResult CenterHit;
+    bool bCenterHit = OwnerWorldPtr_->SweepSingleByChannel(CenterHit, startPos, startPos + (intentDir * DataPtr_->IntentSphereDistance), FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(DataPtr_->IntentSphereRadius), queryParams);
+
+    if (!bCenterHit)
     {
+        SmoothedSteering_ = FMath::VInterpTo(SmoothedSteering_, FVector::ZeroVector, deltaTime, DataPtr_->SmoothingSpeed);
         return;
     }
 
-    float turnMagnitude = 0.f;
-    FVector intentDir = forwardDir;
-    CalculatePlayerIntent(turnMagnitude, intentDir);
-    ProcessIntentSphere(deltaTime, startPos, forwardDir, intentDir, turnMagnitude);
-}
+    FRotationMatrix IntentMatrix(intentDir.Rotation());
+    FVector Right = IntentMatrix.GetScaledAxis(EAxis::Y);
+    FVector Up = IntentMatrix.GetScaledAxis(EAxis::Z);
+    FVector WhiskerDirs[4] = { (intentDir + Right * DataPtr_->WhiskerSpread).GetSafeNormal(), (intentDir - Right * DataPtr_->WhiskerSpread).GetSafeNormal(), (intentDir + Up * DataPtr_->WhiskerSpread).GetSafeNormal(), (intentDir - Up * DataPtr_->WhiskerSpread).GetSafeNormal() };
 
-void UPFAssistedAvoidancePreset::CalculatePlayerIntent(float& outTurnMagnitude, FVector& outIntentDir)
-{
-    float totalYaw = PhysicResourcePtr_->GetYawAngularVelocity();
-    float totalPitch = PhysicResourcePtr_->GetCurrentPitchRotation();
-
-    float yawMag = FMath::Clamp(FMath::Abs(totalYaw) / DataPtr_->MaxExpectedYawVelocity, 0.f, 1.f);
-    float pitchMag = FMath::Clamp(FMath::Abs(totalPitch) / DataPtr_->MaxExpectedPitchRotation, 0.f, 1.f);
-    
-    outTurnMagnitude = FMath::Max(yawMag, pitchMag);
-
-    FRotator intentLocalRot(totalPitch, totalYaw, 0.f);
-    outIntentDir = intentLocalRot.RotateVector(CollisionResourcePtr_->ForwardRootPtr->GetForwardVector()).GetSafeNormal();
-}
-
-bool UPFAssistedAvoidancePreset::ProcessForwardShield(const FVector& startPos, const FVector& forwardDir, const FVector& currentVelocity)
-{
-    FCollisionQueryParams queryParams;
-    queryParams.AddIgnoredActor(CollisionResourcePtr_->GetOwner());
-
-    FHitResult shieldHit;
-    FVector endPos = startPos + (forwardDir * DataPtr_->ForwardShieldDistance);
-
-    bool bHit = OwnerWorldPtr_->LineTraceSingleByChannel(shieldHit, startPos, endPos, ECC_Visibility, queryParams);
-
-    if (bHit)
+    for (int i = 0; i < 4; i++)
     {
-        FVector velocityProjected = FVector::VectorPlaneProject(currentVelocity, shieldHit.ImpactNormal);
-        CollisionResourcePtr_->PhysicRoot->SetPhysicsLinearVelocity(velocityProjected);
-        PhysicResourcePtr_->CurrentForwardVelocity_ = PhysicResourcePtr_->CurrentForwardVelocity_.GetSafeNormal() * velocityProjected.Length();
-
-#if !UE_BUILD_SHIPPING
-        if (DataPtr_->bShowDebug) DrawDebugLine(OwnerWorldPtr_, startPos, endPos, FColor::Red, false, -1.f, 0, 2.f);
-#endif
-        return true;
+        FHitResult WhiskerHit;
+        if (!OwnerWorldPtr_->LineTraceSingleByChannel(WhiskerHit, startPos, startPos + (WhiskerDirs[i] * DataPtr_->IntentSphereDistance), ECC_Visibility, queryParams))
+        {
+            ApplySmoothSteering(WhiskerDirs[i], deltaTime);
+            return;
+        }
     }
 
-#if !UE_BUILD_SHIPPING
-    if (DataPtr_->bShowDebug) DrawDebugLine(OwnerWorldPtr_, startPos, endPos, FColor::Green, false, -1.f, 0, 1.f);
-#endif
-    return false;
+    FVector SkimDir = FVector::VectorPlaneProject(intentDir, CenterHit.ImpactNormal).GetSafeNormal();
+    if (SkimDir.IsNearlyZero()) SkimDir = CenterHit.ImpactNormal;
+    ApplySmoothSteering(SkimDir, deltaTime);
 }
 
-void UPFAssistedAvoidancePreset::ProcessIntentSphere(float deltaTime, const FVector& startPos, const FVector& forwardDir, const FVector& intentDir, float turnMagnitude)
+void UPFAssistedAvoidancePreset::CalculatePlayerIntent(FVector& outIntentDir)
 {
-    float blendAlpha = DataPtr_->RayDirectionBlendCurve ? DataPtr_->RayDirectionBlendCurve->GetFloatValue(turnMagnitude) : turnMagnitude;
-    FVector rayDir = FMath::Lerp(forwardDir, intentDir, blendAlpha).GetSafeNormal();
+    float totalYaw = PhysicResourcePtr_->GetYawAngularVelocity();
+    float targetPitch = PhysicResourcePtr_->GetCurrentPitchRotation();
+    float currentYaw = CollisionResourcePtr_->PhysicRoot->GetComponentRotation().Yaw;
+    outIntentDir = FRotator(targetPitch, currentYaw + totalYaw, 0.f).Vector();
+}
 
-    FCollisionQueryParams queryParams;
-    queryParams.AddIgnoredActor(CollisionResourcePtr_->GetOwner());
-    FCollisionShape sweepShape = FCollisionShape::MakeSphere(DataPtr_->IntentSphereRadius);
-
-    FHitResult sphereHit;
-    FVector endPos = startPos + (rayDir * DataPtr_->IntentSphereDistance);
-
-    bool bHit = OwnerWorldPtr_->SweepSingleByChannel(sphereHit, startPos, endPos, FQuat::Identity, ECC_Visibility, sweepShape, queryParams);
-
-    if (bHit)
+void UPFAssistedAvoidancePreset::ApplySmoothSteering(const FVector& targetDir, float deltaTime)
+{
+    SmoothedSteering_ = FMath::VInterpTo(SmoothedSteering_, targetDir, deltaTime, DataPtr_->SmoothingSpeed);
+    float intensity = SmoothedSteering_.Length();
+    if (intensity > 0.01f)
     {
-        float proximityRatio = 1.0f - FMath::Clamp(sphereHit.Distance / DataPtr_->IntentSphereDistance, 0.0f, 1.0f);
-
-        float forceMultiplier = DataPtr_->AvoidanceForceCurve ? DataPtr_->AvoidanceForceCurve->GetFloatValue(proximityRatio) : proximityRatio;
-
-        float splitAlpha = DataPtr_->TurnPropulsionSplitCurve ? DataPtr_->TurnPropulsionSplitCurve->GetFloatValue(turnMagnitude) : turnMagnitude;
-
-        FVector targetSteering = FMath::Lerp(sphereHit.ImpactNormal, intentDir, splitAlpha).GetSafeNormal();
-
-        float targetPitchOffset = FMath::FindDeltaAngleDegrees(CollisionResourcePtr_->ForwardRootPtr->GetComponentRotation().Pitch, targetSteering.Rotation().Pitch);
-        float targetYawOffset = FMath::FindDeltaAngleDegrees(CollisionResourcePtr_->PhysicRoot->GetComponentRotation().Yaw, targetSteering.Rotation().Yaw);
-
-        PhysicResourcePtr_->AddAssistPitch(targetPitchOffset * forceMultiplier * DataPtr_->BasePitchAssist);
-        PhysicResourcePtr_->SetYawRotationVelocity(targetYawOffset * forceMultiplier * DataPtr_->BaseYawAssist);
-
-        if (splitAlpha > 0.5f)
-        {
-            FVector propelForce = targetSteering * (DataPtr_->TurnPropelForce * forceMultiplier * deltaTime);
-            PhysicResourcePtr_->AddVelocity(propelForce, false, false, 0.f, nullptr);
-        }
-
-#if !UE_BUILD_SHIPPING
-        if (DataPtr_->bShowDebug) 
-        {
-            DrawDebugLine(OwnerWorldPtr_, startPos, sphereHit.ImpactPoint, FColor::Orange, false, -1.f, 0, 3.f);
-            DrawDebugLine(OwnerWorldPtr_, sphereHit.ImpactPoint, sphereHit.ImpactPoint + (targetSteering * 500.f), FColor::Cyan, false, -1.f, 0, 5.f);
-        }
-#endif
+        FVector steerDir = SmoothedSteering_.GetSafeNormal();
+        FRotator steerRot = steerDir.Rotation();
+        FRotator currentRot = CollisionResourcePtr_->ForwardRootPtr->GetComponentRotation();
+        
+        PhysicResourcePtr_->AddAssistPitch(FMath::FindDeltaAngleDegrees(currentRot.Pitch, steerRot.Pitch) * DataPtr_->BasePitchAssist * intensity);
+        PhysicResourcePtr_->SetYawRotationVelocity(FMath::FindDeltaAngleDegrees(CollisionResourcePtr_->PhysicRoot->GetComponentRotation().Yaw, steerRot.Yaw) * DataPtr_->BaseYawAssist * intensity);
+        PhysicResourcePtr_->AddVelocity(steerDir * (DataPtr_->TurnPropelForce * intensity * deltaTime), false, false, 0.f, nullptr);
     }
 }
