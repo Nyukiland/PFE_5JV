@@ -9,13 +9,15 @@
 class UPFPhysicResource;
 
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FStoredPlaytestInfo
 {
 	GENERATED_BODY()
 	
 public:
+	UPROPERTY(BlueprintReadWrite)
 	float ForwardForce;
+	UPROPERTY(BlueprintReadWrite)
 	FVector Position;
 
 public:
@@ -30,6 +32,29 @@ public:
 		ForwardForce = forward;
 		Position = position;
 	}
+};
+
+USTRUCT(BlueprintType)
+struct FPlaytestSaveData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FStoredPlaytestInfo> PlaytestData;
+};
+
+UENUM()
+enum class ERayDir : uint8
+{
+	Forward,
+	Right,
+	Left,
+	Top,
+	Bottom,
+	TopRight,
+	TopLeft,
+	BottomRight,
+	BottomLeft,
 };
 
 UCLASS(Abstract, Blueprintable)
@@ -51,6 +76,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	bool bRecordPlaytest = false;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
 	TObjectPtr<UPFCollisionPreset> CurrentPresetPtr_;
 	
@@ -63,6 +91,12 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable)
 	void ChangeCollisionPreset(TSubclassOf<UPFCollisionPreset> collisionPreset);
+
+	UFUNCTION(BlueprintCallable, Category = "Playtest")
+	void StartRecordingPlaytestData();
+	
+	UFUNCTION(BlueprintCallable, Category = "Playtest")
+	bool ExportPlaytestDataToJson(const FString& FileName);
 
 	virtual int GetPriority() const override;
 	

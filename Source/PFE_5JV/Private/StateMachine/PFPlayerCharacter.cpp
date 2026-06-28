@@ -86,6 +86,9 @@ void APFPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (!bIsStateMachineActive)
+		return;
+	
 	if (CurrentStatePtr_)
 		CurrentStatePtr_->OnTick(DeltaTime);
 
@@ -114,6 +117,11 @@ void APFPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		for (ETriggerEvent trigger : events)
 			inputComponent->BindAction(action, trigger, this, &APFPlayerCharacter::OnInputAction);
 	}
+}
+
+void APFPlayerCharacter::SetStateMachineActiveState(bool bisActive)
+{
+	bIsStateMachineActive = bisActive;
 }
 
 UPFStateComponent* APFPlayerCharacter::GetStateComponent(TSubclassOf<UPFStateComponent> componentClass)

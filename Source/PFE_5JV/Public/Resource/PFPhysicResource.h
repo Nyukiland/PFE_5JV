@@ -71,6 +71,8 @@ public:
 	float CurrentPitchValue_;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pitch")
 	bool bIsFlipped;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pitch")
+	bool bIsKinematic;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PhysicResource")
@@ -112,7 +114,7 @@ public:
 	void SetMinVelocity(float velocity);
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	void SetKinematic(bool bisKinematic);
+	void SetKinematic(bool bKinematic);
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	float GetMaxBoostVelocity() const;
@@ -196,7 +198,7 @@ public:
 	void RemoveAllVelocities();
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource/Debug")
-	void StopAllMotion();
+	void StopAllMotion(bool clearForces = false);
 	
 private:
 	FVector CalculateVelocity(FVelocityToAdd* velocity, float deltaTime, FVector& VelocityGlobal) const;

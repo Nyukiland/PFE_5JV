@@ -23,6 +23,9 @@ void UPFPhysicResource::ComponentTick_Implementation(float deltaTime)
 {
 	Super::ComponentTick_Implementation(deltaTime);
 
+	if (bIsKinematic)
+		return;
+	
 	ProcessPitchVisual(deltaTime);
 	ProcessAngularVelocity(deltaTime);
 
@@ -54,13 +57,16 @@ void UPFPhysicResource::SetMinVelocity(float velocity)
 	MinVelocity_ = velocity;
 }
 
-void UPFPhysicResource::SetKinematic(bool bisKinematic)
+void UPFPhysicResource::SetKinematic(bool bKinematic)
 {
-	if (PhysicRoot->IsSimulatingPhysics() == bisKinematic)
+	if (bIsKinematic == bKinematic)
 		return;
 
-	PhysicRoot->SetSimulatePhysics(!bisKinematic);
-	if (bisKinematic) PhysicRoot->WakeRigidBody();
+	bIsKinematic = bKinematic;
+	if (bIsKinematic)
+	{
+		StopAllMotion(false);
+	}
 }
 
 /* return the max velocity of the most effective method to gain a huge one (Dive or SuperWingBeat)
@@ -463,11 +469,15 @@ void UPFPhysicResource::RemoveAllVelocities()
 	RemoveAngularVelocities();
 }
 
-void UPFPhysicResource::StopAllMotion()
+void UPFPhysicResource::StopAllMotion(bool clearForces)
 {
-	RemoveAllVelocities();
+	if (clearForces) RemoveAllVelocities();
 	ForwardVelocity_ = FVector::ZeroVector;
 	GlobalVelocity_ = FVector::ZeroVector;
+	AngularVelocity_ = FVector::ZeroVector;
+
+	PhysicRoot->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+	PhysicRoot->SetPhysicsLinearVelocity(FVector::ZeroVector);
 }
 
 FVector UPFPhysicResource::CalculateVelocity(FVelocityToAdd* velocity, float deltaTime, FVector& VelocityGlobal) const

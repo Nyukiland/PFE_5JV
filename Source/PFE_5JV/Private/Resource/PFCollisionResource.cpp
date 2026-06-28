@@ -1,6 +1,7 @@
 #include "Resource/PFCollisionResource.h"
 
 #include "Resource/PFPhysicResource.h"
+#include "JsonObjectConverter.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
 void UPFCollisionResource::ChangeCollisionPreset(TSubclassOf<UPFCollisionPreset> collisionPreset)
@@ -17,6 +18,44 @@ void UPFCollisionResource::ChangeCollisionPreset(TSubclassOf<UPFCollisionPreset>
 	{
 		CurrentPresetPtr_->InitPreset(this);
 	}
+}
+
+void UPFCollisionResource::StartRecordingPlaytestData()
+{
+#if WITH_EDITOR
+	bRecordPlaytest = true;
+	GEngine->AddOnScreenDebugMessage(1312, 2, FColor::Purple, "Record Playtest Started");
+#endif
+}
+
+bool UPFCollisionResource::ExportPlaytestDataToJson(const FString& FileName)
+{
+#if WITH_EDITOR
+	if (GameInfoList_.IsEmpty() || !bRecordPlaytest)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[CollisionResource] No playtest data to save."));
+		return false;
+	}
+
+	FPlaytestSaveData SaveData;
+	SaveData.PlaytestData = GameInfoList_;
+	
+	FString JsonString;
+	if (FJsonObjectConverter::UStructToJsonObjectString(SaveData, JsonString))
+	{
+		FString FilePath = FPaths::ProjectContentDir() / TEXT("PlaytestData") / (FileName + TEXT(".json"));
+        
+		bool bSaved = FFileHelper::SaveStringToFile(JsonString, *FilePath);
+		if (bSaved)
+		{
+			UE_LOG(LogTemp, Log, TEXT("[CollisionResource] Playtest data saved successfully at %s"), *FilePath);
+		}
+		return bSaved;
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Failed to serialize playtest data to JSON."));
+	return false;
+#endif
 }
 
 int UPFCollisionResource::GetPriority() const
@@ -104,6 +143,9 @@ void UPFCollisionResource::RecordInfoForPlayTest()
 		return;
 	}
 
+	if (!bRecordPlaytest)
+		return;
+	
 	float forwardVelo = PhysicResourcePtr_->CurrentForwardVelocity_.Length();
 	FVector position = PhysicRoot->GetComponentLocation();
 
