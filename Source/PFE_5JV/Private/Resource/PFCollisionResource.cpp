@@ -1,5 +1,6 @@
 #include "Resource/PFCollisionResource.h"
 
+#include "JsonObjectConverter.h"
 #include "State/PFAfterCollisionState.h"
 #include "StateMachine/PFPlayerCharacter.h"
 
@@ -67,6 +68,44 @@ FString UPFCollisionResource::GetInfo_Implementation()
 	text += TEXT("\n <b>Hit Up: </>") + FString::Printf(TEXT("%i"), bHitUp);
 	text += TEXT("\n <b>Hit Down: </>") + FString::Printf(TEXT("%i"), bHitDown);
 	return text;
+}
+
+void UPFCollisionResource::StartRecordingPlaytestData()
+{
+#if WITH_EDITOR
+	bRecordPlaytest = true;
+	GEngine->AddOnScreenDebugMessage(1312, 2, FColor::Purple, "Record Playtest Started");
+#endif
+}
+
+bool UPFCollisionResource::ExportPlaytestDataToJson(const FString& FileName)
+{
+#if WITH_EDITOR
+	if (GameInfoList_.IsEmpty() || !bRecordPlaytest)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[CollisionResource] No playtest data to save."));
+		return false;
+	}
+
+	FPlaytestSaveData SaveData;
+	SaveData.PlaytestData = GameInfoList_;
+	
+	FString JsonString;
+	if (FJsonObjectConverter::UStructToJsonObjectString(SaveData, JsonString))
+	{
+		FString FilePath = FPaths::ProjectContentDir() / TEXT("PlaytestData") / (FileName + TEXT(".json"));
+        
+		bool bSaved = FFileHelper::SaveStringToFile(JsonString, *FilePath);
+		if (bSaved)
+		{
+			UE_LOG(LogTemp, Log, TEXT("[CollisionResource] Playtest data saved successfully at %s"), *FilePath);
+		}
+		return bSaved;
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Failed to serialize playtest data to JSON."));
+	return false;
+#endif
 }
 
 void UPFCollisionResource::ChangeHelperActive(bool newActive)
@@ -453,7 +492,7 @@ void UPFCollisionResource::RecordInfoForPlayTest()
 		return;
 	}
 
-	if (!bCanRecord_)
+	if (!bCanRecord_ || !bRecordPlaytest)
 		return;
 
 	float forwardVelo = PhysicResource_->CurrentForwardVelocity_.Length();

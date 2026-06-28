@@ -41,13 +41,15 @@ public:
 	}
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FStoredPlaytestInfo
 {
 	GENERATED_BODY()
 	
 public:
+	UPROPERTY(BlueprintReadWrite)
 	float ForwardForce;
+	UPROPERTY(BlueprintReadWrite)
 	FVector Position;
 
 public:
@@ -62,6 +64,15 @@ public:
 		ForwardForce = forward;
 		Position = position;
 	}
+};
+
+USTRUCT(BlueprintType)
+struct FPlaytestSaveData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FStoredPlaytestInfo> PlaytestData;
 };
 
 UENUM()
@@ -103,8 +114,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
 	TObjectPtr<UPFPhysicResource> PhysicResource_;
 
-	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = "Collision")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
 	bool bCanRecord_ = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	bool bRecordPlaytest = false;
 
 	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = "Collision")
 	bool bIsHelperActive_ = true;
@@ -137,6 +151,13 @@ public:
 	bool HasHitDirection(ERayDir Direction) const;
 	
 	virtual FString GetInfo_Implementation() override;
+
+	
+	UFUNCTION(BlueprintCallable, Category = "Playtest")
+	void StartRecordingPlaytestData();
+	
+	UFUNCTION(BlueprintCallable, Category = "Playtest")
+	bool ExportPlaytestDataToJson(const FString& FileName);
 	
 	UFUNCTION(BlueprintCallable, Category = "Collision")
 	void ChangeHelperActive(bool newActive);
