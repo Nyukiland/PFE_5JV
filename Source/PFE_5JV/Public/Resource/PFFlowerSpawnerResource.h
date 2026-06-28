@@ -6,6 +6,7 @@
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFFlowerSpawnerResource.generated.h"
 
+class UPFFlowerSpawnerResourceData;
 class UHierarchicalInstancedStaticMeshComponent;
 class UPFProximityResource;
 class APFPainter;
@@ -27,6 +28,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category="FlowerSpawner|References")
 	TObjectPtr<UPFProximityResource> ProximityResourcePtr_;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
+	TObjectPtr<UPFFlowerSpawnerResourceData> DataPtr_;
 
 	UPROPERTY(VisibleAnywhere, Category="FlowerSpawner|References")
 	TObjectPtr<APFPainter> PainterPtr_;
