@@ -8,7 +8,7 @@ public class PFE_5JV : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "FMODStudio" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "FMODStudio", "Json", "JsonUtilities" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 

@@ -31,6 +31,11 @@ void APFPlayerCharacter::BeginPlay()
 
 	TArray<UPFStateComponent*> stateComponents;
 	GetComponents(stateComponents);
+	stateComponents.Sort([](const UPFStateComponent& A, const UPFStateComponent& B)
+	{
+		return A.GetPriority() > B.GetPriority();
+	});
+	
 	TArray<UPFAbility*> abilities;
 
 	for (UPFStateComponent* comp : stateComponents)
@@ -81,6 +86,9 @@ void APFPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (!bIsStateMachineActive)
+		return;
+	
 	if (CurrentStatePtr_)
 		CurrentStatePtr_->OnTick(DeltaTime);
 
@@ -111,6 +119,11 @@ void APFPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	}
 }
 
+void APFPlayerCharacter::SetStateMachineActiveState(bool bisActive)
+{
+	bIsStateMachineActive = bisActive;
+}
+
 UPFStateComponent* APFPlayerCharacter::GetStateComponent(TSubclassOf<UPFStateComponent> componentClass)
 {
 	int i = 0;
@@ -123,14 +136,14 @@ DEFINE_FUNCTION(APFPlayerCharacter::execGetStateComponent)
 	P_FINISH;
 	P_NATIVE_BEGIN;
 
-	UPFStateComponent* Result = nullptr;
+		UPFStateComponent* Result = nullptr;
 
-	if (ComponentClass)
-	{
-		Result = P_THIS->GetStateComponent(ComponentClass);
-	}
+		if (ComponentClass)
+		{
+			Result = P_THIS->GetStateComponent(ComponentClass);
+		}
 
-	*(UPFStateComponent**)RESULT_PARAM = Result;
+		*(UPFStateComponent**)RESULT_PARAM = Result;
 
 	P_NATIVE_END;
 }
@@ -150,14 +163,14 @@ DEFINE_FUNCTION(APFPlayerCharacter::execGetAndActivateComponent)
 	P_FINISH;
 	P_NATIVE_BEGIN;
 
-	UPFStateComponent* Result = nullptr;
+		UPFStateComponent* Result = nullptr;
 
-	if (ComponentClass)
-	{
-		Result = P_THIS->GetStateComponent(ComponentClass);
-	}
+		if (ComponentClass)
+		{
+			Result = P_THIS->GetStateComponent(ComponentClass);
+		}
 
-	*(UPFStateComponent**)RESULT_PARAM = Result;
+		*(UPFStateComponent**)RESULT_PARAM = Result;
 
 	P_NATIVE_END;
 }
@@ -181,10 +194,10 @@ FText APFPlayerCharacter::GetInfoFromComponent() const
 	FString text;
 
 	FString stateName = CurrentStatePtr_ == nullptr ? TEXT("") : CurrentStatePtr_->GetName();
-	
+
 	text = TEXT("<hb>State:</>\n");
-	text += TEXT("<b>CurrentState</>: ") + FString::Printf(TEXT( "%s"), *stateName);
-	
+	text += TEXT("<b>CurrentState</>: ") + FString::Printf(TEXT("%s"), *stateName);
+
 	for (int i = 0; i < ResourcesCount_ + ActiveAbilities_; i++)
 	{
 		if (StateComponentsPtr_[i] == nullptr)
@@ -240,7 +253,7 @@ UPFStateComponent* APFPlayerCharacter::GetStateComponent(TSubclassOf<UPFStateCom
 	outIndex = -1;
 
 	UClass* nativeClass = GetNativeClass(componentClass);
-	
+
 	if (int* foundIndex = ComponentIndexMap_.Find(nativeClass))
 	{
 		outIndex = *foundIndex;
@@ -338,7 +351,7 @@ UClass* APFPlayerCharacter::GetNativeClass(TSubclassOf<UPFStateComponent> native
 		UE_LOG(LogTemp, Error, TEXT("[PlayerCharacter] No given class in get nativeClass"));
 		return nullptr;
 	}
-	
+
 	while (nativeClass && Cast<UBlueprintGeneratedClass>(nativeClass))
 	{
 		if (nativeClass->GetSuperClass() == UPFStateComponent::StaticClass()

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Resource/PFCollisionResource.h"
 #include "UObject/NoExportTypes.h"
 #include "PFBlueprintHelper.generated.h"
 
@@ -60,4 +61,10 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Helper")
 	static EPlayerInput  GetEnumFromInputName(FName inputName);
+	
+	UFUNCTION(BlueprintCallable, Category = "Playtest|Data")
+	static void GetAvailablePlaytestFiles(TArray<FString>& OutFiles, TArray<FString>& OutFilesPath);
+	
+	UFUNCTION(BlueprintCallable, Category = "Playtest|Data")
+	static bool LoadPlaytestData(const FString FilePath, TArray<FStoredPlaytestInfo>& OutData);
 };

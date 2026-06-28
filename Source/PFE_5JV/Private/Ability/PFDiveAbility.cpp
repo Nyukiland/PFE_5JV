@@ -164,7 +164,7 @@ void UPFDiveAbility::DiveRoll(float deltaTime)
 	if (!IsDiving())
 		return;
 	
-	if (CollisionResource_->HasHitDirection(ERayDir::Bottom))
+	if (CollisionResource_->bHitDown)
 	{
 		TimerWaitToRollDive_ = 0;
 		return;

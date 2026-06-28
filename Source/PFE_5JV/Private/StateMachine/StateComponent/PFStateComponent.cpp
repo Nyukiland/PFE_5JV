@@ -7,6 +7,11 @@ UPFStateComponent::UPFStateComponent()
 
 }
 
+int UPFStateComponent::GetPriority() const
+{
+	return 0;
+}
+
 void UPFStateComponent::ComponentEarlyInit_Implementation()
 {
 	
@@ -22,7 +27,7 @@ void UPFStateComponent::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 	}
 
 	PhysicRoot = Owner->PhysicRootPtr;
-	ForwardRootPtr_ = Owner->ForwardRootPtr;
+	ForwardRootPtr = Owner->ForwardRootPtr;
 }
 
 void UPFStateComponent::ComponentEnable_Implementation()

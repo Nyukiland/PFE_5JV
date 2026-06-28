@@ -23,6 +23,9 @@ void UPFPhysicResource::ComponentTick_Implementation(float deltaTime)
 {
 	Super::ComponentTick_Implementation(deltaTime);
 
+	if (bIsKinematic)
+		return;
+	
 	ProcessPitchVisual(deltaTime);
 	ProcessAngularVelocity(deltaTime);
 
@@ -54,13 +57,16 @@ void UPFPhysicResource::SetMinVelocity(float velocity)
 	MinVelocity_ = velocity;
 }
 
-void UPFPhysicResource::SetKinematic(bool bisKinematic)
+void UPFPhysicResource::SetKinematic(bool bKinematic)
 {
-	if (PhysicRoot->IsSimulatingPhysics() == bisKinematic)
+	if (bIsKinematic == bKinematic)
 		return;
 
-	PhysicRoot->SetSimulatePhysics(!bisKinematic);
-	if (bisKinematic) PhysicRoot->WakeRigidBody();
+	bIsKinematic = bKinematic;
+	if (bIsKinematic)
+	{
+		StopAllMotion(false);
+	}
 }
 
 /* return the max velocity of the most effective method to gain a huge one (Dive or SuperWingBeat)
@@ -233,7 +239,7 @@ void UPFPhysicResource::ProcessVelocity(const float deltaTime)
 	velocityForward = velocityForward.GetClampedToSize(MinVelocity_, MaxAbsoluteVelocity_);
 	CurrentForwardVelocity_ = velocityForward;
 
-	velocity += ForwardRootPtr_->GetForwardVector() * velocityForward.Length();
+	velocity += ForwardRootPtr->GetForwardVector() * velocityForward.Length();
 
 	PhysicRoot->SetPhysicsLinearVelocity(velocity);
 }
@@ -277,7 +283,7 @@ void UPFPhysicResource::ProcessOverrideVelocity()
 {
 	if (FMath::Abs(CurrentOverrideForwardVelocity_) > 0.1f)
 	{
-		PhysicRoot->SetPhysicsLinearVelocity(ForwardRootPtr_->GetForwardVector() * CurrentOverrideForwardVelocity_);
+		PhysicRoot->SetPhysicsLinearVelocity(ForwardRootPtr->GetForwardVector() * CurrentOverrideForwardVelocity_);
 		CurrentOverrideForwardVelocity_ = 0;
 	}
 }
@@ -317,6 +323,18 @@ void UPFPhysicResource::ProcessAngularVelocity(const float deltaTime)
 	PhysicRoot->SetPhysicsAngularVelocityInDegrees(velocity);
 }
 
+float UPFPhysicResource::GetYawAngularVelocity() const
+{
+	float yawVelo = 0;
+	
+	for (FVelocityToAdd velocity : AngularVelocities_)
+	{
+		yawVelo += velocity.Velocity.Z;
+	}
+
+	return yawVelo;
+}
+
 void UPFPhysicResource::AddToPitchRotationVisual(float rotationToAdd, int priority)
 {
 	if (priority > PitchPriority_ || FMath::Abs(rotationToAdd) < 1)
@@ -351,7 +369,7 @@ void UPFPhysicResource::HardSetPitchRotationVisual(float rotation)
 
 	FRotator newRot = FRotator::ZeroRotator;
 	newRot.Pitch = CurrentPitchValue_;
-	ForwardRootPtr_->SetRelativeRotation(newRot);
+	ForwardRootPtr->SetRelativeRotation(newRot);
 }
 
 void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
@@ -377,7 +395,7 @@ void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
 
 	FRotator newRot = FRotator::ZeroRotator;
 	newRot.Pitch = CurrentPitchValue_;
-	ForwardRootPtr_->SetRelativeRotation(newRot);
+	ForwardRootPtr->SetRelativeRotation(newRot);
 
 	bIsFlipped = FMath::FindDeltaAngleDegrees(CurrentPitchValue_, 180) < 90;
 	
@@ -385,6 +403,11 @@ void UPFPhysicResource::ProcessPitchVisual(float deltaTime)
 	PitchRotation_ = 0;
 	PitchPriority_ = 1000;
 	FramePitchAssistOffset_ = 0.f;
+}
+
+float UPFPhysicResource::GetCurrentPitchRotation() const
+{
+	return PitchRotation_;
 }
 
 void UPFPhysicResource::DoGravity(const float deltaTime)
@@ -446,11 +469,15 @@ void UPFPhysicResource::RemoveAllVelocities()
 	RemoveAngularVelocities();
 }
 
-void UPFPhysicResource::StopAllMotion()
+void UPFPhysicResource::StopAllMotion(bool clearForces)
 {
-	RemoveAllVelocities();
+	if (clearForces) RemoveAllVelocities();
 	ForwardVelocity_ = FVector::ZeroVector;
 	GlobalVelocity_ = FVector::ZeroVector;
+	AngularVelocity_ = FVector::ZeroVector;
+
+	PhysicRoot->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+	PhysicRoot->SetPhysicsLinearVelocity(FVector::ZeroVector);
 }
 
 FVector UPFPhysicResource::CalculateVelocity(FVelocityToAdd* velocity, float deltaTime, FVector& VelocityGlobal) const

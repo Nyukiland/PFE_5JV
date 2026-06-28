@@ -1,53 +1,23 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PFPhysicResource.h"
+#include "CollisionPreset/PFCollisionPreset.h"
 #include "Data/PFCollisionResourceData.h"
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFCollisionResource.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerCollision);
+class UPFPhysicResource;
 
-USTRUCT()
-struct FStoredCollisionInfo
-{
-	GENERATED_BODY()
-	
-public:
-	float ForwardForce;
-	FVector GlobalForce;
 
-	FVector Position;
-	FRotator PhysicRotation;
-
-public:
-	FStoredCollisionInfo()
-	{
-		ForwardForce = 0;
-		GlobalForce = FVector::ZeroVector;
-
-		Position = FVector::ZeroVector;
-		PhysicRotation = FRotator::ZeroRotator;
-	}
-	
-	FStoredCollisionInfo(float forward, FVector global, FVector position,
-		FRotator physicRotation)
-	{
-		ForwardForce = forward;
-		GlobalForce = global;
-
-		Position = position;
-		PhysicRotation = physicRotation;
-	}
-};
-
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FStoredPlaytestInfo
 {
 	GENERATED_BODY()
 	
 public:
+	UPROPERTY(BlueprintReadWrite)
 	float ForwardForce;
+	UPROPERTY(BlueprintReadWrite)
 	FVector Position;
 
 public:
@@ -62,6 +32,15 @@ public:
 		ForwardForce = forward;
 		Position = position;
 	}
+};
+
+USTRUCT(BlueprintType)
+struct FPlaytestSaveData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FStoredPlaytestInfo> PlaytestData;
 };
 
 UENUM()
@@ -84,12 +63,6 @@ class PFE_5JV_API UPFCollisionResource : public UPFResource
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(BlueprintAssignable, Category = "Collision")
-	FOnPlayerCollision OnSoftCollision;
-
-	UPROPERTY(BlueprintAssignable, Category = "Collision")
-	FOnPlayerCollision OnHardCollision;
-
 	bool bHitRight;
 	bool bHitLeft;
 	bool bHitUp; 
@@ -100,72 +73,41 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
 	TObjectPtr<UPFCollisionResourceData> DataPtr_;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
+	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
-	TObjectPtr<UPFPhysicResource> PhysicResource_;
-
-	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = "Collision")
-	bool bCanRecord_ = true;
-
-	UPROPERTY(editAnywhere, BlueprintReadWrite, Category = "Collision")
-	bool bIsHelperActive_ = true;
+	bool bRecordPlaytest = false;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
+	TObjectPtr<UPFCollisionPreset> CurrentPresetPtr_;
 	
 	UPROPERTY()
 	TObjectPtr<UWorld> OwnerWorld;
-	
-	UPROPERTY()
-	TArray<float> TimeSavedList_;
-	
-	UPROPERTY()
-	TArray<FStoredCollisionInfo> StoredCollisionInfoList_;
 
 	UPROPERTY()
 	TArray<FStoredPlaytestInfo> GameInfoList_;
-
-	float TimeSavedOnImpact_ = 0;
-	FVector CurrentRepulsion_ = FVector::ZeroVector;
-	bool bIsInHardAvoid_ = false;
-	
-	bool RayDirHits_[9];
 	
 public:
-	UPFCollisionResource();
-	
-	UFUNCTION(BlueprintCallable, Category = "Collision")
-	bool RewindAfterCollision(float deltaTime);
-	
-	UFUNCTION(BlueprintCallable, Category = "Collision")
-	bool HasHitDirection(ERayDir Direction) const;
-	
-	virtual FString GetInfo_Implementation() override;
-	
-	UFUNCTION(BlueprintCallable, Category = "Collision")
-	void ChangeHelperActive(bool newActive);
+	UFUNCTION(BlueprintCallable)
+	void ChangeCollisionPreset(TSubclassOf<UPFCollisionPreset> collisionPreset);
 
-	UFUNCTION(BlueprintCallable, Category = "Collision")
-	bool GetHelperActive() const;
+	UFUNCTION(BlueprintCallable, Category = "Playtest")
+	void StartRecordingPlaytestData();
+	
+	UFUNCTION(BlueprintCallable, Category = "Playtest")
+	bool ExportPlaytestDataToJson(const FString& FileName);
+
+	virtual int GetPriority() const override;
 	
 protected:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
-	// Use after physic required
-	virtual void TickComponent(float deltaTime, enum ELevelTick tickType, FActorComponentTickFunction* thisTickFunction) override;
-
-	bool IsHardCollision(const FVector& impactNormal, const FVector& currentVelocity) const;
-	void HandleSoftCollision(const FVector& impactNormal, const FVector& currentVelocity);
-
-	void CheckFlank(float deltaTime);
-	void CheckPredictiveCollision(float deltaTime);
-	void FirePredictiveRays(const FVector& StartPos, const FVector* RayDirs, const float* RayDist, FVector& OutTotalRepulsion, FVector& OutFirstOpenDir, float& OutClosestDistance, bool& bOutHitCenter, int& OutOpenRayCount);
-	void UpdateSteeringRepulsion(float DeltaTime, const FVector& ForwardDir, const FVector& RightDir, const FVector& UpDir, const FVector& TotalRepulsion, const FVector& FirstOpenDir, bool bHitCenter, int OpenRayCount);
-	void ApplyPredictiveForces(float DeltaTime, float ClosestDistance, float DynamicAvoidDistance, float SpeedMultiplier);
-	void DrawDebugWhiskerCone(const FVector& StartPos, const FVector& EndPos, bool bHit, const FHitResult& HitResult);
+	virtual void ComponentTick_Implementation(float deltaTime) override;
 	
-	void RecordInfoForRollBack(float deltaTime);
+	void CheckFlank(float deltaTime);
 	void RecordInfoForPlayTest();
 	
 	UFUNCTION()
-	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,	FVector NormalImpulse, const FHitResult& Hit);
-
-	UFUNCTION()
-	void OnHardCollisionEventCalled();
+	void OnHit(UPrimitiveComponent* hitComp, AActor* otherActor,
+		UPrimitiveComponent* otherComp,	FVector normalImpulse, const FHitResult& hit);
 };

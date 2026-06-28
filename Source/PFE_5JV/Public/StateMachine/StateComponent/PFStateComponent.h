@@ -19,11 +19,13 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TObjectPtr<UPrimitiveComponent> PhysicRoot;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	TObjectPtr<USceneComponent> ForwardRootPtr_;
+	TObjectPtr<USceneComponent> ForwardRootPtr;
 	
 public:	
 	UPFStateComponent();
 
+	virtual int GetPriority() const;
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void ComponentEarlyInit();
 	virtual void ComponentEarlyInit_Implementation();

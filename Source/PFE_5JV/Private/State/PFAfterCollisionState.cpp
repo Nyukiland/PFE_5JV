@@ -14,8 +14,7 @@ void UPFAfterCollisionState::OnTick_Implementation(float deltaTime)
 {
 	Super::OnTick_Implementation(deltaTime);
 
-	if (CollisionResourcePtr_->RewindAfterCollision(deltaTime))
-	{
+
+	UE_LOG(LogTemp, Error, TEXT("[UPFAfterCollisionState] this should not be used anymore check link"))
 		Owner->SetDefaultState();
-	}
 }

@@ -24,6 +24,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Turn")
 	bool bIsDrifting;
+	float RotationValue_;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn")
@@ -44,7 +45,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Turn")
 	TObjectPtr<UPFCollisionResource> CollisionResource_;
 	
-	float RotationValue_;
 	float SlowForceTimer_;
 
 	float TimerStartTurn_;

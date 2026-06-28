@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Curves/CurveEvaluation.h"
 #include "Data/PFPhysicResourceData.h"
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFPhysicResource.generated.h"
@@ -72,6 +71,8 @@ public:
 	float CurrentPitchValue_;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pitch")
 	bool bIsFlipped;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pitch")
+	bool bIsKinematic;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PhysicResource")
@@ -113,7 +114,7 @@ public:
 	void SetMinVelocity(float velocity);
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
-	void SetKinematic(bool bisKinematic);
+	void SetKinematic(bool bKinematic);
 	
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	float GetMaxBoostVelocity() const;
@@ -150,6 +151,9 @@ public:
 	void ProcessAngularVelocity(const float deltaTime);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	float GetYawAngularVelocity() const;
+
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void AddToPitchRotationVisual(float rotationToAdd, int priority);
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
@@ -163,6 +167,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
 	void ProcessPitchVisual(float deltaTime);
+	
+	UFUNCTION(BlueprintCallable, Category = "PhysicResource")
+	float GetCurrentPitchRotation() const;
 	
 	void DoGravity(const float deltaTime);
 
@@ -191,7 +198,7 @@ public:
 	void RemoveAllVelocities();
 
 	UFUNCTION(BlueprintCallable, Category = "PhysicResource/Debug")
-	void StopAllMotion();
+	void StopAllMotion(bool clearForces = false);
 	
 private:
 	FVector CalculateVelocity(FVelocityToAdd* velocity, float deltaTime, FVector& VelocityGlobal) const;
