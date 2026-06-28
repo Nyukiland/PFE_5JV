@@ -3,6 +3,8 @@
 #include "Windows/AllowWindowsPlatformTypes.h"
 #include <Windows.h>
 
+#include "JsonObjectConverter.h"
+
 void UPFBlueprintHelper::CheckCurrentLayout(EKeyboardOutputPin& outputPins)
 {
 	// Get the current keyboard layout
@@ -126,4 +128,42 @@ EPlayerInput UPFBlueprintHelper::GetEnumFromInputName(FName inputName)
 	}
 
 	return EPlayerInput::NONE;
+}
+
+void UPFBlueprintHelper::GetAvailablePlaytestFiles(TArray<FString>& OutFiles, TArray<FString>& OutFilesPath)
+{
+	OutFiles.Empty();
+	OutFilesPath.Empty();
+    
+	FString Directory = FPaths::ProjectContentDir() / TEXT("PlaytestData/");
+	FString SearchPattern = Directory + TEXT("*.json");
+
+	IFileManager::Get().FindFiles(OutFiles, *SearchPattern, true, false);
+
+	for (int i = 0; i < OutFiles.Num(); i++)
+	{
+		OutFilesPath[i] = Directory + OutFiles[i];
+		OutFiles[i] = FPaths::GetBaseFilename(OutFiles[i]);
+	}
+}
+
+bool UPFBlueprintHelper::LoadPlaytestData(const FString FilePath, TArray<FStoredPlaytestInfo>& OutData)
+{
+	FString JsonString;
+    
+	if (!FFileHelper::LoadFileToString(JsonString, *FilePath))
+	{
+		UE_LOG(LogTemp, Error, TEXT("[PlaytestData] Could not find file: %s"), *FilePath);
+		return false;
+	}
+
+	FPlaytestSaveData LoadedData;
+	if (FJsonObjectConverter::JsonObjectStringToUStruct(JsonString, &LoadedData, 0, 0))
+	{
+		OutData = LoadedData.PlaytestData;
+		return true;
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("[PlaytestData] Failed to parse JSON to Struct."));
+	return false;
 }
