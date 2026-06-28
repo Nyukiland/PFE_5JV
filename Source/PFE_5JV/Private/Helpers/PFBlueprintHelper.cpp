@@ -142,7 +142,7 @@ void UPFBlueprintHelper::GetAvailablePlaytestFiles(TArray<FString>& OutFiles, TA
 
 	for (int i = 0; i < OutFiles.Num(); i++)
 	{
-		OutFilesPath[i] = Directory + OutFiles[i];
+		OutFilesPath.Add(Directory + OutFiles[i]);
 		OutFiles[i] = FPaths::GetBaseFilename(OutFiles[i]);
 	}
 }
