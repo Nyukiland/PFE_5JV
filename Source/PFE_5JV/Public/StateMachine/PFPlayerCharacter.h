@@ -45,6 +45,7 @@ private:
 	
 	int ResourcesCount_ = 0;
 	int ActiveAbilities_ = 0;
+	bool bIsStateMachineActive = true;
 	
 public:	
 	APFPlayerCharacter();
@@ -54,6 +55,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	void SetStateMachineActiveState(bool bisActive);
 
 	//State Component
 	template<typename T>
