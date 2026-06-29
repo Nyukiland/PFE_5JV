@@ -70,14 +70,6 @@
 			"Type": "DynamicLibrary"
 		},
 		{
-			"Path": "$(EngineDir)/Binaries/Win64/Android/UnrealEditor-AndroidDeviceDetection.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Binaries/Win64/Android/UnrealEditor.modules",
-			"Type": "RequiredResource"
-		},
-		{
 			"Path": "$(EngineDir)/Binaries/Win64/EOSSDK-Win64-Shipping.dll",
 			"Type": "DynamicLibrary"
 		},
@@ -1946,30 +1938,6 @@
 			"Type": "DynamicLibrary"
 		},
 		{
-			"Path": "$(EngineDir)/Plugins/2D/Paper2D/Binaries/Win64/UnrealEditor-Paper2D.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/2D/Paper2D/Binaries/Win64/UnrealEditor-Paper2DEditor.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/2D/Paper2D/Binaries/Win64/UnrealEditor-PaperSpriteSheetImporter.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/2D/Paper2D/Binaries/Win64/UnrealEditor-PaperTiledImporter.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/2D/Paper2D/Binaries/Win64/UnrealEditor-SmartSnapping.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/2D/Paper2D/Binaries/Win64/UnrealEditor.modules",
-			"Type": "RequiredResource"
-		},
-		{
 			"Path": "$(EngineDir)/Plugins/AI/AISupport/Binaries/Win64/UnrealEditor-AISupportModule.dll",
 			"Type": "DynamicLibrary"
 		},
@@ -2203,18 +2171,6 @@
 		},
 		{
 			"Path": "$(EngineDir)/Plugins/Cameras/GameplayCameras/Binaries/Win64/UnrealEditor.modules",
-			"Type": "RequiredResource"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/ChaosCloth/Binaries/Win64/UnrealEditor-ChaosCloth.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/ChaosCloth/Binaries/Win64/UnrealEditor-ChaosClothEditor.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/ChaosCloth/Binaries/Win64/UnrealEditor.modules",
 			"Type": "RequiredResource"
 		},
 		{
@@ -2602,14 +2558,6 @@
 			"Type": "RequiredResource"
 		},
 		{
-			"Path": "$(EngineDir)/Plugins/Editor/MobileLauncherProfileWizard/Binaries/Win64/UnrealEditor-MobileLauncherProfileWizard.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Editor/MobileLauncherProfileWizard/Binaries/Win64/UnrealEditor.modules",
-			"Type": "RequiredResource"
-		},
-		{
 			"Path": "$(EngineDir)/Plugins/Editor/ModelingToolsEditorMode/Binaries/Win64/UnrealEditor-ModelingToolsEditorMode.dll",
 			"Type": "DynamicLibrary"
 		},
@@ -2851,14 +2799,6 @@
 		},
 		{
 			"Path": "$(EngineDir)/Plugins/Experimental/CharacterFXEditor/BaseCharacterFXEditor/Binaries/Win64/UnrealEditor.modules",
-			"Type": "RequiredResource"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Experimental/Compositing/CompositeCore/Binaries/Win64/UnrealEditor-CompositeCore.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Experimental/Compositing/CompositeCore/Binaries/Win64/UnrealEditor.modules",
 			"Type": "RequiredResource"
 		},
 		{
@@ -3342,14 +3282,6 @@
 			"Type": "RequiredResource"
 		},
 		{
-			"Path": "$(EngineDir)/Plugins/IoStoreInsights/Binaries/Win64/UnrealEditor-IoStoreInsights.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/IoStoreInsights/Binaries/Win64/UnrealEditor.modules",
-			"Type": "RequiredResource"
-		},
-		{
 			"Path": "$(EngineDir)/Plugins/Marketplace/Developer/RiderLink/Binaries/Win64/UnrealEditor-RD.dll",
 			"Type": "DynamicLibrary"
 		},
@@ -3427,82 +3359,6 @@
 		},
 		{
 			"Path": "$(EngineDir)/Plugins/MassInsights/Binaries/Win64/UnrealEditor.modules",
-			"Type": "RequiredResource"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/AndroidMedia/Binaries/Win64/UnrealEditor-AndroidMediaEditor.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/AndroidMedia/Binaries/Win64/UnrealEditor-AndroidMediaFactory.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/AndroidMedia/Binaries/Win64/UnrealEditor.modules",
-			"Type": "RequiredResource"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/AvfMedia/Binaries/Win64/UnrealEditor-AvfMediaEditor.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/AvfMedia/Binaries/Win64/UnrealEditor-AvfMediaFactory.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/AvfMedia/Binaries/Win64/UnrealEditor.modules",
-			"Type": "RequiredResource"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/ImgMedia/Binaries/Win64/UnrealEditor-ExrReaderGpu.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/ImgMedia/Binaries/Win64/UnrealEditor-ImgMedia.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/ImgMedia/Binaries/Win64/UnrealEditor-ImgMediaEditor.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/ImgMedia/Binaries/Win64/UnrealEditor-ImgMediaEngine.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/ImgMedia/Binaries/Win64/UnrealEditor-ImgMediaFactory.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/ImgMedia/Binaries/Win64/UnrealEditor-OpenExrWrapper.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/ImgMedia/Binaries/Win64/UnrealEditor.modules",
-			"Type": "RequiredResource"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/MediaCompositing/Binaries/Win64/UnrealEditor-MediaCompositing.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/MediaCompositing/Binaries/Win64/UnrealEditor-MediaCompositingEditor.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/MediaCompositing/Binaries/Win64/UnrealEditor.modules",
-			"Type": "RequiredResource"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/MediaPlate/Binaries/Win64/UnrealEditor-MediaPlate.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/MediaPlate/Binaries/Win64/UnrealEditor-MediaPlateEditor.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/MediaPlate/Binaries/Win64/UnrealEditor.modules",
 			"Type": "RequiredResource"
 		},
 		{
@@ -3738,50 +3594,6 @@
 			"Type": "RequiredResource"
 		},
 		{
-			"Path": "$(EngineDir)/Plugins/Runtime/AndroidDeviceProfileSelector/Binaries/Win64/UnrealEditor-AndroidDeviceProfileCommandlets.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/AndroidDeviceProfileSelector/Binaries/Win64/UnrealEditor-AndroidDeviceProfileSelector.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/AndroidDeviceProfileSelector/Binaries/Win64/UnrealEditor.modules",
-			"Type": "RequiredResource"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/AndroidFileServer/Binaries/Win64/UnrealEditor-AndroidFileServer.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/AndroidFileServer/Binaries/Win64/UnrealEditor-AndroidFileServerEditor.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/AndroidFileServer/Binaries/Win64/UnrealEditor.modules",
-			"Type": "RequiredResource"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/AndroidPermission/Binaries/Win64/UnrealEditor-AndroidPermission.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/AndroidPermission/Binaries/Win64/UnrealEditor.modules",
-			"Type": "RequiredResource"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/AppleImageUtils/Binaries/Win64/UnrealEditor-AppleImageUtils.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/AppleImageUtils/Binaries/Win64/UnrealEditor-AppleImageUtilsBlueprintSupport.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/AppleImageUtils/Binaries/Win64/UnrealEditor.modules",
-			"Type": "RequiredResource"
-		},
-		{
 			"Path": "$(EngineDir)/Plugins/Runtime/ArchVisCharacter/Binaries/Win64/UnrealEditor-ArchVisCharacter.dll",
 			"Type": "DynamicLibrary"
 		},
@@ -3919,18 +3731,6 @@
 		},
 		{
 			"Path": "$(EngineDir)/Plugins/Runtime/GeometryProcessing/Binaries/Win64/UnrealEditor.modules",
-			"Type": "RequiredResource"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/GooglePAD/Binaries/Win64/UnrealEditor-GooglePAD.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/GooglePAD/Binaries/Win64/UnrealEditor-GooglePADEditor.dll",
-			"Type": "DynamicLibrary"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/GooglePAD/Binaries/Win64/UnrealEditor.modules",
 			"Type": "RequiredResource"
 		},
 		{
@@ -28068,10 +27868,6 @@
 			"Type": "DebugNonUFS"
 		},
 		{
-			"Path": "$(EngineDir)/Plugins/2D/Paper2D/Paper2D.uplugin",
-			"Type": "UFS"
-		},
-		{
 			"Path": "$(EngineDir)/Plugins/AI/AISupport/AISupport.uplugin",
 			"Type": "UFS"
 		},
@@ -28145,10 +27941,6 @@
 		},
 		{
 			"Path": "$(EngineDir)/Plugins/Cameras/GameplayCameras/GameplayCameras.uplugin",
-			"Type": "UFS"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/ChaosCloth/ChaosCloth.uplugin",
 			"Type": "UFS"
 		},
 		{
@@ -28324,10 +28116,6 @@
 			"Type": "UFS"
 		},
 		{
-			"Path": "$(EngineDir)/Plugins/Editor/MobileLauncherProfileWizard/MobileLauncherProfileWizard.uplugin",
-			"Type": "UFS"
-		},
-		{
 			"Path": "$(EngineDir)/Plugins/Editor/ModelingToolsEditorMode/ModelingToolsEditorMode.uplugin",
 			"Type": "UFS"
 		},
@@ -28429,10 +28217,6 @@
 		},
 		{
 			"Path": "$(EngineDir)/Plugins/Experimental/CharacterFXEditor/BaseCharacterFXEditor/BaseCharacterFXEditor.uplugin",
-			"Type": "UFS"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Experimental/Compositing/CompositeCore/CompositeCore.uplugin",
 			"Type": "UFS"
 		},
 		{
@@ -28568,35 +28352,11 @@
 			"Type": "UFS"
 		},
 		{
-			"Path": "$(EngineDir)/Plugins/IoStoreInsights/IoStoreInsights.uplugin",
-			"Type": "UFS"
-		},
-		{
 			"Path": "$(EngineDir)/Plugins/Marketplace/Developer/RiderLink/RiderLink.uplugin",
 			"Type": "UFS"
 		},
 		{
 			"Path": "$(EngineDir)/Plugins/MassInsights/MassInsights.uplugin",
-			"Type": "UFS"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/AndroidMedia/AndroidMedia.uplugin",
-			"Type": "UFS"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/AvfMedia/AvfMedia.uplugin",
-			"Type": "UFS"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/ImgMedia/ImgMedia.uplugin",
-			"Type": "UFS"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/MediaCompositing/MediaCompositing.uplugin",
-			"Type": "UFS"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Media/MediaPlate/MediaPlate.uplugin",
 			"Type": "UFS"
 		},
 		{
@@ -28656,15 +28416,7 @@
 			"Type": "UFS"
 		},
 		{
-			"Path": "$(EngineDir)/Plugins/Online/Android/OnlineSubsystemGooglePlay/OnlineSubsystemGooglePlay.uplugin",
-			"Type": "UFS"
-		},
-		{
 			"Path": "$(EngineDir)/Plugins/Online/EOSShared/EOSShared.uplugin",
-			"Type": "UFS"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Online/IOS/OnlineSubsystemIOS/OnlineSubsystemIOS.uplugin",
 			"Type": "UFS"
 		},
 		{
@@ -28697,22 +28449,6 @@
 		},
 		{
 			"Path": "$(EngineDir)/Plugins/Runtime/ActorLayerUtilities/ActorLayerUtilities.uplugin",
-			"Type": "UFS"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/AndroidDeviceProfileSelector/AndroidDeviceProfileSelector.uplugin",
-			"Type": "UFS"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/AndroidFileServer/AndroidFileServer.uplugin",
-			"Type": "UFS"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/AndroidPermission/AndroidPermission.uplugin",
-			"Type": "UFS"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/AppleImageUtils/AppleImageUtils.uplugin",
 			"Type": "UFS"
 		},
 		{
@@ -28761,10 +28497,6 @@
 		},
 		{
 			"Path": "$(EngineDir)/Plugins/Runtime/GeometryProcessing/GeometryProcessing.uplugin",
-			"Type": "UFS"
-		},
-		{
-			"Path": "$(EngineDir)/Plugins/Runtime/GooglePAD/GooglePAD.uplugin",
 			"Type": "UFS"
 		},
 		{
@@ -28895,15 +28627,9 @@
 		"ActorSequence",
 		"AdvancedRenamer",
 		"AlembicImporter",
-		"AndroidDeviceProfileSelector",
-		"AndroidFileServer",
-		"AndroidMedia",
-		"AndroidMoviePlayer",
-		"AndroidPermission",
 		"AnimationData",
 		"AnimationModifierLibrary",
 		"AnimationSharing",
-		"AppleImageUtils",
 		"AppleMoviePlayer",
 		"ArchVisCharacter",
 		"AssetManagerEditor",
@@ -28912,7 +28638,6 @@
 		"AudioSynesthesia",
 		"AudioWidgets",
 		"AutomationUtils",
-		"AvfMedia",
 		"BackChannel",
 		"BaseCharacterFXEditor",
 		"BlendSpaceMotionAnalysis",
@@ -28926,7 +28651,6 @@
 		"Cascade",
 		"ChangelistReview",
 		"ChaosCaching",
-		"ChaosCloth",
 		"ChaosEditor",
 		"ChaosInsights",
 		"ChaosNiagara",
@@ -28938,7 +28662,6 @@
 		"CmdLinkServer",
 		"CodeLiteSourceCodeAccess",
 		"ColorGrading",
-		"CompositeCore",
 		"ComputeFramework",
 		"ContentBrowserAssetDataSource",
 		"ContentBrowserClassDataSource",
@@ -28985,18 +28708,14 @@
 		"GeometryProcessing",
 		"GitSourceControl",
 		"GoogleCloudMessaging",
-		"GooglePAD",
 		"HDRIBackdrop",
 		"HairStrands",
 		"IKRig",
-		"IOSDeviceProfileSelector",
-		"ImgMedia",
 		"InputDebugging",
 		"Interchange",
 		"InterchangeAssets",
 		"InterchangeEditor",
 		"InterchangeTests",
-		"IoStoreInsights",
 		"KDevelopSourceCodeAccess",
 		"Landmass",
 		"LauncherChunkInstaller",
@@ -29009,8 +28728,6 @@
 		"MacGraphicsSwitching",
 		"MassInsights",
 		"MaterialAnalyzer",
-		"MediaCompositing",
-		"MediaPlate",
 		"MediaPlayerEditor",
 		"MeshLODToolset",
 		"MeshModelingToolset",
@@ -29018,7 +28735,6 @@
 		"MeshPainting",
 		"MetaHumanSDK",
 		"Metasound",
-		"MobileLauncherProfileWizard",
 		"MobilePatchingUtils",
 		"ModelingToolsEditorMode",
 		"MsQuic",
@@ -29034,12 +28750,9 @@
 		"OnlineBase",
 		"OnlineServices",
 		"OnlineSubsystem",
-		"OnlineSubsystemGooglePlay",
-		"OnlineSubsystemIOS",
 		"OnlineSubsystemNull",
 		"OnlineSubsystemUtils",
 		"OodleNetwork",
-		"Paper2D",
 		"PerforceSourceControl",
 		"PixWinPlugin",
 		"PlanarCut",

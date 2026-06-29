@@ -77,11 +77,8 @@ void UPFDiveAbility::Dive(float deltaTime)
 		return;
 	}
 	
-	float percentageRot = PhysicResourcePtr_->CurrentPitchValue_ / DataPtr_->MaxRotationPitch;
-	percentageRot = FMath::Clamp(percentageRot, 0.0f, 1.0f);
-	
 	float speedToGive = DataPtr_->ForceToGive *
-		DataPtr_->DiveAccelerationBasedOnRotationCurvePtr->GetFloatValue(percentageRot);
+		DataPtr_->DiveAccelerationBasedOnRotationCurvePtr->GetFloatValue(GetDivingValue());
 
 	float velocity0to1 = PhysicResourcePtr_->GetForwardVelocityPercentage();
 	speedToGive *= DataPtr_->DiveAccelerationBasedOnSpeedCurvePtr->GetFloatValue(velocity0to1);
@@ -171,7 +168,10 @@ float UPFDiveAbility::GetDivingValue()
 	if (!IsDiving())
 		return 0;
 
-	return HighestInput_;
+	float percentageRot = PhysicResourcePtr_->CurrentPitchValue_ / DataPtr_->MaxRotationPitch;
+	percentageRot = FMath::Clamp(percentageRot, 0.0f, 1.0f);
+	
+	return percentageRot;
 }
 
 float UPFDiveAbility::GetMaxDivingAngle() const
