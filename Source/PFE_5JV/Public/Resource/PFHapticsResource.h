@@ -18,24 +18,18 @@ public:
 	float Duration;
 	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool bAffectsLeftLarge;
+	bool bAffectsLarge;
 	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool bAffectsLeftSmall;
-	
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool bAffectsRightLarge;
-	
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool bAffectsRightSmall;
+	bool bAffectsSmall;
 	
 public:
 	FHapticsSettings() = default;
 	
 	FHapticsSettings(float InIntensity, float InDuration, 
-		bool bInLeftLarge, bool bInLeftSmall, bool bInRightLarge, bool bInRightSmall)
-	   : Intensity(InIntensity), Duration(InDuration), bAffectsLeftLarge(bInLeftLarge), 
-		 bAffectsLeftSmall(bInLeftSmall), bAffectsRightLarge(bInRightLarge), bAffectsRightSmall(bInRightSmall){}
+		bool bInLarge, bool bInSmall)
+	   : Intensity(InIntensity), Duration(InDuration), bAffectsLarge(bInLarge), 
+		 bAffectsSmall(bInSmall){}
 };
 
 struct FActiveHapticData
@@ -68,7 +62,7 @@ public:
     
 	UFUNCTION(BlueprintCallable)
 	void PlayHaptics(float intensity, float duration, FName uniqueID,
-	   bool bAffectsLeftLarge, bool bAffectsLeftSmall, bool bAffectsRightLarge, bool bAffectsRightSmall);
+	   bool bAffectsLarge, bool bAffectsSmall);
     
 	UFUNCTION(BlueprintCallable)
 	void AskToPauseHaptics();
