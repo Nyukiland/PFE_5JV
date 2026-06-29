@@ -47,6 +47,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	FVector GetRandomFlowerSize();
 
+	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
+	bool CheckSpawnConditions(UPARAM(ref) FHitResult& SupposedSpawnLocationHit, UPARAM(ref) FHitResult& InitialHit);
+
 private:
 	bool CheckValidity() const;
 };

@@ -39,6 +39,28 @@ FVector UPFFlowerSpawnerResource::GetRandomFlowerSize()
 	return RandomFlowerScale;
 }
 
+bool UPFFlowerSpawnerResource::CheckSpawnConditions(FHitResult& SupposedSpawnLocationHit, FHitResult& InitialHit)
+{
+	if (!SupposedSpawnLocationHit.IsValidBlockingHit()) return false;
+
+	// Si la localisation du spawn n'est pas sur le même acteur que le hit initial, on ne spawn pas : 
+	if(SupposedSpawnLocationHit.GetActor() != InitialHit.GetActor()) return false;
+
+	// Si la pente de la surface où on veut spawn est trop raide (ex : falaise), on ne spawn pas :
+	// Calcule l'angle de la pente :
+	FVector UpVector = FVector(0,0,1);
+	const double CosTheta = FVector::DotProduct(SupposedSpawnLocationHit.ImpactNormal, UpVector);
+	double SlopAngle = FMath::Acos(CosTheta);
+	SlopAngle = FMath::RadiansToDegrees(SlopAngle);
+	if(SlopAngle >= DataPtr_->MaximalSlopInDegreesToSpawn) return false;
+	
+	// Ne spawn pas sur les supports n'ayant pas le tag "Landscape"
+	if(SupposedSpawnLocationHit.GetActor()->ActorHasTag("Landscape") == false) return false;
+	
+	// Dans les autres cas, on spawn la fleur :
+	return true;
+}
+
 bool UPFFlowerSpawnerResource::CheckValidity() const
 {
 	if (!OwnerPtr_)

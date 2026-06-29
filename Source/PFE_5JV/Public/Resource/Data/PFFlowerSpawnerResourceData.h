@@ -34,4 +34,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
 	meta=(ToolTip="La taille maximum possible pour une fleur"))
 	float MaximumFlowerScale;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
+	meta=(ToolTip="La pente maximale (en degrés) sur laquelle on spawn les fleurs"))
+	float MaximalSlopInDegreesToSpawn;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
+	meta=(ToolTip="La hauteur minimale au dessus du sol où spawn la fleur."))
+	float MinimalHeightAboveGround;
+
 };
