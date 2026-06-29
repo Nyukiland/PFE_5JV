@@ -44,6 +44,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
 	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> YellowFlowerHISMPtr_;
 
+	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
+	FVector GetRandomFlowerSize();
+
 private:
 	bool CheckValidity() const;
 };

@@ -5,6 +5,7 @@
 
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Helpers/PFPainter.h"
+#include "Kismet/GameplayStatics.h"
 #include "StateMachine/PFPlayerCharacter.h"
 #include "Resource/PFProximityResource.h"
 #include "Resource/Data/PFFlowerSpawnerResourceData.h"
@@ -28,6 +29,14 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 	if (YellowFlowerHISMComponents.Num() > 0) YellowFlowerHISMPtr_ = Cast<UHierarchicalInstancedStaticMeshComponent>(YellowFlowerHISMComponents[0]);
 
 	if (!CheckValidity()) return;
+}
+
+FVector UPFFlowerSpawnerResource::GetRandomFlowerSize()
+{
+	const float RandomFlowerSize = FMath::RandRange(DataPtr_->MinimumFlowerScale, DataPtr_->MaximumFlowerScale);	
+	const FVector RandomFlowerScale = FVector(RandomFlowerSize);
+	
+	return RandomFlowerScale;
 }
 
 bool UPFFlowerSpawnerResource::CheckValidity() const

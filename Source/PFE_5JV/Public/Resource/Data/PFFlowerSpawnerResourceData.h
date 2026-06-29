@@ -27,4 +27,11 @@ public:
 	meta=(ToolTip="Nombre de secondes entre 2 spawns au maximum"))
 	float DelayBetweenTwoSpawnsAtMaximalVelocity;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
+    meta=(ToolTip="La taille minimum possible pour une fleur"))
+    float MinimumFlowerScale;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
+	meta=(ToolTip="La taille maximum possible pour une fleur"))
+	float MaximumFlowerScale;
 };
