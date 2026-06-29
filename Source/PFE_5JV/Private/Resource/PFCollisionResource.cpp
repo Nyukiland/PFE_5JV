@@ -55,6 +55,8 @@ bool UPFCollisionResource::ExportPlaytestDataToJson(const FString& FileName)
 
 	UE_LOG(LogTemp, Error, TEXT("[CollisionResource] Failed to serialize playtest data to JSON."));
 	return false;
+#else
+	return false;
 #endif
 }
 
