@@ -40,9 +40,6 @@ protected:
 	TObjectPtr<UPFVisualResource> VisualResourcePtr_;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Turn")
-	TObjectPtr<UPFHapticsResource> HapticsResource_;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Turn")
 	TObjectPtr<UPFCollisionResource> CollisionResource_;
 	
 	float SlowForceTimer_;
@@ -67,8 +64,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Turn")
 	void TurnVisual();
 	
-	void TurnHaptics();
-
 	UFUNCTION(BlueprintCallable, Category="Turn")
 	bool IsTurning() const;
 	

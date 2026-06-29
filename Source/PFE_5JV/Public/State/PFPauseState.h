@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Resource/PFHapticsResource.h"
 #include "Resource/PFPhysicResource.h"
 #include "StateMachine/State/PFState.h"
 #include "PFPauseState.generated.h"
@@ -13,6 +14,9 @@ class PFE_5JV_API UPFPauseState : public UPFState
 	private:
 	UPROPERTY()
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
+	
+	UPROPERTY()
+	TObjectPtr<UPFHapticsResource> HapticResourcePtr_;
 	
 	public:
 	virtual void OnEnter_Implementation() override;

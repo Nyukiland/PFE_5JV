@@ -54,10 +54,4 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive|DiveRoll",
 		meta = (ToolTip = "The rotation force when diving"))
 	float DiveRollRotationForce;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive|Haptics")
-	FHapticsSettings HapticsSettings;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dive|Haptics")
-	TObjectPtr<UCurveFloat> HapticsBasedOnRotation;
 };

@@ -9,7 +9,6 @@ void UPFTurnAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 
 	PhysicResourcePtr_ = Owner->GetStateComponent<UPFPhysicResource>();
 	VisualResourcePtr_ = Owner->GetStateComponent<UPFVisualResource>();
-	HapticsResource_ = Owner->GetStateComponent<UPFHapticsResource>();
 	CollisionResource_ = Owner->GetStateComponent<UPFCollisionResource>();
 }
 
@@ -32,7 +31,6 @@ void UPFTurnAbility::ComponentTick_Implementation(float deltaTime)
 
 	Turn(deltaTime);
 	TurnVisual();
-	TurnHaptics();
 }
 
 FString UPFTurnAbility::GetInfo_Implementation()
@@ -121,26 +119,6 @@ void UPFTurnAbility::TurnVisual()
 	}
 
 	VisualResourcePtr_->SetRollRotation(DataPtr_->MaxWingRotation * RotationValue_, 0);
-}
-
-void UPFTurnAbility::TurnHaptics()
-{
-	if (!DataPtr_ || !DataPtr_->HapticsBasedOnRotation)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[Turn] Bad set up on Data"))
-		return;
-	}
-
-	FHapticsSettings settings = DataPtr_->HapticsSettings;
-	float intensity = DataPtr_->HapticsBasedOnRotation->GetFloatValue(FMath::Abs(RotationValue_)) * settings.Intensity;
-	intensity = FMath::Clamp(intensity, 0.f, 1.f);
-
-	if (!IsTurning())
-		intensity = 0;
-
-	HapticsResource_->PlayHaptics(intensity, settings.Duration, "Turn",
-								settings.bAffectsLeftLarge, settings.bAffectsLeftSmall, settings.bAffectsRightLarge,
-								settings.bAffectsRightSmall);
 }
 
 bool UPFTurnAbility::IsTurning() const

@@ -46,10 +46,4 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Turn|WingRotation",
 	meta = (ToolTip = "Max rotation when the bird is turnin"))
 	float MaxWingRotation;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn|Haptics")
-	FHapticsSettings HapticsSettings;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Turn|Haptics")
-	TObjectPtr<UCurveFloat> HapticsBasedOnRotation;
 };

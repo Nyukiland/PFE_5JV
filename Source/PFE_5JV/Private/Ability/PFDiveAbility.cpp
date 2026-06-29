@@ -8,7 +8,6 @@ void UPFDiveAbility::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 	PhysicResourcePtr_ = Owner->GetStateComponent<UPFPhysicResource>();
 	VisualResourcePtr_ = Owner->GetStateComponent<UPFVisualResource>();
 	CollisionResource_ = Owner->GetStateComponent<UPFCollisionResource>();
-	HapticsResource_ = Owner->GetStateComponent<UPFHapticsResource>();
 }
 
 void UPFDiveAbility::ComponentDisable_Implementation()
@@ -39,7 +38,6 @@ void UPFDiveAbility::ComponentTick_Implementation(float deltaTime)
 
 	Dive(deltaTime);
 	DiveVisual(deltaTime);
-	DiveHaptics();
 	DiveRoll(deltaTime);
 
 	if (IsDiving())
@@ -121,27 +119,6 @@ void UPFDiveAbility::DiveVisual(float deltaTime)
 	float rotAlphaBasedOnCurve = DataPtr_->RotationPitchBasedOnInputCurvePtr->GetFloatValue(CurrentMedianValue_);
 	float value = FMath::Lerp(0, DataPtr_->MaxRotationPitch, rotAlphaBasedOnCurve);
 	PhysicResourcePtr_->SetPitchRotationVisual(value, -4);
-}
-
-void UPFDiveAbility::DiveHaptics()
-{
-	if (!DataPtr_ || !HapticsResource_ || !DataPtr_->HapticsBasedOnRotation)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[DiveAbility] Bad set up on Data"))
-		return;
-	}
-
-	FHapticsSettings settings = DataPtr_->HapticsSettings;
-	float intensity = DataPtr_->HapticsBasedOnRotation->GetFloatValue(
-		PhysicResourcePtr_->GetForwardVelocityPercentage()) * settings.Intensity;
-	intensity = FMath::Clamp(intensity, 0.f, 1.f);
-
-	if (!IsDiving())
-		intensity = 0;
-
-	HapticsResource_->PlayHaptics(intensity, settings.Duration, "Dive",
-								settings.bAffectsLeftLarge, settings.bAffectsLeftSmall, settings.bAffectsRightLarge,
-								settings.bAffectsRightSmall);
 }
 
 void UPFDiveAbility::DiveRoll(float deltaTime)
