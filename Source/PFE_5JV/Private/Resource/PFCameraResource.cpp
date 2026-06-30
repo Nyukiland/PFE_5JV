@@ -48,7 +48,7 @@ void UPFCameraResource::ComponentInit_Implementation(APFPlayerCharacter* ownerOb
 
 // Regular tick to make sure physic movement is applied before doing the tick
 void UPFCameraResource::TickComponent(float DeltaTime, enum ELevelTick TickType,
-	FActorComponentTickFunction* ThisTickFunction)
+									FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -82,43 +82,49 @@ bool UPFCameraResource::CheckValidity() const
 		UE_LOG(LogTemp, Error, TEXT("[UPFCameraResource] The Data Curve in CameraResource blueprint is NULL"))
 		return false;
 	}
-	
+
 	if (!PhysicResourcePtr_)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[UPFCameraResource] The PhysicResource referenced in CameraResource blueprint is NULL"))
+		UE_LOG(LogTemp, Error,
+				TEXT("[UPFCameraResource] The PhysicResource referenced in CameraResource blueprint is NULL"))
 		return false;
 	}
 
 	if (!DiveAbilityPtr_)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[UPFCameraResource] The VisualResource referenced in CameraResource blueprint is NULL"))
+		UE_LOG(LogTemp, Error,
+				TEXT("[UPFCameraResource] The VisualResource referenced in CameraResource blueprint is NULL"))
 		return false;
 	}
 
 	if (!TurnAbilityPtr_)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[UPFCameraResource] The TurnAbility referenced in CameraResource blueprint is NULL"))
+		UE_LOG(LogTemp, Error,
+				TEXT("[UPFCameraResource] The TurnAbility referenced in CameraResource blueprint is NULL"))
 		return false;
 	}
 
 	if (!WingBeatAbilityPtr_)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[UPFCameraResource] The WingBeatAbility referenced in CameraResource blueprint is NULL"))
+		UE_LOG(LogTemp, Error,
+				TEXT("[UPFCameraResource] The WingBeatAbility referenced in CameraResource blueprint is NULL"))
 		return false;
 	}
 
 	if (!ProximityResourcePtr_)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[UPFCameraResource] The ProximityResourcePtr_ referenced in CameraResource blueprint is NULL"))
+		UE_LOG(LogTemp, Error,
+				TEXT("[UPFCameraResource] The ProximityResourcePtr_ referenced in CameraResource blueprint is NULL"))
 		return false;
 	}
 
 	if (!OwnerWorldPtr_)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[UPFCameraResource] The OwnerWorld referenced in CameraResource blueprint is NULL"))
+		UE_LOG(LogTemp, Error,
+				TEXT("[UPFCameraResource] The OwnerWorld referenced in CameraResource blueprint is NULL"))
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -129,21 +135,23 @@ void UPFCameraResource::ManageCameraOffset(float deltaTime)
 	// Turn
 	float turnValue = TurnAbilityPtr_->TurnValue();
 	float desiredTurnValue = DataPtr_->TurnOffsetCurve->GetFloatValue(FMath::Abs(turnValue)) * FMath::Sign(turnValue);
-	desiredTurnValue *= DataPtr_->TurnOffsetSpeedCurve->GetFloatValue(PhysicResourcePtr_->GetForwardVelocityPercentage());
+	desiredTurnValue *= DataPtr_->TurnOffsetSpeedCurve->GetFloatValue(
+		PhysicResourcePtr_->GetForwardVelocityPercentage());
 	desiredTurnValue *= DataPtr_->TurnYOffset;
-	
-	float turnLerpToUse = TurnAbilityPtr_->TurnValue() == 0?
-		DataPtr_->OffsetTurnToBaseLerpSpeed : DataPtr_->OffsetTurnLerpSpeed;
-	
+
+	float turnLerpToUse = TurnAbilityPtr_->TurnValue() == 0
+							? DataPtr_->OffsetTurnToBaseLerpSpeed
+							: DataPtr_->OffsetTurnLerpSpeed;
+
 	TurnCurrentOffset_ = FMath::FInterpTo(TurnCurrentOffset_, desiredTurnValue,
-									deltaTime, turnLerpToUse);
+										deltaTime, turnLerpToUse);
 
 	// Height (Dive, Base, WingBeat)
 	float targetHeight = DataPtr_->BaseZOffset;
 	float heightLerpToUse = DataPtr_->OffsetGoToBaseLerpSpeed;
 
 	float valuePitch = PhysicResourcePtr_->CurrentPitchValue_;
-	
+
 	if (valuePitch > 0)
 	{
 		float percentage = valuePitch / WingBeatAbilityPtr_->GetMaxWingBeatAngle();
@@ -161,25 +169,26 @@ void UPFCameraResource::ManageCameraOffset(float deltaTime)
 		targetHeight = FMath::Lerp(DataPtr_->BaseZOffset, DataPtr_->DiveZOffset, percentage);
 		heightLerpToUse = DataPtr_->OffsetGoToDiveLerpSpeed;
 	}
-	
+
 	// Ground height override
 	if (ProximityResourcePtr_->HitBelowResult.bBlockingHit)
 	{
 		float currentDist = ProximityResourcePtr_->HitBelowResult.Distance;
 		float maxDist = ProximityResourcePtr_->GetMaxDistanceWithBelow();
-        
+
 		float groundAlpha = 1.0f - FMath::Clamp(currentDist / maxDist, 0.0f, 1.0f);
 
 		float groundTargetHeight = DataPtr_->BaseZOffset + DataPtr_->GroundZOffset;
 
-		float speedPercent = DataPtr_->GroundProximitySpeedCurve->GetFloatValue(PhysicResourcePtr_->GetForwardVelocityPercentage());
+		float speedPercent = DataPtr_->GroundProximitySpeedCurve->GetFloatValue(
+			PhysicResourcePtr_->GetForwardVelocityPercentage());
 		targetHeight = FMath::Lerp(targetHeight, groundTargetHeight, groundAlpha * speedPercent);
-        
+
 		heightLerpToUse = FMath::Max(heightLerpToUse, DataPtr_->GroundAvoidanceLerpSpeed);
 	}
-    
+
 	HeightCurrentOffset_ = FMath::FInterpTo(HeightCurrentOffset_, targetHeight, deltaTime, heightLerpToUse);
-	
+
 	// Apply in absolute because main component
 	pos += TurnCurrentOffset_ * ForwardRootPtr->GetRightVector();
 	pos += HeightCurrentOffset_ * ForwardRootPtr->GetUpVector();
@@ -188,54 +197,61 @@ void UPFCameraResource::ManageCameraOffset(float deltaTime)
 
 void UPFCameraResource::ManageCameraDistance(float deltaTime)
 {
-    float desiredDistanceValue = FMath::Lerp(DataPtr_->BaseDistanceWithPlayer, DataPtr_->MaxDistanceWithPlayer,
-                                  PhysicResourcePtr_->GetForwardVelocityPercentage());
+	float desiredDistanceValue = FMath::Lerp(DataPtr_->BaseDistanceWithPlayer, DataPtr_->MaxDistanceWithPlayer,
+											PhysicResourcePtr_->GetForwardVelocityPercentage());
 
-    FVector startPos = CameraPositionPtr_->GetComponentLocation();
-    FVector endPos = startPos - (CameraPositionPtr_->GetForwardVector() * desiredDistanceValue);
+	float interpSpeed = (desiredDistanceValue < DistanceCurrentOffset_)
+							? DataPtr_->CollisionPushSpeed
+							: DataPtr_->DistanceLerpSpeed;
 
-    FCollisionQueryParams queryParams(SCENE_QUERY_STAT(CameraTrace), false, Owner);
-    FCollisionShape sweepShape = FCollisionShape::MakeSphere(DataPtr_->SphereDetectionSize);
-    FHitResult hit;
+	DistanceCurrentOffset_ = FMath::FInterpTo(DistanceCurrentOffset_, desiredDistanceValue, deltaTime, interpSpeed);
 
-    float maxAllowedDistance = desiredDistanceValue;
+	float closeProximityAlpha = 1.0f - FMath::Clamp((DistanceCurrentOffset_ - DataPtr_->MinCameraDistance) /
+													(DataPtr_->BaseDistanceWithPlayer - DataPtr_->MinCameraDistance),
+													0.0f, 1.0f);
 
-    if (OwnerWorldPtr_->SweepSingleByChannel(hit, startPos, endPos, FQuat::Identity, ECC_Camera, sweepShape, queryParams))
-    {
-        if (!hit.bStartPenetrating)
-        {
-            maxAllowedDistance = (hit.Location - startPos).Size();
-        }
-        else
-        {
-            maxAllowedDistance = DataPtr_->MinCameraDistance; 
-        }
-    }
+	float dynamicZOffset = FMath::Lerp(0.0f, DataPtr_->SquishedHeightOffset, closeProximityAlpha);
 
-    float interpSpeed = (maxAllowedDistance < DistanceCurrentOffset_) ? 
-                         DataPtr_->CollisionPushSpeed : 
-                         DataPtr_->DistanceLerpSpeed;   
-                         
-    DistanceCurrentOffset_ = FMath::FInterpTo(DistanceCurrentOffset_, maxAllowedDistance, deltaTime, interpSpeed);
+	FVector goToPos = FVector(-DistanceCurrentOffset_, 0, dynamicZOffset);
 
-    float closeProximityAlpha = 1.0f - FMath::Clamp((DistanceCurrentOffset_ - DataPtr_->MinCameraDistance) / 
-                                                    (DataPtr_->BaseDistanceWithPlayer - DataPtr_->MinCameraDistance), 0.0f, 1.0f);
+	// Ray for collision
+	// FVector startPos = CameraPositionPtr_->GetComponentLocation();
+	// FVector endPos = CameraPtr_->GetComponentTransform().TransformPosition(goToPos);
+	// FVector dir = endPos - startPos;
+	//
+	// FCollisionQueryParams queryParams;
+	// queryParams.AddIgnoredActor(Owner);
+	// queryParams.bTraceComplex = true;
+	// FCollisionShape sweepShape = FCollisionShape::MakeSphere(DataPtr_->SphereDetectionSize);
+	// FHitResult hit;
+	//
+	// if (OwnerWorldPtr_->SweepSingleByChannel(hit, startPos, endPos, FQuat::Identity, ECC_Visibility, sweepShape, queryParams))
+	// {
+	// 	if (!hit.bStartPenetrating)
+	// 	{
+	// 		float dist = dir.Length() - hit.Distance;
+	// 		startPos = hit.Location + hit.ImpactNormal;
+	// 		startPos = CameraPtr_->GetComponentTransform().InverseTransformPosition(startPos);
+	// 		endPos = FVector::VectorPlaneProject(-CameraPositionPtr_->GetForwardVector(), hit.ImpactNormal) * dist;
+	// 		endPos += startPos;
+	// 		
+	// 		goToPos = endPos;
+	// 	}
+	// }
 
-    float dynamicZOffset = FMath::Lerp(0.0f, DataPtr_->SquishedHeightOffset, closeProximityAlpha);
-
-    CameraPtr_->SetRelativeLocation(FVector(-DistanceCurrentOffset_, 0, dynamicZOffset));
+	CameraPtr_->SetRelativeLocation(goToPos);
 }
 
 void UPFCameraResource::ManageCameraPitch(float deltaTime)
 {
 	float targetPitch = ForwardRootPtr->GetRelativeRotation().Pitch;
-	
+
 	float delta = FMath::FindDeltaAngleDegrees(CurrentPitch_, targetPitch);
 	delta = FMath::Clamp(delta, -DataPtr_->MaxPitchAngle, DataPtr_->MaxPitchAngle);
 
 	CurrentPitch_ = targetPitch - delta;
 	CurrentPitch_ = FMath::FInterpTo(CurrentPitch_, CurrentPitch_ + delta,
-		deltaTime, DataPtr_->PitchLagSpeed);
+									deltaTime, DataPtr_->PitchLagSpeed);
 	CurrentPitch_ = FRotator::NormalizeAxis(CurrentPitch_);
 
 	CameraPitchPtr_->SetRelativeRotation(FRotator(CurrentPitch_, 0.f, 0.f));
@@ -250,7 +266,7 @@ void UPFCameraResource::ManageCameraYaw(float deltaTime)
 
 	CurrentYaw_ = targetYaw - delta;
 	CurrentYaw_ = FMath::FInterpTo(CurrentYaw_, CurrentYaw_ + delta,
-		deltaTime, DataPtr_->YawLagSpeed);
+									deltaTime, DataPtr_->YawLagSpeed);
 	CurrentYaw_ = FRotator::NormalizeAxis(CurrentYaw_);
 
 	CameraYawPtr_->SetRelativeRotation(FRotator(0.f, CurrentYaw_, 0.f));
@@ -262,7 +278,7 @@ void UPFCameraResource::ManageTrueCameraPitch(float deltaTime)
 	float lerpToUse = DataPtr_->CamRotLerpSpeedToBase;
 
 	float valuePitch = PhysicResourcePtr_->CurrentPitchValue_;
-	
+
 	if (valuePitch > 0)
 	{
 		float percentage = valuePitch / WingBeatAbilityPtr_->GetMaxWingBeatAngle();
@@ -285,15 +301,16 @@ void UPFCameraResource::ManageTrueCameraPitch(float deltaTime)
 	{
 		float currentDist = ProximityResourcePtr_->HitBelowResult.Distance;
 		float maxDist = ProximityResourcePtr_->GetMaxDistanceWithBelow();
-        
+
 		float groundAlpha = 1.0f - FMath::Clamp(currentDist / maxDist, 0.0f, 1.0f);
 
-		float speedPercent = DataPtr_->GroundProximitySpeedCurve->GetFloatValue(PhysicResourcePtr_->GetForwardVelocityPercentage());
+		float speedPercent = DataPtr_->GroundProximitySpeedCurve->GetFloatValue(
+			PhysicResourcePtr_->GetForwardVelocityPercentage());
 		targetPitch = FMath::Lerp(targetPitch, DataPtr_->GroundPitch, groundAlpha * speedPercent);
 		lerpToUse = FMath::Max(lerpToUse, DataPtr_->GroundAvoidanceLerpSpeed);
 	}
 
 	TrueCameraPitch_ = FMath::FInterpTo(TrueCameraPitch_, targetPitch,
-		deltaTime, lerpToUse);
+										deltaTime, lerpToUse);
 	CameraPtr_->SetRelativeRotation(FRotator(TrueCameraPitch_, 0.f, 0.f));
 }
