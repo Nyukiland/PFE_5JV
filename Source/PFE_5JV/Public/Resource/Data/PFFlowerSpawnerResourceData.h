@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class PFE_5JV_API UPFFlowerSpawnerResourceData : public UDataAsset
 {
 	GENERATED_BODY()
