@@ -42,6 +42,7 @@ FVector UPFFlowerSpawnerResource::GetRandomFlowerSize()
 bool UPFFlowerSpawnerResource::CheckSpawnConditions(FHitResult& SupposedSpawnLocationHit, FHitResult& InitialHit)
 {
 	if (!SupposedSpawnLocationHit.IsValidBlockingHit()) return false;
+	if (!SupposedSpawnLocationHit.GetActor()) return false;
 
 	// Si la localisation du spawn n'est pas sur le même acteur que le hit initial, on ne spawn pas : 
 	if(SupposedSpawnLocationHit.GetActor() != InitialHit.GetActor()) return false;
