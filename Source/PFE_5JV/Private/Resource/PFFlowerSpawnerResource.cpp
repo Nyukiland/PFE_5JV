@@ -6,6 +6,7 @@
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Helpers/PFPainter.h"
 #include "Kismet/GameplayStatics.h"
+#include "Materials/MaterialParameterCollection.h"
 #include "StateMachine/PFPlayerCharacter.h"
 #include "Resource/PFProximityResource.h"
 #include "Resource/PFPhysicResource.h"
@@ -31,8 +32,45 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 
 	PhysicResourcePtr_ = ownerObj->GetStateComponent<UPFPhysicResource>();
 
+	CurrentFlowerColor_ = EPFFlowerColor::EPFFC_None;
+
 	if (!CheckValidity()) return;
 }
+
+void UPFFlowerSpawnerResource::SetCurrentFlowerColor(EPFFlowerColor FlowerColor)
+{
+	CurrentFlowerColor_ = FlowerColor;
+	OnFlowerColorChangeDelegate.Broadcast(FlowerColor);
+}
+
+bool UPFFlowerSpawnerResource::TryGetFlowerColorFromEnum(EPFFlowerColor FlowerColor, FLinearColor& ColorValue)
+{
+	bool bParameterFound = false;
+	switch (FlowerColor)
+	{
+	case EPFFlowerColor::EPFFC_Blue:
+		ColorValue = FlowerColorCollectionPtr_->GetVectorParameterDefaultValue("S_Blue", bParameterFound);
+		return bParameterFound;
+		
+		case EPFFlowerColor::EPFFC_Red:
+			ColorValue = FlowerColorCollectionPtr_->GetVectorParameterDefaultValue("S_Red", bParameterFound);
+			return bParameterFound;
+
+		case EPFFlowerColor::EPFFC_Yellow:
+			ColorValue = FlowerColorCollectionPtr_->GetVectorParameterDefaultValue("S_Yellow", bParameterFound);
+			return bParameterFound;
+
+		case EPFFlowerColor::EPFFC_Purple:
+			ColorValue = FlowerColorCollectionPtr_->GetVectorParameterDefaultValue("S_Purple", bParameterFound);
+			return bParameterFound;
+
+		case EPFFlowerColor::EPFFC_None:
+		default:
+			return bParameterFound;
+
+	}
+}
+
 
 FVector UPFFlowerSpawnerResource::GetRandomFlowerSize()
 {
@@ -109,6 +147,14 @@ bool UPFFlowerSpawnerResource::CheckValidity() const
 		UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] The PhysicResourcePtr is NULL"));
 		return false;
 	}
+
+	if (!FlowerColorCollectionPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] The FlowerColorCollectionPtr is NULL"));
+		return false;
+	}
+
+	
 	
 	return true;
 }	

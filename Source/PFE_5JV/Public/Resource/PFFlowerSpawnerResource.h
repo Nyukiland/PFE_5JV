@@ -12,6 +12,18 @@ class UHierarchicalInstancedStaticMeshComponent;
 class UPFProximityResource;
 class APFPainter;
 
+UENUM(BlueprintType)
+enum class EPFFlowerColor : uint8
+{
+	EPFFC_None UMETA(DisplayName = "None"),
+	EPFFC_Blue UMETA(DisplayName = "Blue"),
+	EPFFC_Red UMETA(DisplayName = "Red"),
+	EPFFC_Yellow UMETA(DisplayName = "Yellow"),
+	EPFFC_Purple UMETA(DisplayName = "Purple"),
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFlowerColorChange, EPFFlowerColor, FlowerColor);
+
 /**
  * 
  */
@@ -22,6 +34,19 @@ class PFE_5JV_API UPFFlowerSpawnerResource : public UPFResource
 
 public :
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
+
+	UPROPERTY(BlueprintAssignable, Category="FlowerSpawner")
+	FOnFlowerColorChange OnFlowerColorChangeDelegate;
+
+	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
+	void SetCurrentFlowerColor(EPFFlowerColor FlowerColor);
+
+	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
+	inline EPFFlowerColor GetCurrentFlowerColor() const {return CurrentFlowerColor_;}
+		
+	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
+	bool TryGetFlowerColorFromEnum(EPFFlowerColor FlowerColor, FLinearColor& ColorValue);
+
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
@@ -47,6 +72,12 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
+	EPFFlowerColor CurrentFlowerColor_;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
+	TObjectPtr<UMaterialParameterCollection> FlowerColorCollectionPtr_;
 	
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	FVector GetRandomFlowerSize();
