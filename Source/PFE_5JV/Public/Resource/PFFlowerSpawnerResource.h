@@ -73,7 +73,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
 	EPFFlowerColor CurrentFlowerColor_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")

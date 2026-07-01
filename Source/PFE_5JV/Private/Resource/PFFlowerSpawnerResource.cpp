@@ -153,8 +153,6 @@ bool UPFFlowerSpawnerResource::CheckValidity() const
 		UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] The FlowerColorCollectionPtr is NULL"));
 		return false;
 	}
-
-	
 	
 	return true;
 }	
