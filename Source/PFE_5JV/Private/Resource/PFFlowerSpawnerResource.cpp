@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "StateMachine/PFPlayerCharacter.h"
 #include "Resource/PFProximityResource.h"
+#include "Resource/PFPhysicResource.h"
 #include "Resource/Data/PFFlowerSpawnerResourceData.h"
 
 void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
@@ -27,6 +28,8 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 	
 	TArray<UActorComponent*> YellowFlowerHISMComponents = PainterPtr_->GetComponentsByTag(UHierarchicalInstancedStaticMeshComponent::StaticClass(), FName("YellowFlower"));
 	if (YellowFlowerHISMComponents.Num() > 0) YellowFlowerHISMPtr_ = Cast<UHierarchicalInstancedStaticMeshComponent>(YellowFlowerHISMComponents[0]);
+
+	PhysicResourcePtr_ = ownerObj->GetStateComponent<UPFPhysicResource>();
 
 	if (!CheckValidity()) return;
 }
@@ -62,6 +65,13 @@ bool UPFFlowerSpawnerResource::CheckSpawnConditions(FHitResult& SupposedSpawnLoc
 	return true;
 }
 
+float UPFFlowerSpawnerResource::DetermineSpawnDelay()
+{
+	float PlayerVelocityPercentage = PhysicResourcePtr_->GetForwardVelocityPercentage();
+	float SpawnDelay = FMath::Lerp(PlayerVelocityPercentage, DataPtr_->DelayBetweenTwoSpawnsAtMinimalVelocity, DataPtr_->DelayBetweenTwoSpawnsAtMaximalVelocity);
+	return SpawnDelay;
+}
+
 bool UPFFlowerSpawnerResource::CheckValidity() const
 {
 	if (!OwnerPtr_)
@@ -94,9 +104,9 @@ bool UPFFlowerSpawnerResource::CheckValidity() const
 		return false;
 	}
 	
-	if (!BlueFlowerHISMPtr_ || !RedFlowerHISMPtr_ || !YellowFlowerHISMPtr_)
+	if (!PhysicResourcePtr_)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] One or more HISM Flower references are NULL"));
+		UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] The PhysicResourcePtr is NULL"));
 		return false;
 	}
 	

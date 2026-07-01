@@ -6,6 +6,7 @@
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFFlowerSpawnerResource.generated.h"
 
+class UPFPhysicResource;
 class UPFFlowerSpawnerResourceData;
 class UHierarchicalInstancedStaticMeshComponent;
 class UPFProximityResource;
@@ -43,13 +44,19 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
 	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> YellowFlowerHISMPtr_;
-
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
+	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
+	
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	FVector GetRandomFlowerSize();
 
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	bool CheckSpawnConditions(UPARAM(ref) FHitResult& SupposedSpawnLocationHit, UPARAM(ref) FHitResult& InitialHit);
 
+    UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
+    float DetermineSpawnDelay();
+	
 private:
 	bool CheckValidity() const;
 };
