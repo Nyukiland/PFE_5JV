@@ -83,6 +83,9 @@ protected:
 	FVector GetRandomFlowerSize();
 
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
+	float GetRandomFlowerHeight(float GroundHeight);
+
+	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	bool CheckSpawnConditions(UPARAM(ref) FHitResult& SupposedSpawnLocationHit, UPARAM(ref) FHitResult& InitialHit);
 
     UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")

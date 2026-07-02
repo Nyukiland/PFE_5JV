@@ -43,4 +43,8 @@ public:
 	meta=(ToolTip="La hauteur minimale au dessus du sol où spawn la fleur."))
 	float MinimalHeightAboveGround;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
+	meta=(ToolTip="La hauteur maximale au dessus du sol où spawn la fleur."))
+	float MaximalHeightAboveGround;
+
 };

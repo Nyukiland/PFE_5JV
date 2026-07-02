@@ -71,13 +71,20 @@ bool UPFFlowerSpawnerResource::TryGetFlowerColorFromEnum(EPFFlowerColor FlowerCo
 	}
 }
 
-
 FVector UPFFlowerSpawnerResource::GetRandomFlowerSize()
 {
 	const float RandomFlowerSize = FMath::RandRange(DataPtr_->MinimumFlowerScale, DataPtr_->MaximumFlowerScale);	
 	const FVector RandomFlowerScale = FVector(RandomFlowerSize);
 	
 	return RandomFlowerScale;
+}
+
+float UPFFlowerSpawnerResource::GetRandomFlowerHeight(float GroundHeight)
+{
+	float RandomFlowerHeight = FMath::RandRange(DataPtr_->MinimalHeightAboveGround, DataPtr_->MaximalHeightAboveGround);	
+	RandomFlowerHeight += GroundHeight;
+	
+	return RandomFlowerHeight;
 }
 
 bool UPFFlowerSpawnerResource::CheckSpawnConditions(FHitResult& SupposedSpawnLocationHit, FHitResult& InitialHit)
