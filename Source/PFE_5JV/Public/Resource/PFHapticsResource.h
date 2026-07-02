@@ -53,6 +53,8 @@ private:
 	TMap<FName, FActiveHapticData> ActiveHapticsMap_;
     
 	bool bIsPaused_ = false;
+	bool bisMuted_ = false;
+	float Intensity_ = 1.0f;
     
 	UPROPERTY()
 	TObjectPtr<APlayerController> PlayerController_;
@@ -69,7 +71,16 @@ public:
     
 	UFUNCTION(BlueprintCallable)
 	void AskToResumeHaptics();
-    
+	
+	UFUNCTION(BlueprintCallable)
+	void SetMuteHaptics(bool bMute);
+	
+	UFUNCTION(BlueprintCallable)
+    void ToggleMutism();
+	
+	UFUNCTION(BlueprintCallable)
+	void ChangeHapticsIntensity(float intensity);
+	
 private:
 	void AddNewHaptics(FName uniqueID, const FHapticsSettings& settings);
 	void UpdateHaptics(FActiveHapticData* existingData, const FHapticsSettings& settings);
