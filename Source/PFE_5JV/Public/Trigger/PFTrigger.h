@@ -37,4 +37,12 @@ protected:
 	UFUNCTION()
 	void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 					  UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void TriggerEnterEvent();
+	virtual void TriggerEnterEvent_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void TriggerExitEvent();
+	virtual void TriggerExitEvent_Implementation();
 };

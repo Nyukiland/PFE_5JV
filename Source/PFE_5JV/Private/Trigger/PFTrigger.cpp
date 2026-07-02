@@ -57,6 +57,8 @@ void APFTrigger::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor
 		return;
 
 	PlayerInTriggerPtr = player;
+
+	TriggerEnterEvent();
 	
 	for (UPFTriggerBehavior* behavior : BehaviorsPtr_)
 		behavior->OnTriggerEnter();
@@ -79,3 +81,11 @@ void APFTrigger::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* 
 	PlayerInTriggerPtr = nullptr;
 }
 
+void APFTrigger::TriggerEnterEvent_Implementation()
+{
+	
+}
+
+void APFTrigger::TriggerExitEvent_Implementation()
+{
+}
