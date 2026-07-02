@@ -37,6 +37,18 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 	if (!CheckValidity()) return;
 }
 
+void UPFFlowerSpawnerResource::ComponentTick_Implementation(float deltaTime)
+{
+	Super::ComponentTick_Implementation(deltaTime);
+
+	if(DelayToSpawnTimer_ < 0.f)
+	{
+		DelayToSpawnTimer_ = DetermineSpawnDelay();
+		OnFlowerSpawnDelegate.Broadcast();
+	}
+	if(DelayToSpawnTimer_ >= 0.f) DelayToSpawnTimer_ -= deltaTime;
+}
+
 void UPFFlowerSpawnerResource::SetCurrentFlowerColor(EPFFlowerColor FlowerColor)
 {
 	CurrentFlowerColor_ = FlowerColor;
@@ -113,7 +125,10 @@ bool UPFFlowerSpawnerResource::CheckSpawnConditions(FHitResult& SupposedSpawnLoc
 float UPFFlowerSpawnerResource::DetermineSpawnDelay()
 {
 	float PlayerVelocityPercentage = PhysicResourcePtr_->GetForwardVelocityPercentage();
-	float SpawnDelay = FMath::Lerp(PlayerVelocityPercentage, DataPtr_->DelayBetweenTwoSpawnsAtMinimalVelocity, DataPtr_->DelayBetweenTwoSpawnsAtMaximalVelocity);
+	// float PlayerVelocityPercentage = 0.f;
+
+	float SpawnDelay = FMath::Lerp(DataPtr_->DelayBetweenTwoSpawnsAtMinimalVelocity, DataPtr_->DelayBetweenTwoSpawnsAtMaximalVelocity, PlayerVelocityPercentage);
+
 	return SpawnDelay;
 }
 

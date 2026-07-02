@@ -23,6 +23,7 @@ enum class EPFFlowerColor : uint8
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFlowerColorChange, EPFFlowerColor, FlowerColor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFlowerSpawn);
 
 /**
  * 
@@ -33,10 +34,11 @@ class PFE_5JV_API UPFFlowerSpawnerResource : public UPFResource
 	GENERATED_BODY()
 
 public :
-	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
-
 	UPROPERTY(BlueprintAssignable, Category="FlowerSpawner")
 	FOnFlowerColorChange OnFlowerColorChangeDelegate;
+
+	UPROPERTY(BlueprintAssignable, Category="FlowerSpawner")
+	FOnFlowerSpawn OnFlowerSpawnDelegate;
 
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	void SetCurrentFlowerColor(EPFFlowerColor FlowerColor);
@@ -49,6 +51,13 @@ public :
 
 
 protected:
+	
+	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
+	virtual void ComponentTick_Implementation(float deltaTime) override;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
+	float DelayToSpawnTimer_ = -1.0f;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
 	TObjectPtr<APFPlayerCharacter> OwnerPtr_;
 
