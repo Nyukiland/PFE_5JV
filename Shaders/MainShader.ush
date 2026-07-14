@@ -1,0 +1,85 @@
+#pragma once
+
+#include "/Engine/Public/Platform.ush"
+#include "/Engine/Private/Common.ush"
+
+struct FKuwahara
+{
+	float3 KuwaharaFilter(float2 UV, float2 ViewSize, float2 Radius)
+	{
+		float3 mean[4] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+		float3 sigma[4] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+		float2 offsets[4] = {{-Radius.x, -Radius.y}, {-Radius.x, 0}, {0, -Radius.y}, {0, 0}};
+
+		float gradientX = 0;
+		float gradientY = 0;
+		float sobelX[9] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
+		float sobelY[9] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
+
+		int index = 0;
+		float2 texelSize = 1.0 / ViewSize;
+
+		// Gradient calculation
+		for (int x = -1; x <= 1; x++)
+		{
+			for (int y = -1; y <= 1; y++)
+			{
+				if (index == 4)
+				{
+					index++;
+					continue;
+				}
+				float2 offset = float2(x, y) * texelSize;
+				float3 pxCol = SceneTextureLookup(UV + offset, 14, false).xyz;
+				float pxLum = dot(pxCol, float3(0.2126, 0.7152, 0.0722));
+
+				gradientX += pxLum * sobelX[index];
+				gradientY += pxLum * sobelY[index];
+				index++;
+			}
+		}
+
+		float angle = atan2(gradientY, gradientX);
+		float s = sin(angle);
+		float c = cos(angle);
+		float3 col = float3(0, 0, 0);
+
+		// Kuwahara Filter
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j <= Radius.x; j++)
+			{
+				for (int k = 0; k <= Radius.y; k++)
+				{
+					float2 pos = float2(j, k) + offsets[i];
+					float2 offs = pos * texelSize;
+					offs = float2(offs.x * c - offs.y * s, offs.x * s + offs.y * c);
+
+					float2 uvpos = UV + offs;
+					float3 texCol = SceneTextureLookup(uvpos, 14, false).rgb;
+
+					mean[i] += texCol;
+					sigma[i] += texCol * texCol;
+				}
+			}
+		}
+
+		float n = (Radius.x + 1) * (Radius.y + 1);
+		float minSigma = 1.0;
+
+		for (int i = 0; i < 4; i++)
+		{
+			mean[i] /= n;
+			sigma[i] = abs(sigma[i] / n - mean[i] * mean[i]);
+			float sigma_f = sigma[i].r + sigma[i].g + sigma[i].b;
+
+			if (sigma_f < minSigma)
+			{
+				minSigma = sigma_f;
+				col = mean[i];
+			}
+		}
+
+		return col;
+	}
+};
