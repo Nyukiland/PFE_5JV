@@ -17,6 +17,26 @@ void UPFProximityResource::ComponentTick_Implementation(float deltaTime)
 	CheckBelowHit();
 }
 
+float UPFProximityResource::GetClosestDistancePercentage() const
+{
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ProximityResource] DataPtr_ is null!"));
+		return 0;
+	}
+
+	if (!ClosestHitResult.bBlockingHit)
+	{
+		return 0;
+	}
+
+	float dist = ClosestHitResult.Distance;
+	dist -= DataPtr_->SmallestClosestSphereSize;
+	float max = DataPtr_->BaseClosestSphereSize - DataPtr_->SmallestClosestSphereSize;
+
+	return 1 - FMath::Clamp(dist / max, 0.0f, 1.0f);
+}
+
 void UPFProximityResource::CheckCollisionInFront()
 {
 	if (!DataPtr_)

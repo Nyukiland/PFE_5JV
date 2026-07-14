@@ -14,6 +14,9 @@ public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 	virtual void ComponentTick_Implementation(float deltaTime) override;
 
+    UFUNCTION(BlueprintCallable, Category = "Proximity")
+    float GetClosestDistancePercentage() const;
+
 	UFUNCTION(BlueprintCallable, Category = "Proximity")
 	float GetMaxClosestDistance() const;
 
