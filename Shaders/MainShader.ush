@@ -1,85 +1,191 @@
 #pragma once
 
-#include "/Engine/Public/Platform.ush"
-#include "/Engine/Private/Common.ush"
-
 struct FKuwahara
 {
-	float3 KuwaharaFilter(float2 UV, float2 ViewSize, float2 Radius)
+	// -----------------------------------------------------------------------------
+	// 1. STANDARD KUWAHARA
+	// The optimized baseline. Best performance for a static radius.
+	// -----------------------------------------------------------------------------
+	static float3 KuwaharaBasic(float2 UV, float Radius, float2 InvSize)
 	{
-		float3 mean[4] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
-		float3 sigma[4] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
-		float2 offsets[4] = {{-Radius.x, -Radius.y}, {-Radius.x, 0}, {0, -Radius.y}, {0, 0}};
+#if POST_PROCESS_MATERIAL
 
-		float gradientX = 0;
-		float gradientY = 0;
-		float sobelX[9] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
-		float sobelY[9] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
+		float2 BufferUV = ViewportUVToBufferUV(UV);
+		
+		int r = (int)Radius;
+		if (r <= 0) return SceneTextureLookup(BufferUV, 14, false).rgb;
 
-		int index = 0;
-		float2 texelSize = 1.0 / ViewSize;
+		float3 m[4] = {float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0)};
+		float3 s[4] = {float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0)};
+		int2 offsets[4] = {int2(-r, -r), int2(0, -r), int2(-r, 0), int2(0, 0)};
 
-		// Gradient calculation
-		for (int x = -1; x <= 1; x++)
+		[unroll]
+		for (int i = 0; i < 4; ++i)
 		{
-			for (int y = -1; y <= 1; y++)
+			[loop]
+			for (int y = 0; y <= r; ++y)
 			{
-				if (index == 4)
+				[loop]
+				for (int x = 0; x <= r; ++x)
 				{
-					index++;
-					continue;
-				}
-				float2 offset = float2(x, y) * texelSize;
-				float3 pxCol = SceneTextureLookup(UV + offset, 14, false).xyz;
-				float pxLum = dot(pxCol, float3(0.2126, 0.7152, 0.0722));
-
-				gradientX += pxLum * sobelX[index];
-				gradientY += pxLum * sobelY[index];
-				index++;
-			}
-		}
-
-		float angle = atan2(gradientY, gradientX);
-		float s = sin(angle);
-		float c = cos(angle);
-		float3 col = float3(0, 0, 0);
-
-		// Kuwahara Filter
-		for (int i = 0; i < 4; i++)
-		{
-			for (int j = 0; j <= Radius.x; j++)
-			{
-				for (int k = 0; k <= Radius.y; k++)
-				{
-					float2 pos = float2(j, k) + offsets[i];
-					float2 offs = pos * texelSize;
-					offs = float2(offs.x * c - offs.y * s, offs.x * s + offs.y * c);
-
-					float2 uvpos = UV + offs;
-					float3 texCol = SceneTextureLookup(uvpos, 14, false).rgb;
-
-					mean[i] += texCol;
-					sigma[i] += texCol * texCol;
+					float2 offsetUV = BufferUV + float2(offsets[i].x + x, offsets[i].y + y) * InvSize;
+					float3 c = SceneTextureLookup(offsetUV, 14, false).rgb;
+					m[i] += c;
+					s[i] += c * c;
 				}
 			}
 		}
 
-		float n = (Radius.x + 1) * (Radius.y + 1);
-		float minSigma = 1.0;
+		float minVar = 1e8;
+		float3 result = float3(0, 0, 0);
+		float n = (r + 1) * (r + 1);
 
-		for (int i = 0; i < 4; i++)
+		[unroll]
+		for (int j = 0; j < 4; ++j)
 		{
-			mean[i] /= n;
-			sigma[i] = abs(sigma[i] / n - mean[i] * mean[i]);
-			float sigma_f = sigma[i].r + sigma[i].g + sigma[i].b;
+			m[j] /= n;
+			s[j] = abs(s[j] / n - m[j] * m[j]);
+			float variance = s[j].x + s[j].y + s[j].z;
 
-			if (sigma_f < minSigma)
+			if (variance < minVar)
 			{
-				minSigma = sigma_f;
-				col = mean[i];
+				minVar = variance;
+				result = m[j];
 			}
 		}
+		return result;
 
-		return col;
+#else
+		return float3(0, 0, 0);
+#endif
 	}
+
+	// -----------------------------------------------------------------------------
+	// 2. DEPTH-BASED KUWAHARA
+	// Handles the depth lerp inside the shader. Keeps the node graph clean.
+	// -----------------------------------------------------------------------------
+	static float3 KuwaharaDepth(float2 UV, float MinRadius, float MaxRadius, float DepthStart, float DepthEnd, float2 InvSize)
+	{
+#if POST_PROCESS_MATERIAL
+		float2 BufferUV = ViewportUVToBufferUV(UV);
+        
+		// SceneTexture ID 1 is SceneDepth. Returns depth in Unreal Units (cm).
+		float depth = SceneTextureLookup(BufferUV, 1, false).r;
+        
+		float depthFactor = saturate((depth - DepthStart) / (DepthEnd - DepthStart));
+		float localRadius = lerp(MinRadius, MaxRadius, depthFactor);
+        
+		return KuwaharaBasic(UV, localRadius, InvSize);
+#else
+		return float3(0, 0, 0);
+#endif
+	}
+	
+	// -----------------------------------------------------------------------------
+	// 3. VARIANCE-ADAPTIVE KUWAHARA (Highly Recommended)
+	// Calculates local image complexity. Shrinks radius on hard edges to preserve
+	// geometry, expands radius on flat textures for maximum paint effect.
+	// -----------------------------------------------------------------------------
+	static float3 KuwaharaAdaptive(float2 UV, float MaxRadius, float EdgeSensitivity, float2 InvSize)
+	{
+#if POST_PROCESS_MATERIAL
+		float2 BufferUV = ViewportUVToBufferUV(UV);
+		int r = (int)MaxRadius;
+        
+		float3 mean = float3(0, 0, 0);
+		float3 sqMean = float3(0, 0, 0);
+		float nMacro = (2 * r + 1) * (2 * r + 1);
+
+		[loop]
+		for (int y = -r; y <= r; ++y)
+		{
+			[loop]
+			for (int x = -r; x <= r; ++x)
+			{
+				float3 c = SceneTextureLookup(BufferUV + float2(x, y) * InvSize, 14, false).rgb;
+				mean += c;
+				sqMean += c * c;
+			}
+		}
+
+		mean /= nMacro;
+		float3 variance3 = abs(sqMean / nMacro - mean * mean);
+		float totalVariance = variance3.x + variance3.y + variance3.z;
+
+		float adaptiveRadius = max(1.0f, MaxRadius - (totalVariance * EdgeSensitivity));
+        
+		// Pass original UV, as KuwaharaBasic handles its own Buffer conversion
+		return KuwaharaBasic(UV, adaptiveRadius, InvSize);
+#else
+		return float3(0, 0, 0);
+#endif
+	}
+	
+	// -----------------------------------------------------------------------------
+	// 4. GENERALIZED KUWAHARA (Single-Pass Procedural)
+	// Uses 8 overlapping sectors and Gaussian weights. Extremely heavy.
+	// -----------------------------------------------------------------------------
+	static float3 KuwaharaGeneralized(float2 UV, float Radius, float Sharpness, float2 InvSize)
+    {
+#if POST_PROCESS_MATERIAL
+        float2 BufferUV = ViewportUVToBufferUV(UV);
+        int r = (int)Radius;
+        int N = 8; 
+
+        float4 m[8] = {
+           float4(0, 0, 0, 0), float4(0, 0, 0, 0), float4(0, 0, 0, 0), float4(0, 0, 0, 0), float4(0, 0, 0, 0),
+           float4(0, 0, 0, 0), float4(0, 0, 0, 0), float4(0, 0, 0, 0)
+        };
+        float3 s[8] = {
+           float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0),
+           float3(0, 0, 0), float3(0, 0, 0)
+        };
+
+        float piN = 2.0f * 3.14159265f / float(N);
+        float2x2 X = float2x2(cos(piN), sin(piN), -sin(piN), cos(piN));
+
+        [loop]
+        for (int y = -r; y <= r; ++y)
+        {
+           [loop]
+           for (int x = -r; x <= r; ++x)
+           {
+              float2 v = 0.5f * float2(x, y) / float(r);
+              float3 c = SceneTextureLookup(BufferUV + float2(x, y) * InvSize, 14, false).rgb;
+
+              [unroll]
+              for (int k = 0; k < 8; ++k)
+              {
+                 float angle = atan2(v.y, v.x);
+                 float dist = length(v);
+                 float weight = exp(-0.5f * pow((angle / (piN * 0.75f)), 2.0f)) * exp(-0.5f * pow((dist / 0.5f), 2.0f));
+
+                 if (dist <= 0.5f)
+                 {
+                    m[k] += float4(c * weight, weight);
+                    s[k] += c * c * weight;
+                 }
+                 v = mul(X, v);
+              }
+           }
+        }
+
+        float4 output = float4(0, 0, 0, 0);
+        [unroll]
+        for (int j = 0; j < 8; ++j)
+        {
+           m[j].rgb /= (m[j].w + 0.0001f);
+           s[j] = abs(s[j] / (m[j].w + 0.0001f) - m[j].rgb * m[j].rgb);
+
+           float sigma2 = s[j].r + s[j].g + s[j].b;
+           float w = 1.0f / (1.0f + pow(abs(1000.0f * sigma2), 0.5f * Sharpness));
+
+           output += float4(m[j].rgb * w, w);
+        }
+
+        return output.rgb / output.w;
+#else
+        return float3(0, 0, 0);
+#endif
+    }
 };
