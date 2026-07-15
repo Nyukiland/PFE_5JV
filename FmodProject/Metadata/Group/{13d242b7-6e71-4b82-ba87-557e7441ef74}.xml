@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="MixerGroup" id="{13d242b7-6e71-4b82-ba87-557e7441ef74}">
+		<property name="name">
+			<value>Wind</value>
+		</property>
+		<relationship name="effectChain">
+			<destination>{3c93ace5-1190-4231-bf15-c320f1ac6222}</destination>
+		</relationship>
+		<relationship name="panner">
+			<destination>{d4b6519b-661c-4d47-9846-fa711c4ffc79}</destination>
+		</relationship>
+		<relationship name="output">
+			<destination>{5acff119-ba95-4fa2-98ab-895aff3ab988}</destination>
+		</relationship>
+	</object>
+	<object class="MixerBusEffectChain" id="{3c93ace5-1190-4231-bf15-c320f1ac6222}">
+		<relationship name="effects">
+			<destination>{1fb62c51-ab9b-4a57-aed1-6d5bee738184}</destination>
+			<destination>{7b93605f-1091-4e96-982a-225aad152e15}</destination>
+			<destination>{9e7efb39-0268-417c-8463-4f6b28a81c75}</destination>
+		</relationship>
+	</object>
+	<object class="MixerBusPanner" id="{d4b6519b-661c-4d47-9846-fa711c4ffc79}" />
+	<object class="MixerBusFader" id="{1fb62c51-ab9b-4a57-aed1-6d5bee738184}" />
+	<object class="ThreeEQEffect" id="{7b93605f-1091-4e96-982a-225aad152e15}" />
+	<object class="LowpassEffect" id="{9e7efb39-0268-417c-8463-4f6b28a81c75}">
+		<property name="cutoff">
+			<value>22000</value>
+		</property>
+	</object>
+</objects>

@@ -3275,6 +3275,7 @@
 		<relationship name="effects">
 			<destination>{203daa7c-aec4-43c2-9345-57218c607290}</destination>
 			<destination>{3f2d9c90-4463-4f44-ba7a-4be834fce7ee}</destination>
+			<destination>{61f14704-c402-4133-92e6-dadcd0930b00}</destination>
 		</relationship>
 	</object>
 	<object class="MixerBusPanner" id="{f31f519b-9259-41f2-ac29-6235e80782ef}" />
@@ -6230,6 +6231,11 @@
 		<relationship name="automators">
 			<destination>{411abf0e-f10c-4807-a83b-e9310ff2096d}</destination>
 		</relationship>
+	</object>
+	<object class="GainEffect" id="{61f14704-c402-4133-92e6-dadcd0930b00}">
+		<property name="gain">
+			<value>-80</value>
+		</property>
 	</object>
 	<object class="AutomationPoint" id="{0d37b830-fde9-4e36-9afd-51520e7ae3a8}">
 		<property name="position">

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="AudioFile" id="{17a43254-8ead-4dc6-962c-9c1fba46bc8b}">
+		<property name="assetPath">
+			<value>Dive_Out.wav</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>48</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>3.1854791666666666</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{459824c1-523a-4a4c-a75b-428cde5361bb}</destination>
+		</relationship>
+	</object>
+</objects>

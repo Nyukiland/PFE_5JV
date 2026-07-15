@@ -22,6 +22,7 @@
 		<relationship name="effects">
 			<destination>{8e6fc6a0-1b76-4dc5-93a9-78497b61b72d}</destination>
 			<destination>{a7607f32-9858-4bac-9b5e-f445d50663b1}</destination>
+			<destination>{425c748c-f137-497b-982a-9a1f08fc17b9}</destination>
 		</relationship>
 	</object>
 	<object class="MixerBusPanner" id="{b1b36748-519c-4cae-bfef-b018a64e4679}" />
@@ -29,6 +30,11 @@
 	<object class="LowpassEffect" id="{a7607f32-9858-4bac-9b5e-f445d50663b1}">
 		<property name="cutoff">
 			<value>22000</value>
+		</property>
+	</object>
+	<object class="SFXReverbEffect" id="{425c748c-f137-497b-982a-9a1f08fc17b9}">
+		<property name="wetLevel">
+			<value>-80</value>
 		</property>
 	</object>
 </objects>
