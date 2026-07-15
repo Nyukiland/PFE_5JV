@@ -9928,7 +9928,10 @@
 	<object class="MixerBusFader" id="{5c76691b-e6cc-4fdf-bb05-412b54cf2cac}" />
 	<object class="ThreeEQEffect" id="{193535ca-9202-4fb8-ac3a-5c2cc37f4e14}">
 		<property name="lowGain">
-			<value>-11</value>
+			<value>-9</value>
+		</property>
+		<property name="highGain">
+			<value>-5</value>
 		</property>
 	</object>
 	<object class="AutomationPoint" id="{1d53bfa3-db5f-4285-979e-e03ae983d056}">
@@ -10537,6 +10540,9 @@
 		</property>
 		<property name="value">
 			<value>-80</value>
+		</property>
+		<property name="curveShape">
+			<value>-0.469482124</value>
 		</property>
 	</object>
 	<object class="AutomationPoint" id="{a9eee198-5b4f-429d-9ba1-abb8007fe874}">
