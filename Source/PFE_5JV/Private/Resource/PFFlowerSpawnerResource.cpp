@@ -33,7 +33,7 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 	PhysicResourcePtr_ = ownerObj->GetStateComponent<UPFPhysicResource>();
 
 	CurrentFlowerColor_ = EPFFlowerColor::EPFFC_None;
-
+	OnFlowerSpawnDelegate.AddDynamic(this, &UPFFlowerSpawnerResource::SpawnFlowerC);
 	if (!CheckValidity()) return;
 }
 
@@ -99,7 +99,7 @@ float UPFFlowerSpawnerResource::GetRandomFlowerHeight(float GroundHeight)
 	return RandomFlowerHeight;
 }
 
-bool UPFFlowerSpawnerResource::CheckSpawnConditions(FHitResult& Hit)
+bool UPFFlowerSpawnerResource::CheckSpawnConditions(const FHitResult& Hit)
 {
 	if (!Hit.bBlockingHit) return false;
 	if (!Hit.GetActor()) return false;
@@ -127,6 +127,22 @@ float UPFFlowerSpawnerResource::DetermineSpawnDelay()
 	float SpawnDelay = FMath::Lerp(DataPtr_->DelayBetweenTwoSpawnsAtMinimalVelocity, DataPtr_->DelayBetweenTwoSpawnsAtMaximalVelocity, PlayerVelocityPercentage);
 
 	return SpawnDelay;
+}
+
+void UPFFlowerSpawnerResource::SpawnFlowerC()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Flower Spawn !!!!!")));
+	// if(!ProximityResourcePtr_) return;
+	// TArray<FHitResult> ValidHitResults = ProximityResourcePtr_->ValidHitResults;
+	// if(ValidHitResults.IsEmpty()) return;
+	//
+	// FHitResult InitialHitResult;
+	//
+	// for(const FHitResult& ValidHitResult: ValidHitResults)
+	// {
+	// 	if(CheckSpawnConditions(ValidHitResult))
+	// 	InitialHitResult = ValidHitResult;
+	}
 }
 
 bool UPFFlowerSpawnerResource::CheckValidity() const
