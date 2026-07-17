@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <objects serializationModel="Studio.02.02.00">
 	<object class="Event" id="{f17c1e71-d460-416a-8bab-722732dbe114}">
+		<property name="note">
+			<value>Do not ask me why. Even I don't know why I made this.</value>
+		</property>
 		<property name="name">
 			<value>Eagle_Scream</value>
 		</property>
