@@ -142,7 +142,7 @@ void UPFFlowerSpawnerResource::SpawnFlowerC()
 	// {
 	// 	if(CheckSpawnConditions(ValidHitResult))
 	// 	InitialHitResult = ValidHitResult;
-	}
+	// }
 }
 
 bool UPFFlowerSpawnerResource::CheckValidity() const
