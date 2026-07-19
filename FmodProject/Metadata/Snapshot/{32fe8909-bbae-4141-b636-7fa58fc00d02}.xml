@@ -21,8 +21,6 @@
 		</relationship>
 		<relationship name="snapshotProperties">
 			<destination>{fb818088-2831-46e3-b492-5e56d5d85b01}</destination>
-			<destination>{4ea60e1d-c98c-43b7-b3a0-e81cba59bd19}</destination>
-			<destination>{1957bff4-4001-47eb-a301-98124ac27f1c}</destination>
 			<destination>{f40be2a9-484c-4f91-a828-871094b3e2ad}</destination>
 			<destination>{96097eee-bba4-4e11-bef8-4b5630bc10c0}</destination>
 		</relationship>
@@ -51,28 +49,6 @@
 		</property>
 		<relationship name="automatableObject">
 			<destination>{46a7e410-eb5e-409f-8b1c-7be7ef288dba}</destination>
-		</relationship>
-	</object>
-	<object class="SnapshotProperty" id="{4ea60e1d-c98c-43b7-b3a0-e81cba59bd19}">
-		<property name="propertyName">
-			<value>cutoff</value>
-		</property>
-		<property name="value">
-			<value>380</value>
-		</property>
-		<relationship name="automatableObject">
-			<destination>{097ee7eb-d451-4a6e-b720-9f12c8e79bcd}</destination>
-		</relationship>
-	</object>
-	<object class="SnapshotProperty" id="{1957bff4-4001-47eb-a301-98124ac27f1c}">
-		<property name="propertyName">
-			<value>resonance</value>
-		</property>
-		<property name="value">
-			<value>1</value>
-		</property>
-		<relationship name="automatableObject">
-			<destination>{097ee7eb-d451-4a6e-b720-9f12c8e79bcd}</destination>
 		</relationship>
 	</object>
 	<object class="SnapshotProperty" id="{f40be2a9-484c-4f91-a828-871094b3e2ad}">
