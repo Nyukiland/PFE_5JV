@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "EnhancedInputSubsystems.h"
+#include "Components/WorldPartitionStreamingSourceComponent.h"
 #include "PFPlayerCharacter.generated.h"
 
 class UPFStateComponent;
@@ -32,6 +33,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 	TArray<TObjectPtr<UInputAction>> InputActionsPtr_;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player")
+	TObjectPtr<UWorldPartitionStreamingSourceComponent> StreamingSourcePtr_;
 	
 private:
 	UPROPERTY()

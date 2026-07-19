@@ -33,7 +33,7 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 	PhysicResourcePtr_ = ownerObj->GetStateComponent<UPFPhysicResource>();
 
 	CurrentFlowerColor_ = EPFFlowerColor::EPFFC_None;
-
+	OnFlowerSpawnDelegate.AddDynamic(this, &UPFFlowerSpawnerResource::SpawnFlowerC);
 	if (!CheckValidity()) return;
 }
 
@@ -99,24 +99,21 @@ float UPFFlowerSpawnerResource::GetRandomFlowerHeight(float GroundHeight)
 	return RandomFlowerHeight;
 }
 
-bool UPFFlowerSpawnerResource::CheckSpawnConditions(FHitResult& SupposedSpawnLocationHit, FHitResult& InitialHit)
+bool UPFFlowerSpawnerResource::CheckSpawnConditions(const FHitResult& Hit)
 {
-	if (!SupposedSpawnLocationHit.IsValidBlockingHit()) return false;
-	if (!SupposedSpawnLocationHit.GetActor()) return false;
-
-	// Si la localisation du spawn n'est pas sur le même acteur que le hit initial, on ne spawn pas : 
-	if(SupposedSpawnLocationHit.GetActor() != InitialHit.GetActor()) return false;
+	if (!Hit.bBlockingHit) return false;
+	if (!Hit.GetActor()) return false;
 
 	// Si la pente de la surface où on veut spawn est trop raide (ex : falaise), on ne spawn pas :
 	// Calcule l'angle de la pente :
 	FVector UpVector = FVector(0,0,1);
-	const double CosTheta = FVector::DotProduct(SupposedSpawnLocationHit.ImpactNormal, UpVector);
+	const double CosTheta = FVector::DotProduct(Hit.ImpactNormal, UpVector);
 	double SlopAngle = FMath::Acos(CosTheta);
 	SlopAngle = FMath::RadiansToDegrees(SlopAngle);
 	if(SlopAngle >= DataPtr_->MaximalSlopInDegreesToSpawn) return false;
 	
 	// Ne spawn pas sur les supports n'ayant pas le tag "Landscape"
-	if(SupposedSpawnLocationHit.GetActor()->ActorHasTag("Landscape") == false) return false;
+	if(Hit.GetActor()->ActorHasTag("Landscape") == false) return false;
 	
 	// Dans les autres cas, on spawn la fleur :
 	return true;
@@ -130,6 +127,22 @@ float UPFFlowerSpawnerResource::DetermineSpawnDelay()
 	float SpawnDelay = FMath::Lerp(DataPtr_->DelayBetweenTwoSpawnsAtMinimalVelocity, DataPtr_->DelayBetweenTwoSpawnsAtMaximalVelocity, PlayerVelocityPercentage);
 
 	return SpawnDelay;
+}
+
+void UPFFlowerSpawnerResource::SpawnFlowerC()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Flower Spawn !!!!!")));
+	// if(!ProximityResourcePtr_) return;
+	// TArray<FHitResult> ValidHitResults = ProximityResourcePtr_->ValidHitResults;
+	// if(ValidHitResults.IsEmpty()) return;
+	//
+	// FHitResult InitialHitResult;
+	//
+	// for(const FHitResult& ValidHitResult: ValidHitResults)
+	// {
+	// 	if(CheckSpawnConditions(ValidHitResult))
+	// 	InitialHitResult = ValidHitResult;
+	// }
 }
 
 bool UPFFlowerSpawnerResource::CheckValidity() const

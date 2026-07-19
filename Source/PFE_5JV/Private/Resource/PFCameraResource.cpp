@@ -212,51 +212,72 @@ void UPFCameraResource::ManageCameraDistance(float deltaTime)
 
 	float dynamicZOffset = FMath::Lerp(0.0f, DataPtr_->SquishedHeightOffset, closeProximityAlpha);
 
-	FVector goToPos = FVector(-DistanceCurrentOffset_, 0, dynamicZOffset);
+	FVector idealLocalPos = FVector(-DistanceCurrentOffset_, 0, dynamicZOffset);
 
-	// Ray for collision
-	FTransform ParentTransform = CameraPositionPtr_->GetComponentTransform();
+	FTransform parentTransform = CameraPositionPtr_->GetComponentTransform();
 	FVector startPos = Owner->GetActorLocation();
-	FVector endPos = ParentTransform.TransformPosition(goToPos);
-	goToPos = ParentTransform.InverseTransformPosition(CheckRayCameraValidity(startPos, endPos));
+	FVector endPos = parentTransform.TransformPosition(idealLocalPos);
+    
+	FVector targetCollisionPos = parentTransform.InverseTransformPosition(CheckRayCameraValidity(startPos, endPos));
 
-	CameraPtr_->SetRelativeLocation(goToPos);
+	FVector currentCameraPos = CameraPtr_->GetRelativeLocation();
+    
+	float finalLerpSpeed = (targetCollisionPos.SizeSquared() < currentCameraPos.SizeSquared()) 
+						   ? DataPtr_->CollisionPushSpeed : DataPtr_->DistanceLerpSpeed;
+
+	FVector smoothedPos = FMath::VInterpTo(currentCameraPos, targetCollisionPos, deltaTime, finalLerpSpeed);
+
+	CameraPtr_->SetRelativeLocation(smoothedPos);
 }
 
 FVector UPFCameraResource::CheckRayCameraValidity(FVector startPos, FVector endPos)
 {
-	FVector dir = endPos - startPos;
-
 	FCollisionQueryParams queryParams;
 	queryParams.AddIgnoredActor(Owner);
 	queryParams.bTraceComplex = true;
 	FCollisionShape sweepShape = FCollisionShape::MakeSphere(DataPtr_->SphereDetectionSize);
+    
+	FVector currentStart = startPos;
+	FVector currentEnd = endPos;
 	FHitResult hit;
 
-	if (!OwnerWorldPtr_->SweepSingleByChannel(hit, startPos, endPos, FQuat::Identity, ECC_Visibility, sweepShape, queryParams))
-	{
-		return endPos;
-	}
+	const int32 MaxSlideIterations = 3;
 
-	FVector safeHitLoc = hit.Location;
-	
-	if (hit.bStartPenetrating)
+	for (int32 i = 0; i < MaxSlideIterations; ++i)
 	{
-		if (!OwnerWorldPtr_->LineTraceSingleByChannel(hit, startPos, endPos, ECC_Visibility, queryParams))
+		if (!OwnerWorldPtr_->SweepSingleByChannel(hit, currentStart, currentEnd, FQuat::Identity, ECC_Visibility, sweepShape, queryParams))
 		{
-			return endPos;
+			return currentEnd;
 		}
 
-		safeHitLoc += hit.ImpactNormal * 100;
+		FVector safeHitLoc = hit.Location;
+        
+		if (hit.bStartPenetrating)
+		{
+			if (!OwnerWorldPtr_->LineTraceSingleByChannel(hit, currentStart, currentEnd, ECC_Visibility, queryParams))
+			{
+				return currentEnd;
+			}
+			safeHitLoc += hit.ImpactNormal * 2.0f; 
+		}
+		else
+		{
+			safeHitLoc += hit.ImpactNormal * 2.0f;
+		}
+
+		float totalDist = (currentEnd - currentStart).Size();
+		float distTraveled = (hit.Location - currentStart).Size();
+		float remainingDist = FMath::Max(0.0f, totalDist - distTraveled);
+
+		FVector dir = (currentEnd - currentStart).GetSafeNormal();
+		FVector slideDir = FVector::VectorPlaneProject(dir, hit.ImpactNormal);
+		slideDir.Normalize();
+
+		currentStart = safeHitLoc;
+		currentEnd = safeHitLoc + (slideDir * remainingDist);
 	}
 
-	safeHitLoc += hit.ImpactNormal;
-	float remainingDist = dir.Size() - hit.Distance;
-	FVector slideDir = FVector::VectorPlaneProject(dir.GetSafeNormal(), hit.ImpactNormal);
-	slideDir.Normalize();
-
-	FVector finalWorldPos = safeHitLoc + (slideDir * remainingDist);
-	return CheckRayCameraValidity(safeHitLoc, finalWorldPos);
+	return currentEnd;
 }
 
 void UPFCameraResource::ManageCameraPitch(float deltaTime)

@@ -16,12 +16,11 @@ public:
 	TObjectPtr<UPFAssistedAvoidanceData> DataPtr_;
 
 private:
-	UPROPERTY()
-	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
-	UPROPERTY()
-	TObjectPtr<UWorld> OwnerWorldPtr_;
-
-	FVector SmoothedSteering_ = FVector::ZeroVector;
+	UPROPERTY() TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
+	UPROPERTY() TObjectPtr<UWorld> OwnerWorldPtr_;
+    
+	FVector CurrentRepulsion_ = FVector::ZeroVector;
+	bool bIsInHardAvoid_ = false;
 
 public:
 	virtual void InitPreset_Implementation(UPFCollisionResource* collisionResource) override;
@@ -29,6 +28,8 @@ public:
 
 private:
 	void ProcessAssistedAvoidance(float deltaTime, const FVector& currentVelocity);
-	void CalculatePlayerIntent(FVector& outIntentDir);
-	void ApplySmoothSteering(const FVector& targetDir, float deltaTime);
+	bool CheckAbsoluteShield(float deltaTime, const FVector& currentVelocity, const FVector& startPos, const FVector& forwardDir);
+	void CalculateClampedIntent(const FVector& forwardDir, FVector& outIntentDir);
+	void CalculateDynamicRays(const FVector& startPos, const FVector& forwardDir, const float* rayDist, FVector& outTotalRepulsion, FVector& outFirstOpenDir, float& outClosestDistance, bool& bOutHitCenter, int& outOpenRayCount);
+	void JudgeAndApplyPredictiveForces(float deltaTime, const FVector& forwardDir, const FVector& intentDir, const FVector& totalRepulsion, const FVector& firstOpenDir, float closestDistance, float dynamicAvoidDistance, float speedMultiplier, bool bHitCenter, int openRayCount);
 };

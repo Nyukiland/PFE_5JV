@@ -8,6 +8,26 @@
 APFPlayerCharacter::APFPlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	
+	StreamingSourcePtr_ = CreateDefaultSubobject<UWorldPartitionStreamingSourceComponent>(TEXT("StreamingSource"));
+
+	StreamingSourcePtr_->EnableStreamingSource();
+	
+	FStreamingSourceShape SafetyBubble;
+	SafetyBubble.bUseGridLoadingRange = false;
+	SafetyBubble.Radius = 25000.0f;
+	SafetyBubble.bIsSector = false; 
+
+	FStreamingSourceShape ForwardHemisphere;
+	ForwardHemisphere.bUseGridLoadingRange = false; 
+	ForwardHemisphere.Radius = 150000.0f;
+	ForwardHemisphere.bIsSector = true;
+	ForwardHemisphere.SectorAngle = 180.0f; 
+	ForwardHemisphere.Rotation = FRotator::ZeroRotator; 
+
+	StreamingSourcePtr_->Shapes.Empty();
+	StreamingSourcePtr_->Shapes.Add(SafetyBubble);
+	StreamingSourcePtr_->Shapes.Add(ForwardHemisphere);
 }
 
 void APFPlayerCharacter::BeginPlay()

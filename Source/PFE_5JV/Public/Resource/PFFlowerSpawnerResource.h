@@ -93,13 +93,15 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	float GetRandomFlowerHeight(float GroundHeight);
+	
+	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
+	bool CheckSpawnConditions(UPARAM(ref) const FHitResult& Hit);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
-	bool CheckSpawnConditions(UPARAM(ref) FHitResult& SupposedSpawnLocationHit, UPARAM(ref) FHitResult& InitialHit);
-
-    UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
     float DetermineSpawnDelay();
-	
+
+	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
+	void SpawnFlowerC();
 private:
 	bool CheckValidity() const;
 };
