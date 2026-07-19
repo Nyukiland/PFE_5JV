@@ -4,8 +4,9 @@
 #include "Resource/PFFlowerSpawnerResource.h"
 
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
+#include "Helpers/PFMathHelper.h"
 #include "Helpers/PFPainter.h"
-#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Materials/MaterialParameterCollection.h"
 #include "StateMachine/PFPlayerCharacter.h"
 #include "Resource/PFProximityResource.h"
@@ -31,6 +32,8 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 	if (YellowFlowerHISMComponents.Num() > 0) YellowFlowerHISMPtr_ = Cast<UHierarchicalInstancedStaticMeshComponent>(YellowFlowerHISMComponents[0]);
 
 	PhysicResourcePtr_ = ownerObj->GetStateComponent<UPFPhysicResource>();
+
+	OwnerWorldPtr_ = Owner->GetWorld();
 
 	CurrentFlowerColor_ = EPFFlowerColor::EPFFC_None;
 	OnFlowerSpawnDelegate.AddDynamic(this, &UPFFlowerSpawnerResource::SpawnFlowerC);
@@ -131,8 +134,11 @@ float UPFFlowerSpawnerResource::DetermineSpawnDelay()
 
 void UPFFlowerSpawnerResource::SpawnFlowerC()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Flower Spawn !!!!!")));
-	// if(!ProximityResourcePtr_) return;
+	// GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Flower Spawn !!!!!")));
+
+	// // Si la couleur de la fleur n'est pas set, pas la peine de continuer plus loin
+	// if(CurrentFlowerColor_ == EPFFlowerColor::EPFFC_None) return;
+	//
 	// TArray<FHitResult> ValidHitResults = ProximityResourcePtr_->ValidHitResults;
 	// if(ValidHitResults.IsEmpty()) return;
 	//
@@ -140,9 +146,51 @@ void UPFFlowerSpawnerResource::SpawnFlowerC()
 	//
 	// for(const FHitResult& ValidHitResult: ValidHitResults)
 	// {
-	// 	if(CheckSpawnConditions(ValidHitResult))
+	// 	if(!CheckSpawnConditions(ValidHitResult)) continue;
 	// 	InitialHitResult = ValidHitResult;
+	// 	break;
 	// }
+	//
+	// // Rotate the plan XY with random result to be perpendicular to the impact normal :
+	// FVector PlayerPosition = OwnerPtr_->GetActorLocation(); 
+	// FVector BirdToInitialHitVector = PlayerPosition - InitialHitResult.ImpactPoint;
+	// float Distance = BirdToInitialHitVector.Size();
+	//
+	// float BrushRadius = UPFMathHelper::RemapClamped(Distance, PainterDataPtr_->BrushMaxDistance, 0.0f, PainterDataPtr_->BrushSize.X, PainterDataPtr_->BrushSize.Y);
+	// BrushRadius *= 18.0f;
+	//
+	// // TODO : FONCTION POUR AVOIR UN VRAI RANDOM POINT
+	// FVector RandomPointInBrushRadius = FVector(1.0f,0.0f,0.0f);
+	//
+	// FVector UpVector =  FVector(0.0f, 0.0f, 1.0f);
+	// FRotator UpToNormalRotation = UKismetMathLibrary::MakeRotFromX(InitialHitResult.ImpactNormal - UpVector);
+	// FVector InBrushPointPerpendicularToNormal = UpToNormalRotation.RotateVector(RandomPointInBrushRadius); 
+	//
+	// // Place the plan with random result at the impact location :
+	// FVector BrushPlanAtImpactLocation = InitialHitResult.ImpactPoint + InBrushPointPerpendicularToNormal;
+	//
+	// // Get the normalized direction between the bird and the random direction :
+	// FVector BirdToRandomLocationInBrushVector = BrushPlanAtImpactLocation - PlayerPosition;
+	// FVector NormalizedBirdToRandomLocationInBrushVector = BirdToRandomLocationInBrushVector.GetSafeNormal();
+	//
+	// // Adjust the length :
+	// FVector LengthenVector = NormalizedBirdToRandomLocationInBrushVector * 5000.f; // Valeur à mettre dans les datas pour les GDs
+	//
+	// // Get normal and impact datas for this point :
+	// FHitResult CurrentHitResult;
+	// const FCollisionShape sphere = FCollisionShape::MakeSphere(1.f);
+	// OwnerWorldPtr_->SweepSingleByChannel(CurrentHitResult, PlayerPosition, PlayerPosition + LengthenVector,
+	// 								FQuat::Identity, ECC_Visibility, sphere);
+	//
+	// if(!CheckSpawnConditions(CurrentHitResult)) return;
+	// float FlowerHeight = GetRandomFlowerHeight(CurrentHitResult.ImpactPoint.Z);
+	// FVector FlowerSize = GetRandomFlowerSize();
+	//
+	// FVector SpawnLocation = FVector(CurrentHitResult.ImpactPoint.X, CurrentHitResult.ImpactPoint.Y, FlowerHeight);
+	// FRotator SpawnRotation = UKismetMathLibrary::MakeRotFromZX(CurrentHitResult.ImpactNormal, UpVector);
+	// GetWorld()->SpawnActor<class AActor>(FlowerClass, SpawnLocation, SpawnRotation); // Faire une classe C++ pour la fleur
+	//
+
 }
 
 bool UPFFlowerSpawnerResource::CheckValidity() const
@@ -174,6 +222,12 @@ bool UPFFlowerSpawnerResource::CheckValidity() const
 	if (!PainterPtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] The PainterPtr is NULL"))
+		return false;
+	}
+
+	if (!PainterDataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] The PainterDataPtr is NULL"))
 		return false;
 	}
 	

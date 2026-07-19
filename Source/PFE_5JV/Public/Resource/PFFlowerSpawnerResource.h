@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Data/PFPaintResourceData.h"
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFFlowerSpawnerResource.generated.h"
 
@@ -67,16 +68,22 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
 	TObjectPtr<UPFFlowerSpawnerResourceData> DataPtr_;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
+	TSubclassOf<class AActor> FlowerClass;
+		
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Painter|References")
 	TObjectPtr<APFPainter> PainterPtr_;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Painter|References")
+	TObjectPtr<UPFPaintResourceData> PainterDataPtr_;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Painter|References")
 	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> BlueFlowerHISMPtr_;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Painter|References")
 	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> RedFlowerHISMPtr_;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Painter|References")
 	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> YellowFlowerHISMPtr_;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
@@ -87,6 +94,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
 	TObjectPtr<UMaterialParameterCollection> FlowerColorCollectionPtr_;
+
+	UPROPERTY()
+	TObjectPtr<UWorld> OwnerWorldPtr_;	
 	
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	FVector GetRandomFlowerSize();
@@ -102,6 +112,7 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	void SpawnFlowerC();
+	
 private:
 	bool CheckValidity() const;
 };
