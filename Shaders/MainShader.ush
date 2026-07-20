@@ -514,4 +514,93 @@ struct FKuwaharaOpti
         return float3(0, 0, 0);
 #endif
     }
+
+	// -----------------------------------------------------------------------------
+	// ADAPTIVE KUWAHARA + DITHER (Highly Optimized)
+	// Uses scalar luminance for variance to drastically reduce ALU instructions.
+	// Jitter offsets the grid to fake anisotropic brush strokes.
+	// -----------------------------------------------------------------------------
+	static float3 KuwaharaAdaptiveAdvanced(float2 UV, float MaxRadius, float EdgeSensitivity, float2 Jitter, float2 InvSize)
+    {
+#if POST_PROCESS_MATERIAL
+       // Apply Blue Noise dither offset
+       float2 BufferUV = ViewportUVToBufferUV(UV) + (Jitter * InvSize);
+       int rMax = (int)MaxRadius;
+       
+       // --- 1. MACRO VARIANCE PASS (Luminance Optimized) ---
+       // Calculates overall complexity to shrink the radius near edges
+       float meanLumaMacro = 0.0f;
+       float sqMeanLumaMacro = 0.0f;
+       float nMacro = (2.0f * rMax + 1.0f) * (2.0f * rMax + 1.0f);
+
+       [loop]
+       for (int y = -rMax; y <= rMax; ++y)
+       {
+          [loop]
+          for (int x = -rMax; x <= rMax; ++x)
+          {
+             float3 c = SceneTextureLookup(BufferUV + float2(x, y) * InvSize, 14, false).rgb;
+             float l = GetLuminance(c);
+             meanLumaMacro += l;
+             sqMeanLumaMacro += l * l;
+          }
+       }
+
+       meanLumaMacro /= nMacro;
+       float varianceMacro = abs(sqMeanLumaMacro / nMacro - meanLumaMacro * meanLumaMacro);
+       
+       // Scale variance by 3.0 to match the older RGB totalVariance magnitude
+       float adaptiveRadius = max(1.0f, MaxRadius - (varianceMacro * 3.0f * EdgeSensitivity));
+       
+       // --- 2. OPTIMIZED KUWAHARA PASS ---
+       int r = (int)adaptiveRadius;
+       
+       float3 m[4] = {float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0)};
+       float s[4] = {0.0f, 0.0f, 0.0f, 0.0f}; 
+       float lumaSum[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+       int2 offsets[4] = {int2(-r, -r), int2(0, -r), int2(-r, 0), int2(0, 0)};
+
+       [unroll]
+       for (int i = 0; i < 4; ++i)
+       {
+          [loop]
+          for (int y = 0; y <= r; ++y)
+          {
+             [loop]
+             for (int x = 0; x <= r; ++x)
+             {
+                float2 offsetUV = BufferUV + float2(offsets[i].x + x, offsets[i].y + y) * InvSize;
+                float3 c = SceneTextureLookup(offsetUV, 14, false).rgb;
+                float l = GetLuminance(c);
+                
+                m[i] += c;
+                lumaSum[i] += l;
+                s[i] += l * l;
+             }
+          }
+       }
+
+       float minVar = 1e8;
+       float3 result = float3(0, 0, 0);
+       float n = (r + 1) * (r + 1);
+
+       [unroll]
+       for (int j = 0; j < 4; ++j)
+       {
+          m[j] /= n;
+          float meanLuma = lumaSum[j] / n;
+          float variance = abs(s[j] / n - meanLuma * meanLuma);
+
+          if (variance < minVar)
+          {
+             minVar = variance;
+             result = m[j];
+          }
+       }
+       return result;
+
+#else
+       return float3(0, 0, 0);
+#endif
+    }
 };
