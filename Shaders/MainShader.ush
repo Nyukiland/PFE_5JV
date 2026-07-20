@@ -188,4 +188,330 @@ struct FKuwahara
         return float3(0, 0, 0);
 #endif
     }
+
+	// -----------------------------------------------------------------------------
+    // 5. ANISOTROPIC KUWAHARA (Single-Pass Hack)
+    // Computes Structure Tensor in-line (unblurred).
+    // Uses an oriented 4-quadrant elliptical window.
+    // -----------------------------------------------------------------------------
+    static float3 KuwaharaAnisotropicSinglePass(float2 UV, float Radius, float Eccentricity, float2 InvSize)
+    {
+#if POST_PROCESS_MATERIAL
+        float2 BufferUV = ViewportUVToBufferUV(UV);
+        int r = max(1, (int)Radius);
+        
+        // --- 1. LOCAL STRUCTURE TENSOR (3x3 Sobel) ---
+        // Using Sobel weights is cheaper than rotating generic kernels inside the shader
+        float3 c_tl = SceneTextureLookup(BufferUV + float2(-1, -1) * InvSize, 14, false).rgb;
+        float3 c_tc = SceneTextureLookup(BufferUV + float2( 0, -1) * InvSize, 14, false).rgb;
+        float3 c_tr = SceneTextureLookup(BufferUV + float2( 1, -1) * InvSize, 14, false).rgb;
+        float3 c_ml = SceneTextureLookup(BufferUV + float2(-1,  0) * InvSize, 14, false).rgb;
+        float3 c_mr = SceneTextureLookup(BufferUV + float2( 1,  0) * InvSize, 14, false).rgb;
+        float3 c_bl = SceneTextureLookup(BufferUV + float2(-1,  1) * InvSize, 14, false).rgb;
+        float3 c_bc = SceneTextureLookup(BufferUV + float2( 0,  1) * InvSize, 14, false).rgb;
+        float3 c_br = SceneTextureLookup(BufferUV + float2( 1,  1) * InvSize, 14, false).rgb;
+        
+        float3 dx = (c_tr + c_mr * 2.0f + c_br) - (c_tl + c_ml * 2.0f + c_bl);
+        float3 dy = (c_bl + c_bc * 2.0f + c_br) - (c_tl + c_tc * 2.0f + c_tr);
+        
+        float dxdx = dot(dx, dx);
+        float dxdy = dot(dx, dy);
+        float dydy = dot(dy, dy);
+        
+        // --- 2. EIGENVECTORS & ANISOTROPY ---
+        float eFirst = (dxdx + dydy) * 0.5f;
+        float eSqrt = sqrt(max(0.0f, (dxdx - dydy)*(dxdx - dydy) + 4.0f * dxdy * dxdy)) * 0.5f;
+        float lambda1 = eFirst + eSqrt;
+        float lambda2 = eFirst - eSqrt;
+        
+        float2 v = float2(lambda1 - dxdx, -dxdy);
+        float vlen = length(v);
+        float2 t = vlen > 0.0001f ? v / vlen : float2(1, 0);
+        
+        float anisotropy = (lambda1 + lambda2) > 0.0f ? (lambda1 - lambda2) / (lambda1 + lambda2) : 0.0f;
+        
+        // --- 3. ELLIPSE BOUNDS ---
+        float eccClamp = min(Eccentricity, 0.95f);
+        float eccAdj = (1.0f - eccClamp) * 10.0f;
+        float widthFactor = (eccAdj + anisotropy) / eccAdj;
+        
+        float eWidth = widthFactor * Radius;
+        float eHeight = Radius / widthFactor;
+        
+        // --- 4. ORIENTED SAMPLING LOOP ---
+        float cosT = t.x;
+        float sinT = t.y;
+        float2x2 RotMat = float2x2(cosT, sinT, -sinT, cosT);
+        
+        float3 m[4] = {float3(0,0,0), float3(0,0,0), float3(0,0,0), float3(0,0,0)};
+        float3 s[4] = {float3(0,0,0), float3(0,0,0), float3(0,0,0), float3(0,0,0)};
+        float n[4] = {0.0001f, 0.0001f, 0.0001f, 0.0001f}; // Avoid div by 0
+        
+        int boxBound = (int)ceil(max(eWidth, eHeight)); // Dynamically scale box to fit ellipse
+        
+        [loop]
+        for (int y = -boxBound; y <= boxBound; ++y)
+        {
+            [loop]
+            for (int x = -boxBound; x <= boxBound; ++x)
+            {
+                float2 offset = float2(x, y);
+                float2 rotatedOffset = mul(RotMat, offset);
+                
+                // Map to unit circle to enforce elliptical bounds
+                float2 disk = float2(rotatedOffset.x / eWidth, rotatedOffset.y / eHeight);
+                if (dot(disk, disk) > 1.0f) continue;
+                
+                float3 c = SceneTextureLookup(BufferUV + offset * InvSize, 14, false).rgb;
+                
+                // Determine which oriented quadrant this pixel falls into
+                int quad = (rotatedOffset.x >= 0.0f ? 1 : 0) + (rotatedOffset.y >= 0.0f ? 2 : 0);
+                
+                m[quad] += c;
+                s[quad] += c * c;
+                n[quad] += 1.0f;
+            }
+        }
+        
+        float minVar = 1e8;
+        float3 result = float3(0, 0, 0);
+        
+        [unroll]
+        for (int j = 0; j < 4; ++j)
+        {
+            m[j] /= n[j];
+            s[j] = abs(s[j] / n[j] - m[j] * m[j]);
+            float variance = s[j].x + s[j].y + s[j].z;
+            
+            if (variance < minVar)
+            {
+                minVar = variance;
+                result = m[j];
+            }
+        }
+        
+        return result;
+#else
+        return float3(0, 0, 0);
+#endif
+    }
+};
+
+struct FKuwaharaOpti
+{
+    // -----------------------------------------------------------------------------
+    // UTILITY: LUMINANCE
+    // Reduces vector math to scalar math for variance calculations.
+    // -----------------------------------------------------------------------------
+    static float GetLuminance(float3 Color)
+    {
+        return dot(Color, float3(0.299f, 0.587f, 0.114f));
+    }
+
+    // -----------------------------------------------------------------------------
+    // UTILITY: SOBEL DEPTH EDGE
+    // Returns 0.0 on edges, 1.0 on flat surfaces. Multiply final color by this.
+    // -----------------------------------------------------------------------------
+    static float SobelDepthEdge(float2 BufferUV, float2 InvSize, float Thickness)
+    {
+#if POST_PROCESS_MATERIAL
+        float2 offsets[8] = {
+            float2(-1, -1), float2(0, -1), float2(1, -1),
+            float2(-1,  0),                float2(1,  0),
+            float2(-1,  1), float2(0,  1), float2(1,  1)
+        };
+        
+        float Gx[8] = {-1, 0, 1, -2, 2, -1, 0, 1};
+        float Gy[8] = {-1, -2, -1, 0, 0, 1, 2, 1};
+
+        float edgeX = 0.0f;
+        float edgeY = 0.0f;
+
+        [unroll]
+        for (int i = 0; i < 8; ++i)
+        {
+            // ID 1 is SceneDepth
+            float depth = SceneTextureLookup(BufferUV + offsets[i] * InvSize * Thickness, 1, false).r;
+            edgeX += depth * Gx[i];
+            edgeY += depth * Gy[i];
+        }
+
+        float edge = sqrt(edgeX * edgeX + edgeY * edgeY);
+        // Tune the multiplier (0.01f) depending on scene scale to clamp the edge intensity
+        return saturate(1.0f - (edge * 0.01f)); 
+#else
+        return 1.0f;
+#endif
+    }
+
+    // -----------------------------------------------------------------------------
+    // OPTIMIZED BASIC KUWAHARA
+    // Calculates variance purely on luminance. Adds Blue Noise Jitter offset.
+    // -----------------------------------------------------------------------------
+    static float3 KuwaharaOptimized(float2 UV, float Radius, float2 Jitter, float2 InvSize)
+    {
+#if POST_PROCESS_MATERIAL
+       // Apply Blue Noise dither offset scaled by pixel size
+       float2 BufferUV = ViewportUVToBufferUV(UV) + (Jitter * InvSize);
+       
+       int r = (int)Radius;
+       if (r <= 0) return SceneTextureLookup(BufferUV, 14, false).rgb;
+
+       float3 m[4] = {float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0)};
+       float s[4] = {0.0f, 0.0f, 0.0f, 0.0f}; 
+       float lumaSum[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+       int2 offsets[4] = {int2(-r, -r), int2(0, -r), int2(-r, 0), int2(0, 0)};
+
+       [unroll]
+       for (int i = 0; i < 4; ++i)
+       {
+          [loop]
+          for (int y = 0; y <= r; ++y)
+          {
+             [loop]
+             for (int x = 0; x <= r; ++x)
+             {
+                float2 offsetUV = BufferUV + float2(offsets[i].x + x, offsets[i].y + y) * InvSize;
+                float3 c = SceneTextureLookup(offsetUV, 14, false).rgb;
+                float l = GetLuminance(c);
+                
+                m[i] += c;
+                lumaSum[i] += l;
+                s[i] += l * l;
+             }
+          }
+       }
+
+       float minVar = 1e8;
+       float3 result = float3(0, 0, 0);
+       float n = (r + 1) * (r + 1);
+
+       [unroll]
+       for (int j = 0; j < 4; ++j)
+       {
+          m[j] /= n;
+          float meanLuma = lumaSum[j] / n;
+          
+          // Variance is calculated via scalar math instead of float3
+          float variance = abs(s[j] / n - meanLuma * meanLuma);
+
+          if (variance < minVar)
+          {
+             minVar = variance;
+             result = m[j];
+          }
+       }
+       return result;
+
+#else
+       return float3(0, 0, 0);
+#endif
+    }
+
+    // -----------------------------------------------------------------------------
+    // ANISOTROPIC KUWAHARA (Luminance + Dither)
+    // Computes Structure Tensor on Luminance for performance.
+    // -----------------------------------------------------------------------------
+    static float3 KuwaharaAnisotropicAdvanced(float2 UV, float Radius, float Eccentricity, float2 Jitter, float2 InvSize)
+    {
+#if POST_PROCESS_MATERIAL
+        float2 BufferUV = ViewportUVToBufferUV(UV) + (Jitter * InvSize);
+        int r = max(1, (int)Radius);
+        
+        // --- 1. LOCAL STRUCTURE TENSOR (Luminance Sobel) ---
+        // Replacing full float3 reads with scalar luminance to drastically cut ALU
+        float tl = GetLuminance(SceneTextureLookup(BufferUV + float2(-1, -1) * InvSize, 14, false).rgb);
+        float tc = GetLuminance(SceneTextureLookup(BufferUV + float2( 0, -1) * InvSize, 14, false).rgb);
+        float tr = GetLuminance(SceneTextureLookup(BufferUV + float2( 1, -1) * InvSize, 14, false).rgb);
+        float ml = GetLuminance(SceneTextureLookup(BufferUV + float2(-1,  0) * InvSize, 14, false).rgb);
+        float mr = GetLuminance(SceneTextureLookup(BufferUV + float2( 1,  0) * InvSize, 14, false).rgb);
+        float bl = GetLuminance(SceneTextureLookup(BufferUV + float2(-1,  1) * InvSize, 14, false).rgb);
+        float bc = GetLuminance(SceneTextureLookup(BufferUV + float2( 0,  1) * InvSize, 14, false).rgb);
+        float br = GetLuminance(SceneTextureLookup(BufferUV + float2( 1,  1) * InvSize, 14, false).rgb);
+        
+        float dx = (tr + mr * 2.0f + br) - (tl + ml * 2.0f + bl);
+        float dy = (bl + bc * 2.0f + br) - (tl + tc * 2.0f + tr);
+        
+        float dxdx = dx * dx;
+        float dxdy = dx * dy;
+        float dydy = dy * dy;
+        
+        // --- 2. EIGENVECTORS & ANISOTROPY ---
+        float eFirst = (dxdx + dydy) * 0.5f;
+        float eSqrt = sqrt(max(0.0f, (dxdx - dydy)*(dxdx - dydy) + 4.0f * dxdy * dxdy)) * 0.5f;
+        float lambda1 = eFirst + eSqrt;
+        float lambda2 = eFirst - eSqrt;
+        
+        float2 v = float2(lambda1 - dxdx, -dxdy);
+        float vlen = length(v);
+        float2 t = vlen > 0.0001f ? v / vlen : float2(1, 0);
+        
+        float anisotropy = (lambda1 + lambda2) > 0.0f ? (lambda1 - lambda2) / (lambda1 + lambda2) : 0.0f;
+        
+        // --- 3. ELLIPSE BOUNDS ---
+        float eccClamp = min(Eccentricity, 0.95f);
+        float eccAdj = (1.0f - eccClamp) * 10.0f;
+        float widthFactor = (eccAdj + anisotropy) / eccAdj;
+        
+        float eWidth = widthFactor * Radius;
+        float eHeight = Radius / widthFactor;
+        
+        // --- 4. ORIENTED SAMPLING LOOP ---
+        float cosT = t.x;
+        float sinT = t.y;
+        float2x2 RotMat = float2x2(cosT, sinT, -sinT, cosT);
+        
+        float3 m[4] = {float3(0,0,0), float3(0,0,0), float3(0,0,0), float3(0,0,0)};
+        float s[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+        float lumaSum[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+        float n[4] = {0.0001f, 0.0001f, 0.0001f, 0.0001f}; 
+        
+        int boxBound = (int)ceil(max(eWidth, eHeight)); 
+        
+        [loop]
+        for (int y = -boxBound; y <= boxBound; ++y)
+        {
+            [loop]
+            for (int x = -boxBound; x <= boxBound; ++x)
+            {
+                float2 offset = float2(x, y);
+                float2 rotatedOffset = mul(RotMat, offset);
+                
+                float2 disk = float2(rotatedOffset.x / eWidth, rotatedOffset.y / eHeight);
+                if (dot(disk, disk) > 1.0f) continue;
+                
+                float3 c = SceneTextureLookup(BufferUV + offset * InvSize, 14, false).rgb;
+                float l = GetLuminance(c);
+
+                int quad = (rotatedOffset.x >= 0.0f ? 1 : 0) + (rotatedOffset.y >= 0.0f ? 2 : 0);
+                
+                m[quad] += c;
+                lumaSum[quad] += l;
+                s[quad] += l * l;
+                n[quad] += 1.0f;
+            }
+        }
+        
+        float minVar = 1e8;
+        float3 result = float3(0, 0, 0);
+        
+        [unroll]
+        for (int j = 0; j < 4; ++j)
+        {
+            m[j] /= n[j];
+            float meanLuma = lumaSum[j] / n[j];
+            float variance = abs(s[j] / n[j] - meanLuma * meanLuma);
+            
+            if (variance < minVar)
+            {
+                minVar = variance;
+                result = m[j];
+            }
+        }
+        
+        return result;
+#else
+        return float3(0, 0, 0);
+#endif
+    }
 };
