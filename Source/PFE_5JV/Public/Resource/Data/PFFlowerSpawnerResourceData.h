@@ -15,13 +15,14 @@ class PFE_5JV_API UPFFlowerSpawnerResourceData : public UDataAsset
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner",
-	meta=(ToolTip="Evolution de la durée entre 2 spawns en fonction de la vélocité"))
-	TObjectPtr<UCurveFloat> SpawnDelayBasedOnVelocityCurvePtr;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
+	meta=(ToolTip="Distance maximal de spawn par rapport à l'oiseau"))
+	float DelayBetweenTwoSpawnsAtMinimalVelocity;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
 	meta=(ToolTip="Nombre de secondes entre 2 spawns au minimum"))
-	float DelayBetweenTwoSpawnsAtMinimalVelocity;
+	float MaximalSpawnDistanceFromBird;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
 	meta=(ToolTip="Nombre de secondes entre 2 spawns au maximum"))

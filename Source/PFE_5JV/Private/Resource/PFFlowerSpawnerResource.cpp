@@ -6,11 +6,13 @@
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Helpers/PFMathHelper.h"
 #include "Helpers/PFPainter.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Materials/MaterialParameterCollection.h"
 #include "StateMachine/PFPlayerCharacter.h"
 #include "Resource/PFProximityResource.h"
 #include "Resource/PFPhysicResource.h"
+#include "Math/UnrealMathUtility.h"
 #include "Resource/Data/PFFlowerSpawnerResourceData.h"
 
 void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
@@ -36,7 +38,7 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 	OwnerWorldPtr_ = Owner->GetWorld();
 
 	CurrentFlowerColor_ = EPFFlowerColor::EPFFC_None;
-	OnFlowerSpawnDelegate.AddDynamic(this, &UPFFlowerSpawnerResource::SpawnFlowerC);
+	OnFlowerSpawnDelegate.AddDynamic(this, &UPFFlowerSpawnerResource::SpawnFlower);
 	if (!CheckValidity()) return;
 }
 
@@ -47,7 +49,8 @@ void UPFFlowerSpawnerResource::ComponentTick_Implementation(float deltaTime)
 	if(DelayToSpawnTimer_ < 0.f)
 	{
 		DelayToSpawnTimer_ = DetermineSpawnDelay();
-		OnFlowerSpawnDelegate.Broadcast();
+		// Si la couleur de la fleur n'est pas set, pas la peine de continuer plus loin
+		if(CurrentFlowerColor_ != EPFFlowerColor::EPFFC_None) OnFlowerSpawnDelegate.Broadcast();
 	}
 	if(DelayToSpawnTimer_ >= 0.f) DelayToSpawnTimer_ -= deltaTime;
 }
@@ -114,10 +117,10 @@ bool UPFFlowerSpawnerResource::CheckSpawnConditions(const FHitResult& Hit)
 	double SlopAngle = FMath::Acos(CosTheta);
 	SlopAngle = FMath::RadiansToDegrees(SlopAngle);
 	if(SlopAngle >= DataPtr_->MaximalSlopInDegreesToSpawn) return false;
-	
+
 	// Ne spawn pas sur les supports n'ayant pas le tag "Landscape"
 	if(Hit.GetActor()->ActorHasTag("Landscape") == false) return false;
-	
+
 	// Dans les autres cas, on spawn la fleur :
 	return true;
 }
@@ -132,65 +135,96 @@ float UPFFlowerSpawnerResource::DetermineSpawnDelay()
 	return SpawnDelay;
 }
 
-void UPFFlowerSpawnerResource::SpawnFlowerC()
+void UPFFlowerSpawnerResource::SpawnFlower()
 {
-	// GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Flower Spawn !!!!!")));
+	TArray<FHitResult> ValidHitResults = ProximityResourcePtr_->ValidHitResults;
+	if(ValidHitResults.IsEmpty()) return;
 
-	// // Si la couleur de la fleur n'est pas set, pas la peine de continuer plus loin
-	// if(CurrentFlowerColor_ == EPFFlowerColor::EPFFC_None) return;
-	//
-	// TArray<FHitResult> ValidHitResults = ProximityResourcePtr_->ValidHitResults;
-	// if(ValidHitResults.IsEmpty()) return;
-	//
-	// FHitResult InitialHitResult;
-	//
-	// for(const FHitResult& ValidHitResult: ValidHitResults)
-	// {
-	// 	if(!CheckSpawnConditions(ValidHitResult)) continue;
-	// 	InitialHitResult = ValidHitResult;
-	// 	break;
-	// }
-	//
-	// // Rotate the plan XY with random result to be perpendicular to the impact normal :
-	// FVector PlayerPosition = OwnerPtr_->GetActorLocation(); 
-	// FVector BirdToInitialHitVector = PlayerPosition - InitialHitResult.ImpactPoint;
-	// float Distance = BirdToInitialHitVector.Size();
-	//
-	// float BrushRadius = UPFMathHelper::RemapClamped(Distance, PainterDataPtr_->BrushMaxDistance, 0.0f, PainterDataPtr_->BrushSize.X, PainterDataPtr_->BrushSize.Y);
-	// BrushRadius *= 18.0f;
-	//
-	// // TODO : FONCTION POUR AVOIR UN VRAI RANDOM POINT
-	// FVector RandomPointInBrushRadius = FVector(1.0f,0.0f,0.0f);
-	//
-	// FVector UpVector =  FVector(0.0f, 0.0f, 1.0f);
-	// FRotator UpToNormalRotation = UKismetMathLibrary::MakeRotFromX(InitialHitResult.ImpactNormal - UpVector);
-	// FVector InBrushPointPerpendicularToNormal = UpToNormalRotation.RotateVector(RandomPointInBrushRadius); 
-	//
-	// // Place the plan with random result at the impact location :
-	// FVector BrushPlanAtImpactLocation = InitialHitResult.ImpactPoint + InBrushPointPerpendicularToNormal;
-	//
-	// // Get the normalized direction between the bird and the random direction :
-	// FVector BirdToRandomLocationInBrushVector = BrushPlanAtImpactLocation - PlayerPosition;
-	// FVector NormalizedBirdToRandomLocationInBrushVector = BirdToRandomLocationInBrushVector.GetSafeNormal();
-	//
-	// // Adjust the length :
-	// FVector LengthenVector = NormalizedBirdToRandomLocationInBrushVector * 5000.f; // Valeur à mettre dans les datas pour les GDs
-	//
-	// // Get normal and impact datas for this point :
-	// FHitResult CurrentHitResult;
-	// const FCollisionShape sphere = FCollisionShape::MakeSphere(1.f);
-	// OwnerWorldPtr_->SweepSingleByChannel(CurrentHitResult, PlayerPosition, PlayerPosition + LengthenVector,
-	// 								FQuat::Identity, ECC_Visibility, sphere);
-	//
-	// if(!CheckSpawnConditions(CurrentHitResult)) return;
-	// float FlowerHeight = GetRandomFlowerHeight(CurrentHitResult.ImpactPoint.Z);
-	// FVector FlowerSize = GetRandomFlowerSize();
-	//
-	// FVector SpawnLocation = FVector(CurrentHitResult.ImpactPoint.X, CurrentHitResult.ImpactPoint.Y, FlowerHeight);
-	// FRotator SpawnRotation = UKismetMathLibrary::MakeRotFromZX(CurrentHitResult.ImpactNormal, UpVector);
-	// GetWorld()->SpawnActor<class AActor>(FlowerClass, SpawnLocation, SpawnRotation); // Faire une classe C++ pour la fleur
-	//
+	FHitResult InitialHitResult;
+	
+	for(const FHitResult& ValidHitResult: ValidHitResults)
+	{
+		if(!CheckSpawnConditions(ValidHitResult)) continue;
+		InitialHitResult = ValidHitResult;
+		break;
+	}
 
+	// Rotate the plan XY with random result to be perpendicular to the impact normal :
+	FVector PlayerPosition = OwnerPtr_->GetActorLocation(); 
+	FVector BirdToInitialHitVector = PlayerPosition - InitialHitResult.ImpactPoint;
+	float Distance = BirdToInitialHitVector.Size();
+	
+	float BrushRadius = UPFMathHelper::RemapClamped(Distance, PainterDataPtr_->BrushMaxDistance, 0.0f, PainterDataPtr_->BrushSize.X, PainterDataPtr_->BrushSize.Y);
+	BrushRadius *= 18.0f;
+
+	// TODO : FONCTION POUR AVOIR UN VRAI RANDOM POINT
+	FVector RandomPointInBrushRadius = FindRandomPointInBrushRadius(BrushRadius);
+	
+	FVector UpVector =  FVector(0.0f, 0.0f, 1.0f);
+	FRotator UpToNormalRotation = UKismetMathLibrary::MakeRotFromX(InitialHitResult.ImpactNormal - UpVector);
+	FVector InBrushPointPerpendicularToNormal = UpToNormalRotation.RotateVector(RandomPointInBrushRadius); 
+
+	// Place the plan with random result at the impact location :
+	FVector BrushPlanAtImpactLocation = InitialHitResult.ImpactPoint + InBrushPointPerpendicularToNormal;
+
+	// Get the normalized direction between the bird and the random direction :
+	FVector BirdToRandomLocationInBrushVector = BrushPlanAtImpactLocation - PlayerPosition;
+	FVector NormalizedBirdToRandomLocationInBrushVector = BirdToRandomLocationInBrushVector.GetSafeNormal();
+
+	// Adjust the length :
+	FVector LengthenVector = NormalizedBirdToRandomLocationInBrushVector * DataPtr_->MaximalSpawnDistanceFromBird; 
+
+
+	// Get normal and impact datas for this point :
+	FCollisionQueryParams queryParams;
+	queryParams.AddIgnoredActor(Owner);
+	queryParams.bTraceComplex = true; 
+	FHitResult CurrentHitResult;
+	const FCollisionShape sphere = FCollisionShape::MakeSphere(1.f);
+	OwnerWorldPtr_->SweepSingleByChannel(CurrentHitResult, PlayerPosition, PlayerPosition + LengthenVector,
+									FQuat::Identity, ECC_Visibility, sphere, queryParams);
+	
+	if(!CheckSpawnConditions(CurrentHitResult)) return;
+	
+	float FlowerHeight = GetRandomFlowerHeight(CurrentHitResult.ImpactPoint.Z);
+	FVector FlowerSize = GetRandomFlowerSize();
+	
+	FVector SpawnLocation = FVector(CurrentHitResult.ImpactPoint.X, CurrentHitResult.ImpactPoint.Y, FlowerHeight);
+	FRotator SpawnRotation = UKismetMathLibrary::MakeRotFromZX(CurrentHitResult.ImpactNormal, UpVector);
+	APFFlower* Flower = GetWorld()->SpawnActor<class APFFlower>(FlowerClass, SpawnLocation, SpawnRotation); 
+	Flower->SetActorScale3D(FlowerSize);
+
+	FLinearColor ColorValue;
+	TryGetFlowerColorFromEnum(CurrentFlowerColor_, ColorValue);
+	
+	UMaterialInstanceDynamic* FlowerMaterial = Flower->GetDynamicMaterial();
+	if (!FlowerMaterial) return;
+	FlowerMaterial->SetVectorParameterValue(FName("FlowerColor"), ColorValue);
+}
+
+FVector UPFFlowerSpawnerResource::FindRandomPointInBrushRadius(float BrushRadius)
+{
+	// Determine randomness 
+	float Seed = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + OwnerPtr_->GetTransform().GetLocation().X + OwnerPtr_->GetTransform().GetLocation().Y + OwnerPtr_->GetTransform().GetLocation().Z; 
+	const FRandomStream RandomStream(Seed);
+
+	// Determine R :
+	float RRandomNumber = RandomStream.RandRange(0.f, 1000.f);
+	RRandomNumber *= 0.001f;
+	float R = BrushRadius * FMath::Sqrt(RRandomNumber);
+	
+	// Determine Theta angle
+	float ThetaRandomNumber = RandomStream.RandRange(0.f, 1000.f);
+	ThetaRandomNumber *= 0.001f;
+	float Theta  = ThetaRandomNumber * 2 * PI; // for PI, need to add :  #include "Math/UnrealMathUtility.h"
+
+	// Determine XCoordinate
+	float XCoordinate = R * cos(Theta);
+
+	// Determine YCoordinate
+	float YCoordinate = R * sin(Theta);
+
+	return FVector(XCoordinate, YCoordinate, 0.f);
 }
 
 bool UPFFlowerSpawnerResource::CheckValidity() const
@@ -210,12 +244,6 @@ bool UPFFlowerSpawnerResource::CheckValidity() const
 	if (!DataPtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] The Data referenced in FlowerSpawnerResource blueprint is NULL"));
-		return false;
-	}
-
-	if (!DataPtr_->SpawnDelayBasedOnVelocityCurvePtr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] The Data Curve in FlowerSpawnerResourceData blueprint is NULL"))
 		return false;
 	}
 	

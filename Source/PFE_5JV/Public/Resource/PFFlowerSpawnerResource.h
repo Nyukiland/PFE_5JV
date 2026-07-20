@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Actors/PFFlower.h"
 #include "Data/PFPaintResourceData.h"
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFFlowerSpawnerResource.generated.h"
@@ -69,7 +70,7 @@ protected:
 	TObjectPtr<UPFFlowerSpawnerResourceData> DataPtr_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
-	TSubclassOf<class AActor> FlowerClass;
+	TSubclassOf<class APFFlower> FlowerClass;
 		
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Painter|References")
 	TObjectPtr<APFPainter> PainterPtr_;
@@ -111,7 +112,10 @@ protected:
     float DetermineSpawnDelay();
 
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
-	void SpawnFlowerC();
+	void SpawnFlower();
+
+	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
+	FVector FindRandomPointInBrushRadius(float BrushRadius);
 	
 private:
 	bool CheckValidity() const;
