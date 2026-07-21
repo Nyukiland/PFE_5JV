@@ -3,6 +3,7 @@
 
 #include "Resource/PFFlowerSpawnerResource.h"
 
+#include "Actors/PoolSubsystem.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Helpers/PFMathHelper.h"
 #include "Helpers/PFPainter.h"
@@ -157,7 +158,6 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	float BrushRadius = UPFMathHelper::RemapClamped(Distance, PainterDataPtr_->BrushMaxDistance, 0.0f, PainterDataPtr_->BrushSize.X, PainterDataPtr_->BrushSize.Y);
 	BrushRadius *= 18.0f;
 
-	// TODO : FONCTION POUR AVOIR UN VRAI RANDOM POINT
 	FVector RandomPointInBrushRadius = FindRandomPointInBrushRadius(BrushRadius);
 	
 	FVector UpVector =  FVector(0.0f, 0.0f, 1.0f);
