@@ -6,7 +6,7 @@ IMPLEMENT_PRIMARY_GAME_MODULE(FPFE_5JVModule, PFE_5JV, "PFE_5JV" );
 
 void FPFE_5JVModule::StartupModule()
 {
-	FString ShaderDir = FPaths::Combine(FPaths::ProjectDir(), TEXT("Shaders"));
+	FString ShaderDir = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Shaders")));
     
 	if (FPaths::DirectoryExists(ShaderDir))
 	{

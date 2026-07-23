@@ -1,0 +1,27 @@
+#include "/Engine/Public/Platform.ush"
+#include "/Engine/Private/Common.ush"
+#include "/Engine/Private/ScreenPass.ush"
+#include "/PFE_5JV/KuwaharaPass.ush"
+
+Texture2D InputTexture;
+SamplerState InputSampler;
+Texture2D JitterTexture;
+SamplerState JitterSampler;
+
+float2 InvSize;
+float MaxRadius;
+float EdgeSensitivity;
+
+void MainPS(
+	noperspective float2 UV : TEXCOORD0,
+	float4 SvPosition : SV_Position,
+	out float4 OutColor : SV_Target0)
+{
+	// Sample Jitter (Blue Noise)
+	float2 ScreenUV = SvPosition.xy / 128.0f;
+	float2 Jitter = JitterTexture.SampleLevel(JitterSampler, ScreenUV, 0.0f).rg;
+	Jitter = (Jitter - 0.5f);
+    
+	float3 KuwaharaColor = FKuwaharaPass::KuwaharaAdaptiveAdvanced(UV, MaxRadius, EdgeSensitivity, Jitter, InvSize, InputTexture, InputSampler);
+	OutColor = float4(KuwaharaColor, 1.0f);
+}

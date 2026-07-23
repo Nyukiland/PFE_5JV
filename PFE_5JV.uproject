@@ -7,11 +7,12 @@
 		{
 			"Name": "PFE_5JV",
 			"Type": "Runtime",
-			"LoadingPhase": "Default",
+			"LoadingPhase": "PostConfigInit",
 			"AdditionalDependencies": [
 				"Engine",
 				"CoreUObject",
-				"EnhancedInput"
+				"EnhancedInput",
+				"DeveloperSettings"
 			]
 		}
 	],

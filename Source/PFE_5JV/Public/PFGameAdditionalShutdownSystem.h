@@ -4,6 +4,8 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "PFGameAdditionalShutdownSystem.generated.h"
 
+class PFKuwaharaViewExtension;
+
 UCLASS()
 class PFE_5JV_API UPFGameAdditionalShutdownSystem : public UGameInstanceSubsystem
 {
