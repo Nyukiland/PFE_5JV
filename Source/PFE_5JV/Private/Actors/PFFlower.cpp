@@ -2,6 +2,7 @@
 
 
 #include "Actors/PFFlower.h"
+#include "Actors/PoolSubsystem.h"
 
 // Sets default values
 APFFlower::APFFlower()
@@ -11,6 +12,8 @@ APFFlower::APFFlower()
 
 	FlowerMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("FlowerMeshComponent");
 	SetRootComponent(FlowerMeshComponent);
+
+	// PoolSubsystemPtr_ = GetWorld()->GetSubsystem<UPoolSubsystem>();
 }
 
 void APFFlower::BeginPlay()
@@ -29,4 +32,16 @@ void APFFlower::BeginPlay()
 	DynamicMaterial = FlowerMeshComponent->CreateAndSetMaterialInstanceDynamic(0);
 	if (!DynamicMaterial) UE_LOG(LogTemp, Error, TEXT("Failed to create DynamicMaterial in BeginPlay!"));
 }
+
+// void APFFlower::OnReturnToPool_Implementation_Implementation()
+// {
+// 	PoolSubsystemPtr_->ReturnToPool(this);
+// }
+//
+// void APFFlower::OnSpawnFromPool_Implementation_Implementation()
+// {
+// 	
+// }
+
+
 
