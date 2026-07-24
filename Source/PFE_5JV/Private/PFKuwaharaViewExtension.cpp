@@ -16,14 +16,19 @@ PFKuwaharaViewExtension::PFKuwaharaViewExtension(const FAutoRegister& AutoRegist
 
 void PFKuwaharaViewExtension::SubscribeToPostProcessingPass(EPostProcessingPass PassId, const FSceneView& InView, FAfterPassCallbackDelegateArray& InOutPassCallbacks, bool bIsPassEnabled)
 {
+    const UPFKuwaharaSettings* Settings = GetDefault<UPFKuwaharaSettings>();
+    
+    if (!InView.bIsGameView && !Settings->bEnableKuwahara)
+    {
+        return;
+    }
+    
     bool bShouldRender = InView.bIsGameView || (InView.UnscaledViewRect.Width() > 512);
     if (!bShouldRender)
     {
         return;
     }
     
-    // Cache settings here on the game thread when subscribing per view
-    const UPFKuwaharaSettings* Settings = GetDefault<UPFKuwaharaSettings>();
     CachedMaxRadius = Settings->MaxRadius;
     CachedEdgeSensitivity = Settings->EdgeSensitivity;
     
@@ -39,84 +44,74 @@ FScreenPassTexture PFKuwaharaViewExtension::PostProcessPass_RenderThread(FRDGBui
     check(Inputs.Textures[(uint32)EPostProcessMaterialInput::SceneColor].IsValid());
     
     FScreenPassTexture SceneColor(Inputs.Textures[(uint32)EPostProcessMaterialInput::SceneColor]);
-    FIntPoint FullRes = SceneColor.Texture->Desc.Extent;
     
     // 1. Calculate Target Resolution (Locking height to 720p for performance)
-    float AspectRatio = (float)FullRes.X / (float)FullRes.Y;
+    FIntPoint FullResSize = SceneColor.ViewRect.Size();
+    float AspectRatio = (float)FullResSize.X / (float)FullResSize.Y;
     FIntPoint LowRes(FMath::RoundToInt(720.0f * AspectRatio), 720);
-    FIntRect LowResRect(FIntPoint::ZeroValue, LowRes);
 
-    // 2. Allocate Downscaled Buffer (Input for Kuwahara)
+    // 2. Allocate Downscaled Buffers
     FRDGTextureDesc LowResDesc = FRDGTextureDesc::Create2D(
         LowRes, 
         SceneColor.Texture->Desc.Format, 
         FClearValueBinding::Black, 
         TexCreate_RenderTargetable | TexCreate_ShaderResource
     );
-    FRDGTextureRef LowResInputTex = GraphBuilder.CreateTexture(LowResDesc, TEXT("Kuwahara_LowResInput"));
     
-    // Downscale SceneColor to LowResInputTex using the active ViewRect offset and size
-    AddDrawTexturePass(
-        GraphBuilder, 
-        View, 
-        SceneColor.Texture, 
-        LowResInputTex, 
-        SceneColor.ViewRect.Min, 
-        FIntPoint::ZeroValue, 
-        SceneColor.ViewRect.Size(), 
-        LowRes
-    );
-
-    // 3. Allocate Kuwahara Output Buffer
+    FRDGTextureRef LowResInputTex = GraphBuilder.CreateTexture(LowResDesc, TEXT("Kuwahara_LowResInput"));
     FRDGTextureRef LowResOutputTex = GraphBuilder.CreateTexture(LowResDesc, TEXT("Kuwahara_LowResOutput"));
 
-    // 4. Setup Shader Parameters
+    // Ensure our ViewRects start exactly at 0,0 within the pooled textures
+    FScreenPassTexture LowResInput(LowResInputTex, FIntRect(FIntPoint::ZeroValue, LowRes));
+    FScreenPassTexture LowResOutput(LowResOutputTex, FIntRect(FIntPoint::ZeroValue, LowRes));
+
+    // Downscale SceneColor to LowResInput automatically handling viewrects
+    AddDrawTexturePass(GraphBuilder, View, SceneColor, LowResInput);
+
+    // 3. Setup Shader Parameters
     PFKuwaharaPS::FParameters* PassParameters = GraphBuilder.AllocParameters<PFKuwaharaPS::FParameters>();
     
-    PassParameters->InputTexture = LowResInputTex;
+    PassParameters->InputTexture = LowResInput.Texture;
     PassParameters->InputSampler = TStaticSamplerState<SF_Bilinear, AM_Clamp, AM_Clamp, AM_Clamp>::GetRHI();
     
     PassParameters->JitterTexture = JitterTextureRHI.IsValid() ? JitterTextureRHI : GBlackTexture->TextureRHI;
     PassParameters->JitterSampler = TStaticSamplerState<SF_Point, AM_Wrap, AM_Wrap, AM_Wrap>::GetRHI();
     
-    PassParameters->InvSize = FVector2f(1.0f / LowRes.X, 1.0f / LowRes.Y);
+    // --- THE FIX: Calculate physical pooled texture transforms ---
+    FIntPoint PhysicalExtent = LowResInput.Texture->Desc.Extent;
+    
+    PassParameters->InvSize = FVector2f(1.0f / PhysicalExtent.X, 1.0f / PhysicalExtent.Y);
+
     PassParameters->MaxRadius = CachedMaxRadius;
     PassParameters->EdgeSensitivity = CachedEdgeSensitivity;
     
-    PassParameters->RenderTargets[0] = FRenderTargetBinding(LowResOutputTex, ERenderTargetLoadAction::ENoAction);
+    // FIX 1: Manually bind the underlying texture rather than calling a non-existent method
+    PassParameters->RenderTargets[0] = FRenderTargetBinding(LowResOutput.Texture, ERenderTargetLoadAction::ENoAction);
 
-    // 5. Dispatch Kuwahara
+    // 4. Dispatch Kuwahara
     TShaderMapRef<PFKuwaharaPS> PixelShader(GetGlobalShaderMap(View.GetFeatureLevel()));
-    FScreenPassTextureViewport LowResViewport(LowResInputTex, LowResRect);
+    
+    // FIX 2: Convert the FScreenPassTextures into FScreenPassTextureViewports
+    FScreenPassTextureViewport OutputViewport(LowResOutput);
+    FScreenPassTextureViewport InputViewport(LowResInput);
     
     AddDrawScreenPass(
         GraphBuilder, 
         RDG_EVENT_NAME("Kuwahara_Process"), 
         View, 
-        LowResViewport, 
-        LowResViewport, 
+        OutputViewport, 
+        InputViewport, 
         PixelShader, 
         PassParameters
     );
 
-    // 6. Allocate FullRes Output Buffer for Upscale
+    // 5. Allocate FullRes Output Buffer for Upscale
     FRDGTextureDesc FullResDesc = SceneColor.Texture->Desc;
     FRDGTextureRef FullResOutputTex = GraphBuilder.CreateTexture(FullResDesc, TEXT("Kuwahara_FullResOutput"));
+    FScreenPassTexture FullResOutput(FullResOutputTex, SceneColor.ViewRect);
 
-    // Upscale LowResOutput back to FullRes output, restoring the original ViewRect placement
-    AddDrawTexturePass(
-        GraphBuilder, 
-        View, 
-        LowResOutputTex, 
-        FullResOutputTex, 
-        FIntPoint::ZeroValue, 
-        SceneColor.ViewRect.Min, 
-        LowRes, 
-        SceneColor.ViewRect.Size()
-    );
+    // Upscale LowResOutput back to FullRes output
+    AddDrawTexturePass(GraphBuilder, View, LowResOutput, FullResOutput);
 
-    // 7. Explicitly construct returning texture and assign the original ViewRect
-    FScreenPassTexture ReturnTexture(FullResOutputTex, SceneColor.ViewRect);
-    
-    return ReturnTexture; 
+    return FullResOutput; 
 }
