@@ -4,10 +4,14 @@
 #include "GenericPlatform/GenericPlatformMisc.h"
 #include "FMODStudioModule.h"
 #include "fmod_studio.hpp"
+#include "PFKuwaharaSettings.h"
+#include "PFKuwaharaViewExtension.h"
+#include "SceneViewExtension.h"
 
 void UPFGameAdditionalShutdownSystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+
 	TerminateDelegateHandle = FCoreDelegates::GetApplicationWillTerminateDelegate()
 		.AddUObject(this, &UPFGameAdditionalShutdownSystem::OnApplicationEnd);
 }

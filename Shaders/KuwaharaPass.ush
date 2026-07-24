@@ -1,0 +1,110 @@
+#pragma once
+
+struct FKuwaharaPass
+{
+    // -----------------------------------------------------------------------------
+    // UTILITY: LUMINANCE
+    // -----------------------------------------------------------------------------
+    static float GetLuminance(float3 Color)
+    {
+        return dot(Color, float3(0.299f, 0.587f, 0.114f));
+    }
+
+    // -----------------------------------------------------------------------------
+    // ADAPTIVE KUWAHARA + DITHER (Native RDG Version)
+    // -----------------------------------------------------------------------------
+    static float3 KuwaharaAdaptiveAdvanced(
+        float2 UV, 
+        float MaxRadius, 
+        float EdgeSensitivity, 
+        float2 Jitter, 
+        float2 InvSize, 
+        Texture2D InputTexture, 
+        SamplerState InputSampler)
+    {
+       float2 BufferUV = UV + (Jitter * InvSize);
+       int rMax = (int)MaxRadius;
+       
+       // --- 1. MACRO VARIANCE PASS ---
+       float meanLumaMacro = 0.0f;
+       float sqMeanLumaMacro = 0.0f;
+       float nMacro = (2.0f * (float)rMax + 1.0f) * (2.0f * (float)rMax + 1.0f);
+
+       [loop]
+       for (int y = -rMax; y <= rMax; ++y)
+       {
+          [loop]
+          for (int x = -rMax; x <= rMax; ++x)
+          {
+            float2 sampleUV = BufferUV + float2(x, y) * InvSize;
+            float3 c = InputTexture.SampleLevel(InputSampler, sampleUV, 0.0f).rgb;
+             float l = GetLuminance(c);
+             meanLumaMacro += l;
+             sqMeanLumaMacro += l * l;
+          }
+       }
+
+       meanLumaMacro /= nMacro;
+       float varianceMacro = abs(sqMeanLumaMacro / nMacro - meanLumaMacro * meanLumaMacro);
+       
+       float adaptiveRadius = max(1.0f, MaxRadius - (varianceMacro * 3.0f * EdgeSensitivity));
+       
+       // --- 2. OPTIMIZED KUWAHARA PASS ---
+       int r = (int)adaptiveRadius;
+       
+       float3 m[4] = {float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0)};
+       float s[4] = {0.0f, 0.0f, 0.0f, 0.0f}; 
+       float lumaSum[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+       
+       // Assign offsets explicitly to avoid non-constant initialization errors
+       int2 offsets[4];
+       offsets[0] = int2(-r, -r);
+       offsets[1] = int2(0, -r);
+       offsets[2] = int2(-r, 0);
+       offsets[3] = int2(0, 0);
+
+       [unroll]
+       for (int i = 0; i < 4; ++i)
+       {
+          [loop]
+          // USE rMax HERE, NOT r
+          for (int y = 0; y <= rMax; ++y)
+          {
+             [loop]
+             // USE rMax HERE, NOT r
+             for (int x = 0; x <= rMax; ++x)
+             {
+                // DIVERGENCE GUARD: Skip calculations if beyond the per-pixel radius
+                if (x > r || y > r) continue;
+
+                float2 offsetUV = BufferUV + float2(offsets[i].x + x, offsets[i].y + y) * InvSize;
+                float3 c = InputTexture.SampleLevel(InputSampler, offsetUV, 0.0f).rgb;
+                float l = GetLuminance(c);
+                
+                m[i] += c;
+                lumaSum[i] += l;
+                s[i] += l * l;
+             }
+          }
+       }
+
+       float minVar = 1e8;
+       float3 result = float3(0, 0, 0);
+       float n = (float)((r + 1) * (r + 1));
+
+       [unroll]
+       for (int j = 0; j < 4; ++j)
+       {
+          m[j] /= n;
+          float meanLuma = lumaSum[j] / n;
+          float variance = abs(s[j] / n - meanLuma * meanLuma);
+
+          if (variance < minVar)
+          {
+             minVar = variance;
+             result = m[j];
+          }
+       }
+       return result;
+    }
+};
