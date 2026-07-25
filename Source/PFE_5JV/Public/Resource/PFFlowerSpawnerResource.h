@@ -98,6 +98,9 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UWorld> OwnerWorldPtr_;	
+
+	UPROPERTY()
+	TObjectPtr<UPoolSubsystem> PoolSubsystemPtr_;
 	
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	FVector GetRandomFlowerSize();

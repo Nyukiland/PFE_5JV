@@ -2,7 +2,6 @@
 
 
 #include "Actors/PFFlower.h"
-#include "Actors/PoolSubsystem.h"
 
 // Sets default values
 APFFlower::APFFlower()
@@ -12,8 +11,6 @@ APFFlower::APFFlower()
 
 	FlowerMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("FlowerMeshComponent");
 	SetRootComponent(FlowerMeshComponent);
-
-	// PoolSubsystemPtr_ = GetWorld()->GetSubsystem<UPoolSubsystem>();
 }
 
 void APFFlower::BeginPlay()
@@ -26,22 +23,28 @@ void APFFlower::BeginPlay()
 		return;
 	}
 
+	this->SetActorEnableCollision(false);
+	this->DisableComponentsSimulatePhysics();
+
 	UMaterialInterface* MaterialInterface = FlowerMeshComponent->GetMaterial(0);
 	if (!MaterialInterface) UE_LOG(LogTemp, Error, TEXT("No material assigned to FlowerMeshComponent in BeginPlay!"));
 
 	DynamicMaterial = FlowerMeshComponent->CreateAndSetMaterialInstanceDynamic(0);
 	if (!DynamicMaterial) UE_LOG(LogTemp, Error, TEXT("Failed to create DynamicMaterial in BeginPlay!"));
+
+
 }
 
-// void APFFlower::OnReturnToPool_Implementation_Implementation()
-// {
-// 	PoolSubsystemPtr_->ReturnToPool(this);
-// }
-//
-// void APFFlower::OnSpawnFromPool_Implementation_Implementation()
-// {
-// 	
-// }
+
+void APFFlower::OnReturnToPool_Implementation()
+{
+	this->SetActorHiddenInGame(true);
+}
+
+void APFFlower::OnSpawnFromPool_Implementation()
+{
+	this->SetActorHiddenInGame(false);
+}
 
 
 

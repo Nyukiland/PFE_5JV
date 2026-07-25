@@ -26,12 +26,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Flower)
 	TObjectPtr<UMaterialInstanceDynamic> DynamicMaterial = nullptr;
-
-	// TObjectPtr<UPoolSubsystem> PoolSubsystemPtr_;
-	//
-	// UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Poolable")
-	// void OnSpawnFromPool_Implementation();
-	//
-	// UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Poolable")
-	// void OnReturnToPool_Implementation();
+	
+	UFUNCTION(BlueprintCallable, Category = "Poolable")
+	virtual void OnSpawnFromPool_Implementation() override;
+	
+	UFUNCTION(BlueprintCallable, Category = "Poolable")
+	virtual void OnReturnToPool_Implementation() override;
 };

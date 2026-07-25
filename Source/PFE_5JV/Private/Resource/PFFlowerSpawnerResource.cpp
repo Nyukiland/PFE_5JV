@@ -38,6 +38,9 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 
 	OwnerWorldPtr_ = Owner->GetWorld();
 
+	PoolSubsystemPtr_ = GetWorld()->GetSubsystem<UPoolSubsystem>();
+	PoolSubsystemPtr_->ImplementInitialPool(FlowerClass, DataPtr_->InitialPoolSize);
+
 	CurrentFlowerColor_ = EPFFlowerColor::EPFFC_None;
 	OnFlowerSpawnDelegate.AddDynamic(this, &UPFFlowerSpawnerResource::SpawnFlower);
 	if (!CheckValidity()) return;
@@ -54,6 +57,11 @@ void UPFFlowerSpawnerResource::ComponentTick_Implementation(float deltaTime)
 		if(CurrentFlowerColor_ != EPFFlowerColor::EPFFC_None) OnFlowerSpawnDelegate.Broadcast();
 	}
 	if(DelayToSpawnTimer_ >= 0.f) DelayToSpawnTimer_ -= deltaTime;
+
+	// Si on a atteint la limite d'objets de la pool placé, on remplace par HISM :
+	if(PoolSubsystemPtr_->PlacedObjects.Num() >= DataPtr_->ActorsAmountSpawnedBeforeReplacingByHism) {
+		PoolSubsystemPtr_->ReturnToPool(FlowerClass);
+	}
 }
 
 void UPFFlowerSpawnerResource::SetCurrentFlowerColor(EPFFlowerColor FlowerColor)
@@ -174,7 +182,6 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	// Adjust the length :
 	FVector LengthenVector = NormalizedBirdToRandomLocationInBrushVector * DataPtr_->MaximalSpawnDistanceFromBird; 
 
-
 	// Get normal and impact datas for this point :
 	FCollisionQueryParams queryParams;
 	queryParams.AddIgnoredActor(Owner);
@@ -191,9 +198,16 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	
 	FVector SpawnLocation = FVector(CurrentHitResult.ImpactPoint.X, CurrentHitResult.ImpactPoint.Y, FlowerHeight);
 	FRotator SpawnRotation = UKismetMathLibrary::MakeRotFromZX(CurrentHitResult.ImpactNormal, UpVector);
-	APFFlower* Flower = GetWorld()->SpawnActor<class APFFlower>(FlowerClass, SpawnLocation, SpawnRotation); 
-	Flower->SetActorScale3D(FlowerSize);
 
+
+	// Spawn avec PoolSystem : 
+	// APFFlower* Flower = Cast<APFFlower>(PoolSubsystemPtr_->SpawnFromPool(FlowerClass, SpawnLocation, SpawnRotation));
+
+	// Spawn sans PoolSystem
+	APFFlower* Flower = GetWorld()->SpawnActor<class APFFlower>(FlowerClass, SpawnLocation, SpawnRotation); 
+	
+	Flower->SetActorScale3D(FlowerSize);
+	
 	FLinearColor ColorValue;
 	TryGetFlowerColorFromEnum(CurrentFlowerColor_, ColorValue);
 	
