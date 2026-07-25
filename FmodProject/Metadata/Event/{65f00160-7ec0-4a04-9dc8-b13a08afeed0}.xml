@@ -2,7 +2,7 @@
 <objects serializationModel="Studio.02.02.00">
 	<object class="Event" id="{65f00160-7ec0-4a04-9dc8-b13a08afeed0}">
 		<property name="name">
-			<value>Flap</value>
+			<value>Unused Flap</value>
 		</property>
 		<property name="outputFormat">
 			<value>1</value>
