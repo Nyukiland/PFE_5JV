@@ -305,7 +305,7 @@
 			<value>28.836812500000001</value>
 		</property>
 		<property name="volume">
-			<value>-10</value>
+			<value>-13.5</value>
 		</property>
 		<property name="looping">
 			<value>true</value>
@@ -802,7 +802,7 @@
 			<value>60</value>
 		</property>
 		<property name="value">
-			<value>0</value>
+			<value>-3</value>
 		</property>
 	</object>
 	<object class="AutomationPoint" id="{b00ffe4e-6404-4f5e-b3d3-21495cd48812}">
