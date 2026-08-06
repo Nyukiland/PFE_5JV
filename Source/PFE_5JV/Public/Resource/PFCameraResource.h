@@ -79,7 +79,6 @@ private:
 
     void ManageCameraOffset(float deltaTime);
     void ManageCameraDistance(float deltaTime);
-    FVector CheckRayCameraValidity(FVector startPos, FVector endPos);
 
     void ManageCameraPitch(float deltaTime);
     void ManageCameraYaw(float deltaTime);

@@ -197,87 +197,42 @@ void UPFCameraResource::ManageCameraOffset(float deltaTime)
 
 void UPFCameraResource::ManageCameraDistance(float deltaTime)
 {
-	float desiredDistanceValue = FMath::Lerp(DataPtr_->BaseDistanceWithPlayer, DataPtr_->MaxDistanceWithPlayer,
-											PhysicResourcePtr_->GetForwardVelocityPercentage());
+    float desiredDistanceValue = FMath::Lerp(DataPtr_->BaseDistanceWithPlayer, DataPtr_->MaxDistanceWithPlayer,
+        PhysicResourcePtr_->GetForwardVelocityPercentage());
 
-	float interpSpeed = (desiredDistanceValue < DistanceCurrentOffset_)
-							? DataPtr_->CollisionPushSpeed
-							: DataPtr_->DistanceLerpSpeed;
+    float distanceInterpSpeed = (desiredDistanceValue < DistanceCurrentOffset_)
+        ? DataPtr_->CollisionPushSpeed
+        : DataPtr_->DistanceLerpSpeed;
 
-	DistanceCurrentOffset_ = FMath::FInterpTo(DistanceCurrentOffset_, desiredDistanceValue, deltaTime, interpSpeed);
+    DistanceCurrentOffset_ = FMath::FInterpTo(DistanceCurrentOffset_, desiredDistanceValue, deltaTime, distanceInterpSpeed);
 
-	float closeProximityAlpha = 1.0f - FMath::Clamp((DistanceCurrentOffset_ - DataPtr_->MinCameraDistance) /
-													(DataPtr_->BaseDistanceWithPlayer - DataPtr_->MinCameraDistance),
-													0.0f, 1.0f);
+    FVector farPos = CameraRollPtr_->GetComponentTransform().TransformPosition(FVector(-DistanceCurrentOffset_, 0.f, 0.f));
 
-	float dynamicZOffset = FMath::Lerp(0.0f, DataPtr_->SquishedHeightOffset, closeProximityAlpha);
+    FVector nearPos = PhysicRoot->GetComponentLocation() - PhysicRoot->GetForwardVector() * DataPtr_->MinCameraDistance;
 
-	FVector idealLocalPos = FVector(-DistanceCurrentOffset_, 0, dynamicZOffset);
+    FCollisionQueryParams queryParams;
+    queryParams.AddIgnoredActor(Owner);
+    queryParams.bTraceComplex = true;
+    FCollisionShape sweepShape = FCollisionShape::MakeSphere(DataPtr_->SphereDetectionSize);
 
-	FTransform parentTransform = CameraPositionPtr_->GetComponentTransform();
-	FVector startPos = Owner->GetActorLocation();
-	FVector endPos = parentTransform.TransformPosition(idealLocalPos);
-    
-	FVector targetCollisionPos = parentTransform.InverseTransformPosition(CheckRayCameraValidity(startPos, endPos));
+    FHitResult hit;
+    FVector targetPos = farPos;
 
-	FVector currentCameraPos = CameraPtr_->GetRelativeLocation();
-    
-	float finalLerpSpeed = (targetCollisionPos.SizeSquared() < currentCameraPos.SizeSquared()) 
-						   ? DataPtr_->CollisionPushSpeed : DataPtr_->DistanceLerpSpeed;
+    if (OwnerWorldPtr_->SweepSingleByChannel(hit, nearPos, farPos, FQuat::Identity, ECC_Visibility, sweepShape, queryParams))
+    {
+        targetPos = FMath::Lerp(nearPos, farPos, hit.Time);
+    }
 
-	FVector smoothedPos = FMath::VInterpTo(currentCameraPos, targetCollisionPos, deltaTime, finalLerpSpeed);
+    FVector currentCameraPos = CameraPtr_->GetComponentLocation();
+    FVector anchor = Owner->GetActorLocation();
 
-	CameraPtr_->SetRelativeLocation(smoothedPos);
-}
+    float posInterpSpeed = (FVector::DistSquared(targetPos, anchor) < FVector::DistSquared(currentCameraPos, anchor))
+        ? DataPtr_->CollisionPushSpeed
+        : DataPtr_->DistanceLerpSpeed;
 
-FVector UPFCameraResource::CheckRayCameraValidity(FVector startPos, FVector endPos)
-{
-	FCollisionQueryParams queryParams;
-	queryParams.AddIgnoredActor(Owner);
-	queryParams.bTraceComplex = true;
-	FCollisionShape sweepShape = FCollisionShape::MakeSphere(DataPtr_->SphereDetectionSize);
-    
-	FVector currentStart = startPos;
-	FVector currentEnd = endPos;
-	FHitResult hit;
+    FVector smoothedPos = FMath::VInterpTo(currentCameraPos, targetPos, deltaTime, posInterpSpeed);
 
-	const int32 MaxSlideIterations = 3;
-
-	for (int32 i = 0; i < MaxSlideIterations; ++i)
-	{
-		if (!OwnerWorldPtr_->SweepSingleByChannel(hit, currentStart, currentEnd, FQuat::Identity, ECC_Visibility, sweepShape, queryParams))
-		{
-			return currentEnd;
-		}
-
-		FVector safeHitLoc = hit.Location;
-        
-		if (hit.bStartPenetrating)
-		{
-			if (!OwnerWorldPtr_->LineTraceSingleByChannel(hit, currentStart, currentEnd, ECC_Visibility, queryParams))
-			{
-				return currentEnd;
-			}
-			safeHitLoc += hit.ImpactNormal * 2.0f; 
-		}
-		else
-		{
-			safeHitLoc += hit.ImpactNormal * 2.0f;
-		}
-
-		float totalDist = (currentEnd - currentStart).Size();
-		float distTraveled = (hit.Location - currentStart).Size();
-		float remainingDist = FMath::Max(0.0f, totalDist - distTraveled);
-
-		FVector dir = (currentEnd - currentStart).GetSafeNormal();
-		FVector slideDir = FVector::VectorPlaneProject(dir, hit.ImpactNormal);
-		slideDir.Normalize();
-
-		currentStart = safeHitLoc;
-		currentEnd = safeHitLoc + (slideDir * remainingDist);
-	}
-
-	return currentEnd;
+    CameraPtr_->SetWorldLocation(smoothedPos);
 }
 
 void UPFCameraResource::ManageCameraPitch(float deltaTime)
