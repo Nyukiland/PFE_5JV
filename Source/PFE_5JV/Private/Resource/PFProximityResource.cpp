@@ -54,10 +54,14 @@ void UPFProximityResource::CheckCollisionInFront()
 	queryParams.bTraceComplex = true;
 	queryParams.bReturnFaceIndex = true;
 
+	FCollisionObjectQueryParams objectQueryParams;
+	objectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	objectQueryParams.AddObjectTypesToQuery(ECC_GameTraceChannel4);
+	
 	ValidHitResults.Empty();
 
-	OwnerWorldPtr_->SweepMultiByChannel(ValidHitResults, startPosition, startPosition + FVector(0.f, 0.f, 0.1f),
-										FQuat::Identity, ECC_Visibility, sphere, queryParams);
+	OwnerWorldPtr_->SweepMultiByObjectType(ValidHitResults, startPosition, startPosition + FVector(0.f, 0.f, 0.1f),
+										FQuat::Identity, objectQueryParams, sphere, queryParams);
 
 #if !UE_BUILD_SHIPPING
 
@@ -98,6 +102,10 @@ void UPFProximityResource::CheckClosestHit()
     queryParams.AddIgnoredActor(Owner);
     queryParams.bTraceComplex = true; 
 
+	FCollisionObjectQueryParams objectQueryParams;
+	objectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	objectQueryParams.AddObjectTypesToQuery(ECC_GameTraceChannel4);
+	
     FHitResult bestHit;
     bestHit.TraceStart = startPosition;
     bestHit.TraceEnd = startPosition;
@@ -112,8 +120,8 @@ void UPFProximityResource::CheckClosestHit()
         TArray<FHitResult> currentHits;
         FCollisionShape sphere = FCollisionShape::MakeSphere(currentRadius);
 
-        bool bHit = OwnerWorldPtr_->SweepMultiByChannel(currentHits, startPosition, startPosition + FVector(0.f, 0.f, 0.1f), 
-            FQuat::Identity, ECC_Visibility, sphere, queryParams);
+        bool bHit = OwnerWorldPtr_->SweepMultiByObjectType(currentHits, startPosition, startPosition + FVector(0.f, 0.f, 0.1f), 
+            FQuat::Identity, objectQueryParams, sphere, queryParams);
 
         if (bHit)
         {
@@ -121,7 +129,9 @@ void UPFProximityResource::CheckClosestHit()
 
             for (const FHitResult& hit : currentHits)
             {
-                if (hit.bBlockingHit || hit.bStartPenetrating)
+            	bool bIsOurTrigger = hit.Component.IsValid() && (hit.Component->GetCollisionObjectType() == ECC_GameTraceChannel4);
+            	
+                if (hit.bBlockingHit || hit.bStartPenetrating || bIsOurTrigger)
                 {
                     bestHit = hit;
                     break; 
@@ -185,8 +195,12 @@ void UPFProximityResource::CheckBelowHit()
 	queryParams.AddIgnoredActor(Owner);
 	queryParams.bTraceComplex = true;
 
+	FCollisionObjectQueryParams objectQueryParams;
+	objectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	objectQueryParams.AddObjectTypesToQuery(ECC_GameTraceChannel4);
+	
 	bool bHit = OwnerWorldPtr_->
-		LineTraceSingleByChannel(HitBelowResult, startPos, endPos, ECC_Visibility, queryParams);
+		LineTraceSingleByObjectType(HitBelowResult, startPos, endPos, objectQueryParams, queryParams);
 
 #if !UE_BUILD_SHIPPING
 
