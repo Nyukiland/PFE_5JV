@@ -49,5 +49,8 @@ protected:
 	TObjectPtr<UPFProximityResourceData> DataPtr_;
 
 	UPROPERTY()
-	TObjectPtr<UWorld> OwnerWorldPtr_;	
+	TObjectPtr<UWorld> OwnerWorldPtr_;
+
+	FCollisionQueryParams CachedQueryParams;
+	FCollisionObjectQueryParams CachedObjectQueryParams;
 };

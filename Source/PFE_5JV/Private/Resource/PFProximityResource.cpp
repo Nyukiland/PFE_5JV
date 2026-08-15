@@ -6,12 +6,25 @@ void UPFProximityResource::ComponentInit_Implementation(APFPlayerCharacter* owne
 	Super::ComponentInit_Implementation(ownerObj);
 
 	OwnerWorldPtr_ = Owner->GetWorld();
+
+	CachedQueryParams.AddIgnoredActor(Owner);
+	CachedQueryParams.bTraceComplex = true;
+	CachedQueryParams.bReturnFaceIndex = true;
+
+	CachedObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	CachedObjectQueryParams.AddObjectTypesToQuery(ECC_GameTraceChannel4);
 }
 
 void UPFProximityResource::ComponentTick_Implementation(float deltaTime)
 {
 	Super::ComponentTick_Implementation(deltaTime);
 
+	if (!DataPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ProximityResource] DataPtr_ is null!"));
+		return;
+	}
+	
 	CheckCollisionInFront();
 	CheckClosestHit();
 	CheckBelowHit();
@@ -39,29 +52,14 @@ float UPFProximityResource::GetClosestDistancePercentage() const
 
 void UPFProximityResource::CheckCollisionInFront()
 {
-	if (!DataPtr_)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[ProximityResource] DataPtr_ is null!"));
-		return;
-	}
-
 	FVector startPosition = Owner->GetActorLocation() + (DataPtr_->ForwardSphereDistance * PhysicRoot->
 		GetForwardVector());
 	const FCollisionShape sphere = FCollisionShape::MakeSphere(DataPtr_->ForwardSphereSize);
-
-	FCollisionQueryParams queryParams;
-	queryParams.AddIgnoredActor(Owner);
-	queryParams.bTraceComplex = true;
-	queryParams.bReturnFaceIndex = true;
-
-	FCollisionObjectQueryParams objectQueryParams;
-	objectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
-	objectQueryParams.AddObjectTypesToQuery(ECC_GameTraceChannel4);
 	
-	ValidHitResults.Empty();
+	ValidHitResults.Reset();
 
 	OwnerWorldPtr_->SweepMultiByObjectType(ValidHitResults, startPosition, startPosition + FVector(0.f, 0.f, 0.1f),
-										FQuat::Identity, objectQueryParams, sphere, queryParams);
+										FQuat::Identity, CachedObjectQueryParams, sphere, CachedQueryParams);
 
 #if !UE_BUILD_SHIPPING
 
@@ -87,24 +85,10 @@ void UPFProximityResource::CheckCollisionInFront()
 
 void UPFProximityResource::CheckClosestHit()
 {
-    if (!DataPtr_)
-    {
-       UE_LOG(LogTemp, Error, TEXT("[ProximityResource] DataPtr_ is null!"));
-       return;
-    }
-
     FVector startPosition = Owner->GetActorLocation(); 
     float currentRadius = DataPtr_->BaseClosestSphereSize;
     float stepSize = DataPtr_->ClosestSphereDetectionStep;
     float minRadius = DataPtr_->SmallestClosestSphereSize;
-
-    FCollisionQueryParams queryParams;
-    queryParams.AddIgnoredActor(Owner);
-    queryParams.bTraceComplex = true; 
-
-	FCollisionObjectQueryParams objectQueryParams;
-	objectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
-	objectQueryParams.AddObjectTypesToQuery(ECC_GameTraceChannel4);
 	
     FHitResult bestHit;
     bestHit.TraceStart = startPosition;
@@ -121,7 +105,7 @@ void UPFProximityResource::CheckClosestHit()
         FCollisionShape sphere = FCollisionShape::MakeSphere(currentRadius);
 
         bool bHit = OwnerWorldPtr_->SweepMultiByObjectType(currentHits, startPosition, startPosition + FVector(0.f, 0.f, 0.1f), 
-            FQuat::Identity, objectQueryParams, sphere, queryParams);
+            FQuat::Identity, CachedObjectQueryParams, sphere, CachedQueryParams);
 
         if (bHit)
         {
@@ -182,25 +166,11 @@ void UPFProximityResource::CheckClosestHit()
 
 void UPFProximityResource::CheckBelowHit()
 {
-	if (!DataPtr_)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[ProximityResource] DataPtr_ is null!"));
-		return;
-	}
-
 	FVector startPos = PhysicRoot->GetComponentLocation();
 	FVector endPos = startPos + (ForwardRootPtr->GetUpVector() * -DataPtr_->BelowRayDistance);
-
-	FCollisionQueryParams queryParams;
-	queryParams.AddIgnoredActor(Owner);
-	queryParams.bTraceComplex = true;
-
-	FCollisionObjectQueryParams objectQueryParams;
-	objectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
-	objectQueryParams.AddObjectTypesToQuery(ECC_GameTraceChannel4);
 	
 	bool bHit = OwnerWorldPtr_->
-		LineTraceSingleByObjectType(HitBelowResult, startPos, endPos, objectQueryParams, queryParams);
+		LineTraceSingleByObjectType(HitBelowResult, startPos, endPos, CachedObjectQueryParams, CachedQueryParams);
 
 #if !UE_BUILD_SHIPPING
 
