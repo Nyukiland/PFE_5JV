@@ -29,12 +29,14 @@ AActor* UPoolSubsystem::SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Loc
 			SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 			PooledActor = GetWorld()->SpawnActor<AActor>(PoolClass, Location, Rotation, SpawnParameters);
 			PlacedObjects.Add(PooledActor);
+			PlacedObjectTransforms.Add(PooledActor->GetTransform());
 		}
 		else
 		{
 			PooledActor = ObjectPool.Pop();
 			PlacedObjects.Add(PooledActor);
 			PooledActor->SetActorLocationAndRotation(Location, Rotation);
+			PlacedObjectTransforms.Add(PooledActor->GetTransform());
 			// Change la scale
 			// Change le materiau du pooled actor
 			// A mettre dans le pooled Actor plutôt ?

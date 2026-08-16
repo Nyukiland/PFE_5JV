@@ -77,7 +77,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Painter|References")
 	TObjectPtr<UPFPaintResourceData> PainterDataPtr_;
-
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Painter|References")
 	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> BlueFlowerHISMPtr_;
 
@@ -86,6 +86,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Painter|References")
 	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> YellowFlowerHISMPtr_;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Painter|References")
+	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> PurpleFlowerHISMPtr_;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
@@ -113,12 +116,15 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
     float DetermineSpawnDelay();
-
+	
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	void SpawnFlower();
 
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	FVector FindRandomPointInBrushRadius(float BrushRadius);
+
+	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
+	UHierarchicalInstancedStaticMeshComponent* GetColoredHISM();
 	
 private:
 	bool CheckValidity() const;

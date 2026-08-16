@@ -30,5 +30,8 @@ public:
 	UPROPERTY()
 	TArray<AActor*> PlacedObjects;
 
+	UPROPERTY()
+	TArray<FTransform> PlacedObjectTransforms;
+
 
 };
