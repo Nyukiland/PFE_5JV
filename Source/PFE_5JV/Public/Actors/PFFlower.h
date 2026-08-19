@@ -18,6 +18,7 @@ public:
 	// Sets default values for this actor's properties
 	APFFlower();
 	TObjectPtr<UMaterialInstanceDynamic> GetDynamicMaterial() { return DynamicMaterial;}
+	TObjectPtr<UStaticMeshComponent> GetFlowerMesh() { return FlowerMeshComponent;}
 	virtual void BeginPlay() override;
 	
 protected:
