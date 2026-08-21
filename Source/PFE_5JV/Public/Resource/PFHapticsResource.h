@@ -61,6 +61,8 @@ private:
     
 public:
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
+
+	virtual FString GetInfo_Implementation() override;
     
 	UFUNCTION(BlueprintCallable)
 	void PlayHaptics(float intensity, float duration, FName uniqueID,

@@ -9,6 +9,20 @@ void UPFHapticsResource::ComponentInit_Implementation(APFPlayerCharacter* ownerO
 	CheckValidity();
 }
 
+FString UPFHapticsResource::GetInfo_Implementation()
+{
+	FString text = TEXT("<hb>Haptics:</>");
+	text += TEXT("\n <b> Mute: </>") + FString::Printf(TEXT("%d"), bisMuted_);
+	text += TEXT("\n <b>Intensity: </>") + FString::Printf(TEXT("%f"), Intensity_);
+	text += TEXT("\n");
+	text += TEXT("\n <b>Currently active haptics: </>");
+	for (auto Pair : ActiveHapticsMap_)
+	{
+		text += TEXT("\n -") + Pair.Key.ToString();
+	}
+	return text;
+}
+
 void UPFHapticsResource::PlayHaptics(float intensity, float duration, FName uniqueID,
 									bool bAffectsLarge, bool bAffectsSmall)
 {
@@ -81,12 +95,12 @@ void UPFHapticsResource::SetMuteHaptics(bool bMute)
 {
 	if (bMute == bisMuted_)
 		return;
-	
+
 	bisMuted_ = bMute;
-	
-	if (bisMuted_)
+
+	if (!bisMuted_)
 		return;
-	
+
 	for (auto& Pair : ActiveHapticsMap_)
 	{
 		FActiveHapticData& Data = Pair.Value;
@@ -97,7 +111,7 @@ void UPFHapticsResource::SetMuteHaptics(bool bMute)
 			Data.EngineHandle
 		);
 	}
-	
+
 	ActiveHapticsMap_.Empty();
 }
 
@@ -108,24 +122,20 @@ void UPFHapticsResource::ToggleMutism()
 
 void UPFHapticsResource::ChangeHapticsIntensity(float intensity)
 {
+	Intensity_ = intensity;
+
 	for (auto& Pair : ActiveHapticsMap_)
 	{
 		FActiveHapticData& Data = Pair.Value;
 
-		float intensityHaptics = Data.Settings.Intensity;
-		intensityHaptics /= Intensity_;
-		intensityHaptics *= intensity;
-		
 		Data.EngineHandle = PlayerController_->PlayDynamicForceFeedback(
-			intensityHaptics, Data.Settings.Duration,
+			Data.Settings.Intensity * Intensity_, Data.Settings.Duration,
 			Data.Settings.bAffectsLarge, Data.Settings.bAffectsSmall,
 			Data.Settings.bAffectsLarge, Data.Settings.bAffectsSmall,
 			EDynamicForceFeedbackAction::Start,
 			FDynamicForceFeedbackHandle()
 		);
 	}
-	
-	Intensity_ = intensity;
 }
 
 void UPFHapticsResource::AddNewHaptics(FName uniqueID, const FHapticsSettings& settings)
@@ -154,23 +164,23 @@ void UPFHapticsResource::UpdateHaptics(FActiveHapticData* existingData, const FH
 			EDynamicForceFeedbackAction::Update,
 			existingData->EngineHandle
 		);
-		
+
 		return;
 	}
-	
+
 	PlayerController_->PlayDynamicForceFeedback(
-		0.f, 0.f, false, false, false, false, 
-		EDynamicForceFeedbackAction::Stop, 
+		0.f, 0.f, false, false, false, false,
+		EDynamicForceFeedbackAction::Stop,
 		existingData->EngineHandle
 	);
 
 	existingData->Settings = settings;
-        
+
 	existingData->EngineHandle = PlayerController_->PlayDynamicForceFeedback(
-		settings.Intensity * Intensity_, settings.Duration, 
-		settings.bAffectsLarge, settings.bAffectsSmall, 
+		settings.Intensity * Intensity_, settings.Duration,
 		settings.bAffectsLarge, settings.bAffectsSmall,
-		EDynamicForceFeedbackAction::Start, 
+		settings.bAffectsLarge, settings.bAffectsSmall,
+		EDynamicForceFeedbackAction::Start,
 		FDynamicForceFeedbackHandle()
 	);
 }
