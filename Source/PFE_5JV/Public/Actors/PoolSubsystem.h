@@ -8,7 +8,7 @@
 #include "PoolSubsystem.generated.h"
 
 USTRUCT()
-struct FPoolArrays
+struct FPFPoolArrays
 {
 	GENERATED_BODY()
 
@@ -69,7 +69,7 @@ public:
 	static constexpr int InitialPoolSize = 20;
 	
 	UPROPERTY()
-	TMap<UClass*, FPoolArrays> ObjectPools;
+	TMap<UClass*, FPFPoolArrays> ObjectPools;
 		
 	UFUNCTION(BlueprintCallable, Category = "Pool Subsystem")
 	void InitializePool(TSubclassOf<AActor> PoolClass, int Amount);
@@ -96,7 +96,7 @@ T* UPoolSubsystem::SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location
 
 	if(PoolClass.Get()->ImplementsInterface(UPFPoolable::StaticClass()))
 	{
-		FPoolArrays& ObjectPool = ObjectPools.FindOrAdd(PoolClass);
+		FPFPoolArrays& ObjectPool = ObjectPools.FindOrAdd(PoolClass);
 		if(ObjectPool.PoolIsEmpty())
 		{
 			FActorSpawnParameters SpawnParameters;

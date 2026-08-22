@@ -57,7 +57,7 @@ void UPFFlowerSpawnerResource::ComponentTick_Implementation(float deltaTime)
 	for (const auto& Pair : PoolSubsystemPtr_->ObjectPools)
 	{
 		UClass* PoolClass = Pair.Key;
-		FPoolArrays ObjectPool = Pair.Value;
+		FPFPoolArrays ObjectPool = Pair.Value;
 		
 		if(ObjectPool.PlacedObjectsNum() >= MaxActorsAmountPlaced) {
 			if(FlowerHISMPtr_ == nullptr) return;

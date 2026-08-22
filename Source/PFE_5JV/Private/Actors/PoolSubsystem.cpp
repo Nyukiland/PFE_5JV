@@ -8,7 +8,7 @@ void UPoolSubsystem::InitializePool(TSubclassOf<AActor> PoolClass, int Amount)
 {
 	if(PoolClass.Get()->ImplementsInterface(UPFPoolable::StaticClass()))
 	{
-		FPoolArrays& ObjectPool = ObjectPools.FindOrAdd(PoolClass);
+		FPFPoolArrays& ObjectPool = ObjectPools.FindOrAdd(PoolClass);
 		for(int i = 0; i < Amount; i++)
 		{
 			FActorSpawnParameters SpawnParameters;
@@ -32,7 +32,7 @@ void UPoolSubsystem::ReturnToPool(TSubclassOf<AActor> PoolClass)
 {
 	if(PoolClass->ImplementsInterface(UPFPoolable::StaticClass()) == false) return;
 
-	FPoolArrays* ObjectPool = ObjectPools.Find(PoolClass);
+	FPFPoolArrays* ObjectPool = ObjectPools.Find(PoolClass);
 	if(ObjectPool == nullptr) return;
 	if(ObjectPool->PlacedObjectsIsEmpty() == true) return;
 	
