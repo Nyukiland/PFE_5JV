@@ -21,19 +21,20 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 	Super::ComponentInit_Implementation(ownerObj);
 
 	OwnerPtr_ = ownerObj;
-	ProximityResourcePtr_ = OwnerPtr_->GetStateComponent<UPFProximityResource>();
+	OwnerWorldPtr_ = Owner->GetWorld();
 	
+	ProximityResourcePtr_ = OwnerPtr_->GetStateComponent<UPFProximityResource>();
+	PhysicResourcePtr_ = ownerObj->GetStateComponent<UPFPhysicResource>();
 	PainterPtr_ = APFPainter::GetPainter(OwnerPtr_->GetWorld());
+		
+	// Initialize Actors to Spawn
+	PoolSubsystemPtr_ = GetWorld()->GetSubsystem<UPoolSubsystem>();
+	// Flower :
+	PoolSubsystemPtr_->InitializePool(FlowerClass, PoolSubsystemPtr_->InitialPoolSize);
+
 
 	TArray<UActorComponent*> FlowerHISMComponents = PainterPtr_->GetComponentsByTag(UHierarchicalInstancedStaticMeshComponent::StaticClass(), FName("Flower_0"));
 	if (FlowerHISMComponents.Num() > 0) FlowerHISMPtr_ = Cast<UHierarchicalInstancedStaticMeshComponent>(FlowerHISMComponents[0]);
-
-	PhysicResourcePtr_ = ownerObj->GetStateComponent<UPFPhysicResource>();
-
-	OwnerWorldPtr_ = Owner->GetWorld();
-
-	PoolSubsystemPtr_ = GetWorld()->GetSubsystem<UPoolSubsystem>();
-	PoolSubsystemPtr_->ImplementInitialPool(FlowerClass, DataPtr_->InitialPoolSize);
 
 	CurrentFlowerColor_ = EPFFlowerColor::EPFFC_None;
 	OnFlowerSpawnDelegate.AddDynamic(this, &UPFFlowerSpawnerResource::SpawnFlower);
@@ -52,23 +53,28 @@ void UPFFlowerSpawnerResource::ComponentTick_Implementation(float deltaTime)
 	}
 	if(DelayToSpawnTimer_ >= 0.f) DelayToSpawnTimer_ -= deltaTime;
 
-	// Si on a atteint la limite d'objets de la pool placé, on remplace par HISM :
-	if(PoolSubsystemPtr_->PlacedObjects.Num() >= DataPtr_->ActorsAmountSpawnedBeforeReplacingByHism) {
-		if(FlowerHISMPtr_ == nullptr) return;
-		FLinearColor ColorValue;
-		TryGetFlowerColorFromEnum(CurrentFlowerColor_, ColorValue);
+	// Pour chaque type d'acteurs qui a un pool, si on a atteint la limite d'acteurs placés, on remplace par la version HISM :
+	for (const auto& Pair : PoolSubsystemPtr_->ObjectPools)
+	{
+		UClass* PoolClass = Pair.Key;
+		FPoolArrays ObjectPool = Pair.Value;
 		
-		TArray<int32> Indices = FlowerHISMPtr_->AddInstances(PoolSubsystemPtr_->PlacedObjectTransforms, true, true, false
-			);
+		if(ObjectPool.PlacedObjectsNum() >= MaxActorsAmountPlaced) {
+			if(FlowerHISMPtr_ == nullptr) return;
+			FLinearColor ColorValue;
+			TryGetFlowerColorFromEnum(CurrentFlowerColor_, ColorValue);
+			
+			TArray<int32> Indices = FlowerHISMPtr_->AddInstances(ObjectPool.PlacedObjectTransforms, true, true, false
+				);
 
-		for(int32 InstanceIndex : Indices)
-		{
-			FlowerHISMPtr_->SetCustomDataValue(InstanceIndex, 0, ColorValue.R, true);
-			FlowerHISMPtr_->SetCustomDataValue(InstanceIndex, 1, ColorValue.G, true);
-			FlowerHISMPtr_->SetCustomDataValue(InstanceIndex, 2, ColorValue.B, true);
+			for(int32 InstanceIndex : Indices)
+			{
+				FlowerHISMPtr_->SetCustomDataValue(InstanceIndex, 0, ColorValue.R, true);
+				FlowerHISMPtr_->SetCustomDataValue(InstanceIndex, 1, ColorValue.G, true);
+				FlowerHISMPtr_->SetCustomDataValue(InstanceIndex, 2, ColorValue.B, true);
+			}
+			PoolSubsystemPtr_->ReturnToPool(PoolClass);
 		}
-		PoolSubsystemPtr_->PlacedObjectTransforms.Empty();
-		PoolSubsystemPtr_->ReturnToPool(FlowerClass);
 	}
 }
 
@@ -209,7 +215,7 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 
 
 	// Spawn avec PoolSystem : 
-	APFFlower* Flower = Cast<APFFlower>(PoolSubsystemPtr_->SpawnFromPool(FlowerClass, SpawnLocation, SpawnRotation));
+	APFFlower* Flower = Cast<APFFlower>(PoolSubsystemPtr_->SpawnFromPool<AActor>(FlowerClass, SpawnLocation, SpawnRotation));
 
 	// Spawn sans PoolSystem
 	// APFFlower* Flower = GetWorld()->SpawnActor<class APFFlower>(FlowerClass, SpawnLocation, SpawnRotation); 
@@ -218,6 +224,7 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	
 	FLinearColor ColorValue;
 	TryGetFlowerColorFromEnum(CurrentFlowerColor_, ColorValue);
+	
 	// GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Green, FString::Printf(TEXT("Theta : %f - %f - %f"), ColorValue.R, ColorValue.G, ColorValue.B));
 	// if(Flower->GetFlowerMesh() == nullptr)	UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] GetFlowerMesh is NULL"));
 	// Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(0, ColorValue.R);

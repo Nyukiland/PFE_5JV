@@ -13,9 +13,6 @@ class UPFPoolable : public UInterface
 	GENERATED_BODY()
 };
 
-/**
- * 
- */
 class PFE_5JV_API IPFPoolable
 {
 	GENERATED_BODY()

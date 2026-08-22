@@ -4,65 +4,41 @@
 #include "Actors/PoolSubsystem.h"
 #include "Actors/PFPoolable.h"
 
-void UPoolSubsystem::ImplementInitialPool(TSubclassOf<AActor> PoolClass, int Amount)
+void UPoolSubsystem::InitializePool(TSubclassOf<AActor> PoolClass, int Amount)
 {
-	for(int i = 0; i < Amount; i++)
-	{
-		FActorSpawnParameters SpawnParameters;
-        SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-        FVector Location = FVector(0.f, 0.f, 0.f);
-        FRotator Rotation = FRotator(0.f, 0.f, 0.f);
-        AActor* Poolable = GetWorld()->SpawnActor<AActor>(PoolClass, Location, Rotation, SpawnParameters);
-        ObjectPool.Add(Poolable);
-	}
-}
-
-AActor* UPoolSubsystem::SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation)
-{
-	AActor* PooledActor = nullptr;
-
 	if(PoolClass.Get()->ImplementsInterface(UPFPoolable::StaticClass()))
 	{
-		if(ObjectPool.IsEmpty())
+		FPoolArrays& ObjectPool = ObjectPools.FindOrAdd(PoolClass);
+		for(int i = 0; i < Amount; i++)
 		{
 			FActorSpawnParameters SpawnParameters;
 			SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-			PooledActor = GetWorld()->SpawnActor<AActor>(PoolClass, Location, Rotation, SpawnParameters);
-			PlacedObjects.Add(PooledActor);
-			PlacedObjectTransforms.Add(PooledActor->GetTransform());
+			FVector Location = FVector(0.f, 0.f, -2000.f);
+			FRotator Rotation = FRotator(0.f, 0.f, 0.f);
+			AActor* Poolable = GetWorld()->SpawnActor<AActor>(PoolClass, Location, Rotation, SpawnParameters);
+			ObjectPool.AddToPool(Poolable);
 		}
-		else
-		{
-			PooledActor = ObjectPool.Pop();
-			PlacedObjects.Add(PooledActor);
-			PooledActor->SetActorLocationAndRotation(Location, Rotation);
-			PlacedObjectTransforms.Add(PooledActor->GetTransform());
-			// Change la scale
-			// Change le materiau du pooled actor
-			// A mettre dans le pooled Actor plutôt ?
-		}
-
-		IPFPoolable::Execute_OnSpawnFromPool(PooledActor);
 	}
+}
 
-	return PooledActor;
+// Version blueprint de la fonction templatée
+void UPoolSubsystem::SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation,
+	AActor*& SpawnedActor)
+{
+	SpawnedActor = SpawnFromPool<AActor>(PoolClass, Location, Rotation);
 }
 
 void UPoolSubsystem::ReturnToPool(TSubclassOf<AActor> PoolClass)
 {
-	for(AActor* PlacedObject : PlacedObjects)
-	{
-		if(PlacedObject->GetClass()->ImplementsInterface(UPFPoolable::StaticClass()))
-		{
-			IPFPoolable::Execute_OnReturnToPool(PlacedObject);
-			// Fait apparaitre les HISM pour tous les acteurs dans le tableau
-		}
-		else
-		{
-			PlacedObject->Destroy();	
-		}
-	}
+	if(PoolClass->ImplementsInterface(UPFPoolable::StaticClass()) == false) return;
 
-	ObjectPool.Append(PlacedObjects);
-	PlacedObjects.Empty();
+	FPoolArrays* ObjectPool = ObjectPools.Find(PoolClass);
+	if(ObjectPool == nullptr) return;
+	if(ObjectPool->PlacedObjectsIsEmpty() == true) return;
+	
+	for(AActor* PlacedObject : ObjectPool->PlacedObjects)
+	{
+		IPFPoolable::Execute_OnReturnToPool(PlacedObject);
+	}
+	ObjectPool->ReturnToPool();
 }

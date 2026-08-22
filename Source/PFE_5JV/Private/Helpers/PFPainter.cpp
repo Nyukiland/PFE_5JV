@@ -1,6 +1,7 @@
 #include "Helpers/PFPainter.h"
 
 #include "EngineUtils.h"
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 
 APFPainter* APFPainter::Instance = nullptr;
 
@@ -53,6 +54,19 @@ APFPainter* APFPainter::GetPainter(UObject* WorldContext)
 void APFPainter::PaintStuff_Implementation(const TArray<FHitResult>& validHitResults, const TArray<float>& brushSizes)
 {
 }
+
+// UHierarchicalInstancedStaticMeshComponent* APFPainter::CreateNewHISM(
+// 	UHierarchicalInstancedStaticMeshComponent* HismToDuplicate)
+// {
+// 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("[Painter] Creating new HISM"));
+// 	UStaticMesh* StaticMesh = HismToDuplicate->GetStaticMesh();
+// 	UMaterialInterface* MaterialInterface = StaticMesh->GetMaterial(0);
+// 	FString Name = HismToDuplicate->GetName();
+// 	UHierarchicalInstancedStaticMeshComponent* NewHISM = AddComponentByClass(TSubclassOf<UHierarchicalInstancedStaticMeshComponent>, false);
+//
+// 	return NewHISM;
+// }
+
 
 void APFPainter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {

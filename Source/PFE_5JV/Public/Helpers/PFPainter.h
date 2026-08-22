@@ -4,6 +4,8 @@
 #include "GameFramework/Actor.h"
 #include "PFPainter.generated.h"
 
+class UHierarchicalInstancedStaticMeshComponent;
+
 UCLASS()
 class PFE_5JV_API APFPainter : public AActor
 {
@@ -12,6 +14,7 @@ class PFE_5JV_API APFPainter : public AActor
 public:
 	APFPainter();
 	static APFPainter* Instance;
+	static constexpr int MaxHISMIntances = 25;
 
 protected:
 	virtual void BeginPlay() override;
@@ -26,4 +29,5 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void PaintStuff(const TArray<FHitResult>& validHitResults, const TArray<float>& brushSizes);
 	void PaintStuff_Implementation(const TArray<FHitResult>& validHitResults, const TArray<float>& brushSizes);
+	// UHierarchicalInstancedStaticMeshComponent* CreateNewHISM(UHierarchicalInstancedStaticMeshComponent* HismToDuplicate);
 };

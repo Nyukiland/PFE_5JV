@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Actors/PFFlower.h"
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Data/PFPaintResourceData.h"
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFFlowerSpawnerResource.generated.h"
@@ -53,6 +54,7 @@ public :
 
 
 protected:
+	static constexpr int MaxActorsAmountPlaced = 20;
 	
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 	virtual void ComponentTick_Implementation(float deltaTime) override;

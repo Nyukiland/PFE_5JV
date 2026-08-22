@@ -6,9 +6,6 @@
 #include "Engine/DataAsset.h"
 #include "PFFlowerSpawnerResourceData.generated.h"
 
-/**
- * 
- */
 UCLASS(Blueprintable, BlueprintType)
 class PFE_5JV_API UPFFlowerSpawnerResourceData : public UDataAsset
 {
@@ -47,12 +44,4 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
 	meta=(ToolTip="La hauteur maximale au dessus du sol où spawn la fleur."))
 	float MaximalHeightAboveGround;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
-		meta=(ToolTip="Le nombre d'acteurs spawnés avant qu'on les remplace par leur version HISM."))
-	int ActorsAmountSpawnedBeforeReplacingByHism;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
-		meta=(ToolTip="Le nombre initial d'acteurs spawnés au début du jeu pour constituer la pool."))
-	int InitialPoolSize;
 };
