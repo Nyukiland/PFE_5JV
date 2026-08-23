@@ -5,7 +5,6 @@
 
 #include "Actors/PoolSubsystem.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
-#include "Helpers/PFBlueprintHelper.h"
 #include "Helpers/PFMathHelper.h"
 #include "Helpers/PFPainter.h"
 #include "Kismet/GameplayStatics.h"
@@ -38,7 +37,7 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 	if (FlowerHISMComponents.Num() > 0) FlowerHISMPtr_ = Cast<UHierarchicalInstancedStaticMeshComponent>(FlowerHISMComponents[0]);
 
 	CurrentFlowerColor_ = EPFFlowerColor::EPFFC_None;
-	OnFlowerSpawnDelegate.AddDynamic(this, &UPFFlowerSpawnerResource::SpawnFlower);
+	OnFlowerSpawnDelegate.AddUObject(this, &UPFFlowerSpawnerResource::SpawnFlower);
 	OnMaxActorsAmountPlacedDelegate.AddUObject(PainterPtr_, &APFPainter::ReplaceActorsByHismByClass);
 	if (!CheckValidity()) return;
 }

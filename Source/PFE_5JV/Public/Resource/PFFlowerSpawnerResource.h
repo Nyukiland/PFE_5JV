@@ -34,11 +34,8 @@ enum class EPFCustomDataVersion : uint8
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFlowerColorChange, EPFFlowerColor, FlowerColor);
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnMaxActorsAmountPlaced, const TSubclassOf<AActor>&, const FLinearColor, const TArray<FTransform>&);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFlowerSpawn);
+DECLARE_MULTICAST_DELEGATE(FOnFlowerSpawn);
 
-/**
- * 
- */
 UCLASS()
 class PFE_5JV_API UPFFlowerSpawnerResource : public UPFResource
 {
@@ -47,8 +44,7 @@ class PFE_5JV_API UPFFlowerSpawnerResource : public UPFResource
 public :
 	UPROPERTY(BlueprintAssignable, Category="FlowerSpawner")
 	FOnFlowerColorChange OnFlowerColorChangeDelegate;
-
-	UPROPERTY(BlueprintAssignable, Category="FlowerSpawner")
+	
 	FOnFlowerSpawn OnFlowerSpawnDelegate;
 	
 	FOnMaxActorsAmountPlaced OnMaxActorsAmountPlacedDelegate;

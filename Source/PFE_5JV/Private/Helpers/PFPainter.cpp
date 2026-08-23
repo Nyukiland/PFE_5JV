@@ -11,6 +11,60 @@ APFPainter::APFPainter()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
+void APFPainter::BeginPlay()
+{
+	Super::BeginPlay();
+	for(UClass* Class : HismToGenerate)
+	{
+		CreateNewHismModel(Class);
+	}
+
+	OnMaxHismAmountInstancedDelegate.AddUObject(this, &APFPainter::CreateNewHismModel);
+}
+
+void APFPainter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	for(const auto& Pair : ActiveHisms)
+	{
+		UClass* ActorClass = Pair.Key;
+		FPFHismData CurrentHismData = Pair.Value;
+		if(CurrentHismData.HismPtr_->GetInstanceCount() >= MaxHismIntances) OnMaxHismAmountInstancedDelegate.Broadcast(ActorClass);
+	}
+}
+
+APFPainter* APFPainter::GetPainter(UObject* WorldContext)
+{
+	if (!Instance || !IsValid(Instance))
+	{
+		UWorld* World = WorldContext ? WorldContext->GetWorld() : nullptr;
+		if (!World) 
+		{
+			UE_LOG(LogTemp, Error, TEXT("[Painter] No valid World Context provided."));
+			return nullptr;
+		}
+
+		for (TActorIterator<APFPainter> It(World); It; ++It)
+		{
+			if (*It && IsValid(*It))
+			{
+				Instance = *It;
+				return Instance;
+			}
+		}
+		
+		UE_LOG(LogTemp, Error, TEXT("[Painter] The instance of painter has not been placed on the scene"));
+		
+		if (!Instance)
+		{
+			UE_LOG(LogTemp, Error, TEXT("[Painter] Failed to spawn new instance."));
+		}
+	}
+	
+	return Instance;
+}
+
 void APFPainter::CreateNewHismModel(const TSubclassOf<AActor>& ActorClass)
 {
 	if(ActorClass == nullptr) return;
@@ -21,7 +75,7 @@ void APFPainter::CreateNewHismModel(const TSubclassOf<AActor>& ActorClass)
 	FString ClassName = ActorClass->GetName();
 	ClassName = ClassName.Replace(TEXT("BP_"), TEXT("HISM_"));
 	ClassName += FString::Printf(TEXT("_%d"), Hism.Index);
-	UE_LOG(LogTemp, Warning, TEXT("ClassName : %s"), *ClassName);
+	UE_LOG(LogTemp, Warning, TEXT("[Painter] Création d'un nouveau modèle d'HISM : %s"), *ClassName);
 	UHierarchicalInstancedStaticMeshComponent* NewHism = NewObject<UHierarchicalInstancedStaticMeshComponent>(this, FName(*ClassName));
 	if(NewHism == nullptr)
 	{
@@ -60,51 +114,6 @@ void APFPainter::InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarch
 	// Spawn a first HISM instance to avoid spike later
 	FTransform Transform = FTransform(FRotator::ZeroRotator, FVector(0.f, 0.f, -2000.f), FVector::ZeroVector);
 	HismPtr_->AddInstance(Transform, true);
-}
-
-void APFPainter::BeginPlay()
-{
-	Super::BeginPlay();
-	for(UClass* Class : HismToGenerate)
-	{
-		CreateNewHismModel(Class);
-	}
-}
-
-void APFPainter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
-APFPainter* APFPainter::GetPainter(UObject* WorldContext)
-{
-	if (!Instance || !IsValid(Instance))
-	{
-		UWorld* World = WorldContext ? WorldContext->GetWorld() : nullptr;
-		if (!World) 
-		{
-			UE_LOG(LogTemp, Error, TEXT("[Painter] No valid World Context provided."));
-			return nullptr;
-		}
-
-		for (TActorIterator<APFPainter> It(World); It; ++It)
-		{
-			if (*It && IsValid(*It))
-			{
-				Instance = *It;
-				return Instance;
-			}
-		}
-		
-		UE_LOG(LogTemp, Error, TEXT("[Painter] The instance of painter has not been placed on the scene"));
-		
-		if (!Instance)
-		{
-			UE_LOG(LogTemp, Error, TEXT("[Painter] Failed to spawn new instance."));
-		}
-	}
-	
-	return Instance;
 }
 
 void APFPainter::ReplaceActorsByHismByClass(const TSubclassOf<AActor>& ActorClass, const FLinearColor ColorValue, const TArray<FTransform>& PlacedObjectTransforms)

@@ -18,6 +18,8 @@ struct FPFHismData
 	int Index = -1;
 };
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnMaxHismAmountInstanced, const TSubclassOf<AActor>& ActorClass);
+
 UCLASS()
 class PFE_5JV_API APFPainter : public AActor
 {
@@ -26,7 +28,9 @@ class PFE_5JV_API APFPainter : public AActor
 public:
 	APFPainter();
 	static APFPainter* Instance;
-	static constexpr int MaxHISMIntances = 25;
+	static constexpr int MaxHismIntances = 5000;
+
+	FOnMaxHismAmountInstanced OnMaxHismAmountInstancedDelegate;
 
 protected:
 	virtual void BeginPlay() override;
