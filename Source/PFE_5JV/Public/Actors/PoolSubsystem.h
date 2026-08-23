@@ -108,7 +108,11 @@ T* UPoolSubsystem::SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location
 		{
 			PooledActor = CastChecked<T>(ObjectPool.Pop());
 			PooledActor->SetActorLocationAndRotation(Location, Rotation);
-			ObjectPool.AddToPlacedObject(PooledActor, PooledActor->GetTransform());
+			if(UStaticMeshComponent* MeshComp = PooledActor->FindComponentByClass<UStaticMeshComponent>())
+			{
+				FTransform Transform = MeshComp->GetComponentTransform();
+				ObjectPool.AddToPlacedObject(PooledActor, Transform);
+			}
 		}
 
 		IPFPoolable::Execute_OnSpawnFromPool(PooledActor);

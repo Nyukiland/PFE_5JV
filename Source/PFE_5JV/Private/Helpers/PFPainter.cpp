@@ -97,20 +97,26 @@ void APFPainter::CreateNewHismModel(const TSubclassOf<AActor>& ActorClass)
 
 void APFPainter::InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarchicalInstancedStaticMeshComponent* HismPtr_)
 {
-	if(ActorClass == nullptr) return;
-	AActor* DefaultActor = ActorClass->GetDefaultObject<AActor>();
-	if(DefaultActor == nullptr) return;
-	UStaticMeshComponent* MeshComponent = DefaultActor->FindComponentByClass<UStaticMeshComponent>();
-	if(MeshComponent == nullptr) return;
-	UStaticMesh* Mesh = MeshComponent->GetStaticMesh();
-	if(Mesh == nullptr) return;
-	UMaterialInterface* Material = Mesh->GetMaterial(0);
-	if(Material == nullptr) return;
+	if(HismPtr_ == nullptr) return;
 	HismPtr_->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	HismPtr_->SetStaticMesh(Mesh);
-	HismPtr_->SetMaterial(0, Material);
 	HismPtr_->SetNumCustomDataFloats(3);
+	if(ActorClass == nullptr) return;
+	if(AActor* DefaultActor = ActorClass->GetDefaultObject<AActor>())
+	{
+		if(UStaticMeshComponent* MeshComponent = DefaultActor->FindComponentByClass<UStaticMeshComponent>())
+		{
+			if(UStaticMesh* Mesh = MeshComponent->GetStaticMesh())
+			{
+				HismPtr_->SetStaticMesh(Mesh);
+			}
+			
+			if(UMaterialInterface* Material = MeshComponent->GetMaterial(0))
+			{
+				HismPtr_->SetMaterial(0, Material);
+			}
+		}
+	}
+	
 	// Spawn a first HISM instance to avoid spike later
 	FTransform Transform = FTransform(FRotator::ZeroRotator, FVector(0.f, 0.f, -2000.f), FVector::ZeroVector);
 	HismPtr_->AddInstance(Transform, true);
