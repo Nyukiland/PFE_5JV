@@ -25,7 +25,15 @@ enum class EPFFlowerColor : uint8
 	EPFFC_Purple UMETA(DisplayName = "Purple"),
 };
 
+UENUM(BlueprintType)
+enum class EPFCustomDataVersion : uint8
+{
+	EPFFC_Actor UMETA(DisplayName = "Actor"),
+	EPFFC_Hism UMETA(DisplayName = "HISM"),
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFlowerColorChange, EPFFlowerColor, FlowerColor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnMaxActorsAmountPlaced, TSubclassOf<AActor>, ActorClass, FLinearColor, ColorValue, TArray<FTransform>, PlacedObjectTransforms);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFlowerSpawn);
 
 /**
@@ -42,6 +50,9 @@ public :
 
 	UPROPERTY(BlueprintAssignable, Category="FlowerSpawner")
 	FOnFlowerSpawn OnFlowerSpawnDelegate;
+
+	UPROPERTY(BlueprintAssignable, Category="FlowerSpawner")
+	FOnMaxActorsAmountPlaced OnMaxActorsAmountPlacedDelegate;
 
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	void SetCurrentFlowerColor(EPFFlowerColor FlowerColor);

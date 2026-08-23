@@ -32,7 +32,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	void CreateNewHismModel(const TSubclassOf<AActor>& ActorClass);
-	static void GetHismInitializationDataFromClass(const TSubclassOf<AActor>& ActorClass, UHierarchicalInstancedStaticMeshComponent* HismPtr_);
+	static void InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarchicalInstancedStaticMeshComponent* HismPtr_);
 	
 public:	
 	virtual void Tick(float DeltaTime) override;
@@ -41,10 +41,13 @@ public:
 	TArray<UClass*> HismToGenerate;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Painter")
-	TMap<UClass*, FPFHismData> CurrentHism;
+	TMap<UClass*, FPFHismData> ActiveHisms;
 
 	UFUNCTION(BlueprintCallable, Category = "Utility")
 	static APFPainter* GetPainter(UObject* WorldContext);
+
+	UFUNCTION()
+	void ReplaceActorsByHismByClass(TSubclassOf<AActor> ActorClass, FLinearColor ColorValue, TArray<FTransform> PlacedObjectTransforms);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void PaintStuff(const TArray<FHitResult>& validHitResults, const TArray<float>& brushSizes);

@@ -38,6 +38,7 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 
 	CurrentFlowerColor_ = EPFFlowerColor::EPFFC_None;
 	OnFlowerSpawnDelegate.AddDynamic(this, &UPFFlowerSpawnerResource::SpawnFlower);
+	OnMaxActorsAmountPlacedDelegate.AddDynamic(PainterPtr_, &APFPainter::ReplaceActorsByHismByClass);
 	if (!CheckValidity()) return;
 }
 
@@ -60,19 +61,11 @@ void UPFFlowerSpawnerResource::ComponentTick_Implementation(float deltaTime)
 		FPFPoolArrays ObjectPool = Pair.Value;
 		
 		if(ObjectPool.PlacedObjectsNum() >= MaxActorsAmountPlaced) {
+			
 			if(FlowerHISMPtr_ == nullptr) return;
 			FLinearColor ColorValue;
 			TryGetFlowerColorFromEnum(CurrentFlowerColor_, ColorValue);
-			
-			TArray<int32> Indices = FlowerHISMPtr_->AddInstances(ObjectPool.PlacedObjectTransforms, true, true, false
-				);
-
-			for(int32 InstanceIndex : Indices)
-			{
-				FlowerHISMPtr_->SetCustomDataValue(InstanceIndex, 0, ColorValue.R, true);
-				FlowerHISMPtr_->SetCustomDataValue(InstanceIndex, 1, ColorValue.G, true);
-				FlowerHISMPtr_->SetCustomDataValue(InstanceIndex, 2, ColorValue.B, true);
-			}
+			OnMaxActorsAmountPlacedDelegate.Broadcast(PoolClass, ColorValue, ObjectPool.PlacedObjectTransforms);
 			PoolSubsystemPtr_->ReturnToPool(PoolClass);
 		}
 	}
@@ -227,10 +220,10 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	
 	// GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Green, FString::Printf(TEXT("Theta : %f - %f - %f"), ColorValue.R, ColorValue.G, ColorValue.B));
 	// if(Flower->GetFlowerMesh() == nullptr)	UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] GetFlowerMesh is NULL"));
-	// Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(0, ColorValue.R);
-	// Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(1, ColorValue.G);
-	// Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(2, ColorValue.B);
-	// Flower->GetFlowerMesh()->SetCustomPrimitiveDataVector4f(0, ColorValue);
+	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(0, ColorValue.R);
+	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(1, ColorValue.G);
+	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(2, ColorValue.B);
+	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(7, 0.0f);
 	
 	UMaterialInstanceDynamic* FlowerMaterial = Flower->GetDynamicMaterial();
 	if (!FlowerMaterial) return;

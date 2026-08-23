@@ -14,7 +14,7 @@ APFPainter::APFPainter()
 void APFPainter::CreateNewHismModel(const TSubclassOf<AActor>& ActorClass)
 {
 	if(ActorClass == nullptr) return;
-	FPFHismData& Hism = CurrentHism.FindOrAdd(ActorClass);
+	FPFHismData& Hism = ActiveHisms.FindOrAdd(ActorClass);
 	Hism.Index++;
 
 	// Create the new HISM :
@@ -38,10 +38,10 @@ void APFPainter::CreateNewHismModel(const TSubclassOf<AActor>& ActorClass)
 	Hism.HismPtr_ = NewHism;
 
 	// Initialize the new HISM :
-	GetHismInitializationDataFromClass(ActorClass, Hism.HismPtr_);
+	InitializeHism(ActorClass, Hism.HismPtr_);
 }
 
-void APFPainter::GetHismInitializationDataFromClass(const TSubclassOf<AActor>& ActorClass, UHierarchicalInstancedStaticMeshComponent* HismPtr_)
+void APFPainter::InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarchicalInstancedStaticMeshComponent* HismPtr_)
 {
 	if(ActorClass == nullptr) return;
 	AActor* DefaultActor = ActorClass->GetDefaultObject<AActor>();
@@ -52,10 +52,13 @@ void APFPainter::GetHismInitializationDataFromClass(const TSubclassOf<AActor>& A
 	if(Mesh == nullptr) return;
 	UMaterialInterface* Material = Mesh->GetMaterial(0);
 	if(Material == nullptr) return;
+	HismPtr_->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	HismPtr_->SetStaticMesh(Mesh);
 	HismPtr_->SetMaterial(0, Material);
 }
+
+
 
 void APFPainter::BeginPlay()
 {
@@ -100,6 +103,29 @@ APFPainter* APFPainter::GetPainter(UObject* WorldContext)
 	}
 	
 	return Instance;
+}
+
+// TODO : changer rendre les paramètres const et passer par référence
+void APFPainter::ReplaceActorsByHismByClass(TSubclassOf<AActor> ActorClass, FLinearColor ColorValue, TArray<FTransform> PlacedObjectTransforms)
+{
+	FPFHismData* CurrentHismData = ActiveHisms.Find(ActorClass);
+	if(CurrentHismData == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[Painter] There is no HISM model for %s class. Add it in HismToGenerate array"), *ActorClass->GetName());
+		return;
+	}
+	UHierarchicalInstancedStaticMeshComponent* CurrentHismPtr_ = CurrentHismData->HismPtr_;
+	TArray<int32> Indices = CurrentHismPtr_->AddInstances(PlacedObjectTransforms, true, true, false);
+
+	for(int32 InstanceIndex : Indices)
+	{
+		// UE_LOG(LogTemp, Error, TEXT("[Painter] HISM Indice  : %d"), InstanceIndex);
+		CurrentHismPtr_->SetCustomDataValue(InstanceIndex, 0, ColorValue.R, true);
+		CurrentHismPtr_->SetCustomDataValue(InstanceIndex, 1, ColorValue.G, true);
+		CurrentHismPtr_->SetCustomDataValue(InstanceIndex, 2, ColorValue.B, true);
+		// Active la couleur via HISM
+		CurrentHismPtr_->SetCustomPrimitiveDataFloat(7, 1.0f);
+	}
 }
 
 void APFPainter::PaintStuff_Implementation(const TArray<FHitResult>& validHitResults, const TArray<float>& brushSizes)
