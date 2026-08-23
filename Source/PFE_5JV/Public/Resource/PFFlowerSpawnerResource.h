@@ -33,7 +33,7 @@ enum class EPFCustomDataVersion : uint8
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFlowerColorChange, EPFFlowerColor, FlowerColor);
-DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnMaxActorsAmountPlaced, const TSubclassOf<AActor>&, const FLinearColor, const TArray<FTransform>&);
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnActorsByHismSwitch, const TSubclassOf<AActor>&, const FLinearColor, const TArray<FTransform>&);
 DECLARE_MULTICAST_DELEGATE(FOnFlowerSpawn);
 
 UCLASS()
@@ -46,8 +46,7 @@ public :
 	FOnFlowerColorChange OnFlowerColorChangeDelegate;
 	
 	FOnFlowerSpawn OnFlowerSpawnDelegate;
-	
-	FOnMaxActorsAmountPlaced OnMaxActorsAmountPlacedDelegate;
+	FOnActorsByHismSwitch OnActorsByHismSwitchDelegate;
 
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	void SetCurrentFlowerColor(EPFFlowerColor FlowerColor);
@@ -96,6 +95,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
 	EPFFlowerColor CurrentFlowerColor_;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
+	FLinearColor CurrentColorValue;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
 	TObjectPtr<UMaterialParameterCollection> FlowerColorCollectionPtr_;

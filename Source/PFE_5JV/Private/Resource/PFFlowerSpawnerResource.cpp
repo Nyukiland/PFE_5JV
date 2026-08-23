@@ -31,14 +31,10 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 	PoolSubsystemPtr_ = GetWorld()->GetSubsystem<UPoolSubsystem>();
 	// Flower :
 	PoolSubsystemPtr_->InitializePool(FlowerClass, PoolSubsystemPtr_->InitialPoolSize);
-
-
-	TArray<UActorComponent*> FlowerHISMComponents = PainterPtr_->GetComponentsByTag(UHierarchicalInstancedStaticMeshComponent::StaticClass(), FName("Flower_0"));
-	if (FlowerHISMComponents.Num() > 0) FlowerHISMPtr_ = Cast<UHierarchicalInstancedStaticMeshComponent>(FlowerHISMComponents[0]);
-
+	
 	CurrentFlowerColor_ = EPFFlowerColor::EPFFC_None;
 	OnFlowerSpawnDelegate.AddUObject(this, &UPFFlowerSpawnerResource::SpawnFlower);
-	OnMaxActorsAmountPlacedDelegate.AddUObject(PainterPtr_, &APFPainter::ReplaceActorsByHismByClass);
+	OnActorsByHismSwitchDelegate.AddUObject(PainterPtr_, &APFPainter::ReplaceActorsByHismByClass);
 	if (!CheckValidity()) return;
 }
 
@@ -61,11 +57,7 @@ void UPFFlowerSpawnerResource::ComponentTick_Implementation(float deltaTime)
 		FPFPoolArrays ObjectPool = Pair.Value;
 		
 		if(ObjectPool.PlacedObjectsNum() >= MaxActorsAmountPlaced) {
-			
-			if(FlowerHISMPtr_ == nullptr) return;
-			FLinearColor ColorValue;
-			TryGetFlowerColorFromEnum(CurrentFlowerColor_, ColorValue);
-			OnMaxActorsAmountPlacedDelegate.Broadcast(PoolClass, ColorValue, ObjectPool.PlacedObjectTransforms);
+			OnActorsByHismSwitchDelegate.Broadcast(PoolClass, CurrentColorValue, ObjectPool.PlacedObjectTransforms);
 			PoolSubsystemPtr_->ReturnToPool(PoolClass);
 		}
 	}
@@ -73,8 +65,24 @@ void UPFFlowerSpawnerResource::ComponentTick_Implementation(float deltaTime)
 
 void UPFFlowerSpawnerResource::SetCurrentFlowerColor(EPFFlowerColor FlowerColor)
 {
+	// if it is already the same color, do nothing
+	if(CurrentFlowerColor_ == FlowerColor) return;
+
+	// if there is actors placed with old color, replace by HISM version before changing the color
+	for (const auto& Pair : PoolSubsystemPtr_->ObjectPools)
+	{
+		UClass* PoolClass = Pair.Key;
+		FPFPoolArrays ObjectPool = Pair.Value;
+
+		if(ObjectPool.PlacedObjectsIsEmpty() == false)
+		{
+			OnActorsByHismSwitchDelegate.Broadcast(PoolClass, CurrentColorValue, ObjectPool.PlacedObjectTransforms);
+		}
+	}
+	
+	// Implement new color :
 	CurrentFlowerColor_ = FlowerColor;
-	OnFlowerColorChangeDelegate.Broadcast(FlowerColor);
+	TryGetFlowerColorFromEnum(CurrentFlowerColor_, CurrentColorValue);
 }
 
 bool UPFFlowerSpawnerResource::TryGetFlowerColorFromEnum(EPFFlowerColor FlowerColor, FLinearColor& ColorValue)
@@ -220,19 +228,16 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	// APFFlower* Flower = GetWorld()->SpawnActor<class APFFlower>(FlowerClass, SpawnLocation, SpawnRotation); 
 	
 	Flower->SetActorScale3D(FlowerSize);
-	
-	FLinearColor ColorValue;
-	TryGetFlowerColorFromEnum(CurrentFlowerColor_, ColorValue);
-	
-	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(0, ColorValue.R);
-	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(1, ColorValue.G);
-	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(2, ColorValue.B);
+		
+	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(0, CurrentColorValue.R);
+	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(1, CurrentColorValue.G);
+	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(2, CurrentColorValue.B);
 	// color activation via Custom primitive data :
 	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(7, GetCustomDataAlphaFromEnum(EPFCustomDataVersion::EPFFC_Actor));
 	
-	UMaterialInstanceDynamic* FlowerMaterial = Flower->GetDynamicMaterial();
-	if (!FlowerMaterial) return;
-	FlowerMaterial->SetVectorParameterValue(FName("FlowerColor"), ColorValue);
+	// UMaterialInstanceDynamic* FlowerMaterial = Flower->GetDynamicMaterial();
+	// if (!FlowerMaterial) return;
+	// FlowerMaterial->SetVectorParameterValue(FName("FlowerColor"), CurrentColorValue);
 }
 
 FVector UPFFlowerSpawnerResource::FindRandomPointInBrushRadius(float BrushRadius)
