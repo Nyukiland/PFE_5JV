@@ -47,7 +47,7 @@ public:
 	static APFPainter* GetPainter(UObject* WorldContext);
 
 	UFUNCTION()
-	void ReplaceActorsByHismByClass(TSubclassOf<AActor> ActorClass, FLinearColor ColorValue, TArray<FTransform> PlacedObjectTransforms);
+	void ReplaceActorsByHismByClass(const TSubclassOf<AActor>& ActorClass, const FLinearColor ColorValue, const TArray<FTransform>& PlacedObjectTransforms);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void PaintStuff(const TArray<FHitResult>& validHitResults, const TArray<float>& brushSizes);

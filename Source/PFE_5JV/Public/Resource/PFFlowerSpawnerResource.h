@@ -33,7 +33,7 @@ enum class EPFCustomDataVersion : uint8
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFlowerColorChange, EPFFlowerColor, FlowerColor);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnMaxActorsAmountPlaced, TSubclassOf<AActor>, ActorClass, FLinearColor, ColorValue, TArray<FTransform>, PlacedObjectTransforms);
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnMaxActorsAmountPlaced, const TSubclassOf<AActor>&, const FLinearColor, const TArray<FTransform>&);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFlowerSpawn);
 
 /**
@@ -50,8 +50,7 @@ public :
 
 	UPROPERTY(BlueprintAssignable, Category="FlowerSpawner")
 	FOnFlowerSpawn OnFlowerSpawnDelegate;
-
-	UPROPERTY(BlueprintAssignable, Category="FlowerSpawner")
+	
 	FOnMaxActorsAmountPlaced OnMaxActorsAmountPlacedDelegate;
 
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
@@ -63,7 +62,9 @@ public :
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	bool TryGetFlowerColorFromEnum(EPFFlowerColor FlowerColor, FLinearColor& ColorValue);
 
-
+	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner | Helper")
+	static float GetCustomDataAlphaFromEnum(EPFCustomDataVersion Version);
+	
 protected:
 	static constexpr int MaxActorsAmountPlaced = 20;
 	

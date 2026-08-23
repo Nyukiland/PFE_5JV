@@ -5,6 +5,7 @@
 
 #include "Actors/PoolSubsystem.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
+#include "Helpers/PFBlueprintHelper.h"
 #include "Helpers/PFMathHelper.h"
 #include "Helpers/PFPainter.h"
 #include "Kismet/GameplayStatics.h"
@@ -38,7 +39,7 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 
 	CurrentFlowerColor_ = EPFFlowerColor::EPFFC_None;
 	OnFlowerSpawnDelegate.AddDynamic(this, &UPFFlowerSpawnerResource::SpawnFlower);
-	OnMaxActorsAmountPlacedDelegate.AddDynamic(PainterPtr_, &APFPainter::ReplaceActorsByHismByClass);
+	OnMaxActorsAmountPlacedDelegate.AddUObject(PainterPtr_, &APFPainter::ReplaceActorsByHismByClass);
 	if (!CheckValidity()) return;
 }
 
@@ -103,6 +104,12 @@ bool UPFFlowerSpawnerResource::TryGetFlowerColorFromEnum(EPFFlowerColor FlowerCo
 			return bParameterFound;
 
 	}
+}
+
+float UPFFlowerSpawnerResource::GetCustomDataAlphaFromEnum(EPFCustomDataVersion Version)
+{
+	float alpha = (Version == EPFCustomDataVersion::EPFFC_Hism)? 1.0f : 0.0f;
+	return alpha;
 }
 
 FVector UPFFlowerSpawnerResource::GetRandomFlowerSize()
@@ -218,21 +225,15 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	FLinearColor ColorValue;
 	TryGetFlowerColorFromEnum(CurrentFlowerColor_, ColorValue);
 	
-	// GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Green, FString::Printf(TEXT("Theta : %f - %f - %f"), ColorValue.R, ColorValue.G, ColorValue.B));
-	// if(Flower->GetFlowerMesh() == nullptr)	UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] GetFlowerMesh is NULL"));
 	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(0, ColorValue.R);
 	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(1, ColorValue.G);
 	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(2, ColorValue.B);
-	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(7, 0.0f);
+	// color activation via Custom primitive data :
+	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(7, GetCustomDataAlphaFromEnum(EPFCustomDataVersion::EPFFC_Actor));
 	
 	UMaterialInstanceDynamic* FlowerMaterial = Flower->GetDynamicMaterial();
 	if (!FlowerMaterial) return;
 	FlowerMaterial->SetVectorParameterValue(FName("FlowerColor"), ColorValue);
-	// if(FlowerMaterial == nullptr)	UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] FlowerMaterial is NULL"));
-	// FlowerMaterial->SetScalarParameterByIndex(0, ColorValue.R);
-	// FlowerMaterial->SetScalarParameterByIndex(1, ColorValue.G);
-	// FlowerMaterial->SetScalarParameterByIndex(2, ColorValue.B);
-
 }
 
 FVector UPFFlowerSpawnerResource::FindRandomPointInBrushRadius(float BrushRadius)

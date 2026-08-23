@@ -1,8 +1,8 @@
 #include "Helpers/PFPainter.h"
 
 #include "EngineUtils.h"
-#include "MovieSceneTracksComponentTypes.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
+#include "Resource/PFFlowerSpawnerResource.h"
 
 APFPainter* APFPainter::Instance = nullptr;
 
@@ -57,9 +57,10 @@ void APFPainter::InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarch
 	HismPtr_->SetStaticMesh(Mesh);
 	HismPtr_->SetMaterial(0, Material);
 	HismPtr_->SetNumCustomDataFloats(3);
+	// Spawn a first HISM instance to avoid spike later
+	FTransform Transform = FTransform(FRotator::ZeroRotator, FVector(0.f, 0.f, -2000.f), FVector::ZeroVector);
+	HismPtr_->AddInstance(Transform, true);
 }
-
-
 
 void APFPainter::BeginPlay()
 {
@@ -106,8 +107,7 @@ APFPainter* APFPainter::GetPainter(UObject* WorldContext)
 	return Instance;
 }
 
-// TODO : changer rendre les paramètres const et passer par référence
-void APFPainter::ReplaceActorsByHismByClass(TSubclassOf<AActor> ActorClass, FLinearColor ColorValue, TArray<FTransform> PlacedObjectTransforms)
+void APFPainter::ReplaceActorsByHismByClass(const TSubclassOf<AActor>& ActorClass, const FLinearColor ColorValue, const TArray<FTransform>& PlacedObjectTransforms)
 {
 	FPFHismData* CurrentHismData = ActiveHisms.Find(ActorClass);
 	if(CurrentHismData == nullptr)
@@ -120,13 +120,13 @@ void APFPainter::ReplaceActorsByHismByClass(TSubclassOf<AActor> ActorClass, FLin
 
 	for(int32 InstanceIndex : Indices)
 	{
-		// UE_LOG(LogTemp, Error, TEXT("[Painter] HISM Indice  : %d"), InstanceIndex);
-		CurrentHismPtr_->SetCustomDataValue(InstanceIndex, 0, ColorValue.R, true);
-		CurrentHismPtr_->SetCustomDataValue(InstanceIndex, 1, ColorValue.G, true);
-		CurrentHismPtr_->SetCustomDataValue(InstanceIndex, 2, ColorValue.B, true);
+		CurrentHismPtr_->SetCustomDataValue(InstanceIndex, 0, ColorValue.R, false);
+		CurrentHismPtr_->SetCustomDataValue(InstanceIndex, 1, ColorValue.G, false);
+		CurrentHismPtr_->SetCustomDataValue(InstanceIndex, 2, ColorValue.B, false);
 		// Active la couleur via HISM
-		CurrentHismPtr_->SetCustomPrimitiveDataFloat(7, 1.0f);
+		CurrentHismPtr_->SetCustomPrimitiveDataFloat(7, UPFFlowerSpawnerResource::GetCustomDataAlphaFromEnum(EPFCustomDataVersion::EPFFC_Hism));
 	}
+	CurrentHismPtr_->MarkRenderStateDirty();
 }
 
 void APFPainter::PaintStuff_Implementation(const TArray<FHitResult>& validHitResults, const TArray<float>& brushSizes)
