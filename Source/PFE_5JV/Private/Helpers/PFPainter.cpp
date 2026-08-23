@@ -56,6 +56,7 @@ void APFPainter::InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarch
 
 	HismPtr_->SetStaticMesh(Mesh);
 	HismPtr_->SetMaterial(0, Material);
+	HismPtr_->SetNumCustomDataFloats(3);
 }
 
 
