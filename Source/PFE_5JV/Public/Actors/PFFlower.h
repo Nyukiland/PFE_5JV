@@ -19,9 +19,10 @@ public:
 	APFFlower();
 	TObjectPtr<UMaterialInstanceDynamic> GetDynamicMaterial() { return DynamicMaterial;}
 	TObjectPtr<UStaticMeshComponent> GetFlowerMesh() { return FlowerMeshComponent;}
-	virtual void BeginPlay() override;
 	
 protected:
+	virtual void BeginPlay() override;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Flower)
 	TObjectPtr<UStaticMeshComponent> FlowerMeshComponent;
 

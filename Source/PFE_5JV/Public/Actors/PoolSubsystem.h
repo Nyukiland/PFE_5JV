@@ -5,60 +5,10 @@
 #include "CoreMinimal.h"
 #include "PFPoolable.h"
 #include "Subsystems/WorldSubsystem.h"
+#include "Helpers/FlowerSpawner/PFFlowerSpawnerTypes.h"
 #include "PoolSubsystem.generated.h"
 
-USTRUCT()
-struct FPFPoolArrays
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	TArray<AActor*> ObjectPool;
-
-	UPROPERTY()
-	TArray<AActor*> PlacedObjects;
-
-	UPROPERTY()
-	TArray<FTransform> PlacedObjectTransforms;
-
-	bool PoolIsEmpty() const {
-		return ObjectPool.IsEmpty();
-	}
-
-	bool PlacedObjectsIsEmpty() const {
-		return PlacedObjects.IsEmpty();
-	}
-
-	void AddToPool(AActor* ActorToAdd)
-	{
-		ObjectPool.Add(ActorToAdd);
-	}
-
-	void AddToPlacedObject(AActor* ActorToAdd, const FTransform& Transform)
-	{
-		PlacedObjects.Add(ActorToAdd);
-		PlacedObjectTransforms.Add(Transform);
-	}
-
-	void ReturnToPool()
-	{
-		ObjectPool.Append(PlacedObjects);
-		PlacedObjects.Empty();
-		PlacedObjectTransforms.Empty();
-	}
-
-	AActor* Pop()
-	{
-		return ObjectPool.Pop();
-	}
-
-	int PlacedObjectsNum() const
-	{
-		return PlacedObjects.Num();
-	}
-	
-};
-
+struct FPFPoolArrays;
 
 UCLASS()
 class PFE_5JV_API UPoolSubsystem : public UWorldSubsystem
@@ -108,7 +58,7 @@ T* UPoolSubsystem::SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location
 		{
 			PooledActor = CastChecked<T>(ObjectPool.Pop());
 			PooledActor->SetActorLocationAndRotation(Location, Rotation);
-			if(UStaticMeshComponent* MeshComp = PooledActor->FindComponentByClass<UStaticMeshComponent>())
+			if(const UStaticMeshComponent* MeshComp = PooledActor->template FindComponentByClass<UStaticMeshComponent>())
 			{
 				FTransform Transform = MeshComp->GetComponentTransform();
 				ObjectPool.AddToPlacedObject(PooledActor, Transform);

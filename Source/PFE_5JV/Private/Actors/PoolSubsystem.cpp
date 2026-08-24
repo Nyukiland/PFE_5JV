@@ -3,6 +3,7 @@
 
 #include "Actors/PoolSubsystem.h"
 #include "Actors/PFPoolable.h"
+#include "Helpers/FlowerSpawner/PFFlowerSpawnerTypes.h"
 
 void UPoolSubsystem::InitializePool(TSubclassOf<AActor> PoolClass, int Amount)
 {

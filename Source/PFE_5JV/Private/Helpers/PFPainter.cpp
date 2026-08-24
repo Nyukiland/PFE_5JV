@@ -3,6 +3,7 @@
 #include "EngineUtils.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Resource/PFFlowerSpawnerResource.h"
+#include "Helpers/FlowerSpawner/PFFlowerSpawnerTypes.h"
 
 APFPainter* APFPainter::Instance = nullptr;
 

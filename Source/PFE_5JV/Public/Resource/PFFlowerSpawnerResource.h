@@ -15,23 +15,6 @@ class UHierarchicalInstancedStaticMeshComponent;
 class UPFProximityResource;
 class APFPainter;
 
-UENUM(BlueprintType)
-enum class EPFFlowerColor : uint8
-{
-	EPFFC_None UMETA(DisplayName = "None"),
-	EPFFC_Blue UMETA(DisplayName = "Blue"),
-	EPFFC_Red UMETA(DisplayName = "Red"),
-	EPFFC_Yellow UMETA(DisplayName = "Yellow"),
-	EPFFC_Purple UMETA(DisplayName = "Purple"),
-};
-
-UENUM(BlueprintType)
-enum class EPFCustomDataVersion : uint8
-{
-	EPFFC_Actor UMETA(DisplayName = "Actor"),
-	EPFFC_Hism UMETA(DisplayName = "HISM"),
-};
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFlowerColorChange, EPFFlowerColor, FlowerColor);
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnActorsByHismSwitch, const TSubclassOf<AActor>&, const FLinearColor, const TArray<FTransform>&);
 DECLARE_MULTICAST_DELEGATE(FOnFlowerSpawn);
@@ -60,12 +43,12 @@ public :
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner | Helper")
 	static float GetCustomDataAlphaFromEnum(EPFCustomDataVersion Version);
 	
-protected:
-	static constexpr int MaxActorsAmountPlaced = 20;
-	
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 	virtual void ComponentTick_Implementation(float deltaTime) override;
 	
+protected:
+	static constexpr int MaxActorsAmountPlaced = 20;
+		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
 	float DelayToSpawnTimer_ = -1.0f;
 	

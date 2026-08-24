@@ -2,21 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Helpers/FlowerSpawner/PFFlowerSpawnerTypes.h"
 #include "PFPainter.generated.h"
 
+struct FPFHismData;
 class UHierarchicalInstancedStaticMeshComponent;
-
-USTRUCT(Blueprintable, BlueprintType)
-struct FPFHismData
-{
-	GENERATED_BODY()
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM Data")
-	UHierarchicalInstancedStaticMeshComponent* HismPtr_ = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM Data")
-	int Index = -1;
-};
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMaxHismAmountInstanced, const TSubclassOf<AActor>& ActorClass);
 

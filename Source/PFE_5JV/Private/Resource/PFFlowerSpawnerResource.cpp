@@ -4,7 +4,6 @@
 #include "Resource/PFFlowerSpawnerResource.h"
 
 #include "Actors/PoolSubsystem.h"
-#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Helpers/PFMathHelper.h"
 #include "Helpers/PFPainter.h"
 #include "Kismet/GameplayStatics.h"
@@ -15,6 +14,7 @@
 #include "Resource/PFPhysicResource.h"
 #include "Math/UnrealMathUtility.h"
 #include "Resource/Data/PFFlowerSpawnerResourceData.h"
+#include "Helpers/FlowerSpawner/PFFlowerSpawnerTypes.h"
 
 void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* ownerObj)
 {
@@ -139,7 +139,7 @@ bool UPFFlowerSpawnerResource::CheckSpawnConditions(const FHitResult& Hit)
 {
 	if (!Hit.bBlockingHit) return false;
 	if (!Hit.GetActor()) return false;
-
+UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource] %s"), *Hit.GetActor()->GetName());
 	// Si la pente de la surface où on veut spawn est trop raide (ex : falaise), on ne spawn pas :
 	// Calcule l'angle de la pente :
 	FVector UpVector = FVector(0,0,1);
@@ -150,6 +150,8 @@ bool UPFFlowerSpawnerResource::CheckSpawnConditions(const FHitResult& Hit)
 
 	// Ne spawn pas sur les supports n'ayant pas le tag "Landscape"
 	if(Hit.GetActor()->ActorHasTag("Landscape") == false) return false;
+	// Hit.GetActor()->ActorHasTag("Water")
+	
 
 	// Dans les autres cas, on spawn la fleur :
 	return true;
