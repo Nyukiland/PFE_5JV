@@ -215,29 +215,27 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	if(!CheckSpawnConditions(CurrentHitResult)) return;
 	
 	float FlowerHeight = GetRandomFlowerHeight(CurrentHitResult.ImpactPoint.Z);
-	FVector FlowerSize = GetRandomFlowerSize();
-	
 	FVector SpawnLocation = FVector(CurrentHitResult.ImpactPoint.X, CurrentHitResult.ImpactPoint.Y, FlowerHeight);
-	FRotator SpawnRotation = UKismetMathLibrary::MakeRotFromZX(CurrentHitResult.ImpactNormal, UpVector);
 
+	// Rotation de la fleur :
+	FQuat AlignmentQuat = FRotationMatrix::MakeFromZX(CurrentHitResult.ImpactNormal, FVector::ForwardVector).ToQuat();
+	float RandomRotation = FMath::RandRange(0, 360);
+	FQuat FinalQuat = AlignmentQuat * FQuat(FVector::UpVector, FMath::DegreesToRadians(RandomRotation));
+	FRotator FinalRotation = FinalQuat.Rotator();
 
 	// Spawn avec PoolSystem : 
-	APFFlower* Flower = Cast<APFFlower>(PoolSubsystemPtr_->SpawnFromPool<AActor>(FlowerClass, SpawnLocation, SpawnRotation));
+	APFFlower* Flower = Cast<APFFlower>(PoolSubsystemPtr_->SpawnFromPool<AActor>(FlowerClass, SpawnLocation, FinalRotation));
 
-	// Spawn sans PoolSystem
-	// APFFlower* Flower = GetWorld()->SpawnActor<class APFFlower>(FlowerClass, SpawnLocation, SpawnRotation); 
-	
+	// Change Size :
+	FVector FlowerSize = GetRandomFlowerSize();
 	Flower->SetActorScale3D(FlowerSize);
-		
+
+	// Change Actor Color
 	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(0, CurrentColorValue.R);
 	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(1, CurrentColorValue.G);
 	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(2, CurrentColorValue.B);
 	// color activation via Custom primitive data :
 	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(7, GetCustomDataAlphaFromEnum(EPFCustomDataVersion::EPFFC_Actor));
-	
-	// UMaterialInstanceDynamic* FlowerMaterial = Flower->GetDynamicMaterial();
-	// if (!FlowerMaterial) return;
-	// FlowerMaterial->SetVectorParameterValue(FName("FlowerColor"), CurrentColorValue);
 }
 
 FVector UPFFlowerSpawnerResource::FindRandomPointInBrushRadius(float BrushRadius)
