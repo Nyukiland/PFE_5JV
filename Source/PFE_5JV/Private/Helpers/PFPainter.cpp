@@ -125,6 +125,7 @@ void APFPainter::InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarch
 
 void APFPainter::ReplaceActorsByHismByClass(const TSubclassOf<AActor>& ActorClass, const FLinearColor ColorValue, const TArray<FTransform>& PlacedObjectTransforms)
 {
+	UE_LOG(LogTemp, Warning,TEXT( "[Painter] ReplaceActorsByHismByClass"));
 	FPFHismData* CurrentHismData = ActiveHisms.Find(ActorClass);
 	if(CurrentHismData == nullptr)
 	{

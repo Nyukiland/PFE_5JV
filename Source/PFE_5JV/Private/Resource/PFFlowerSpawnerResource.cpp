@@ -83,6 +83,7 @@ void UPFFlowerSpawnerResource::SetCurrentFlowerColor(EPFFlowerColor FlowerColor)
 	// Implement new color :
 	CurrentFlowerColor_ = FlowerColor;
 	TryGetFlowerColorFromEnum(CurrentFlowerColor_, CurrentColorValue);
+	OnFlowerColorChangeDelegate.Broadcast(CurrentFlowerColor_);
 }
 
 bool UPFFlowerSpawnerResource::TryGetFlowerColorFromEnum(EPFFlowerColor FlowerColor, FLinearColor& ColorValue)
