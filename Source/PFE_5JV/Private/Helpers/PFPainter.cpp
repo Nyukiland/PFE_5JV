@@ -18,8 +18,6 @@ void APFPainter::BeginPlay()
 	for(const auto Pair : StaticMeshModelsToSpawn)
 	{
 		UClass* FlowerClass = Pair.Key;
-		FPFStaticMeshModelData StaticMeshModelData = Pair.Value;
-		
 		CreateNewHismModel(FlowerClass);
 	}
 

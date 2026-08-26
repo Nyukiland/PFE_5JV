@@ -28,22 +28,22 @@ protected:
 	void CreateNewHismModel(const TSubclassOf<AActor>& ActorClass);
 	static void InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarchicalInstancedStaticMeshComponent* HismPtr_);
 	
-public:	
-	virtual void Tick(float DeltaTime) override;
-
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Painter")
-	// TArray<UClass*> HismToGenerate;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Painter")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner Model")
 	TMap<UClass*, FPFStaticMeshModelData> StaticMeshModelsToSpawn;
-
+	
+public:	
+	TMap<UClass*, FPFStaticMeshModelData> GetStaticMeshModelsToSpawn() {return StaticMeshModelsToSpawn;};
+	
+	virtual void Tick(float DeltaTime) override;
+	
 	UFUNCTION(BlueprintCallable, Category = "Utility")
 	static APFPainter* GetPainter(UObject* WorldContext);
-
-	UFUNCTION()
-	void ReplaceActorsByHismByClass(const TSubclassOf<AActor>& ActorClass, const FLinearColor ColorValue, const TArray<FTransform>& PlacedObjectTransforms);
-
+	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void PaintStuff(const TArray<FHitResult>& validHitResults, const TArray<float>& brushSizes);
 	void PaintStuff_Implementation(const TArray<FHitResult>& validHitResults, const TArray<float>& brushSizes);
+
+	UFUNCTION()
+	void ReplaceActorsByHismByClass(const TSubclassOf<AActor>& ActorClass, const FLinearColor ColorValue, const TArray<FTransform>& PlacedObjectTransforms);
+	
 };

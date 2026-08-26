@@ -4,18 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "Actors/PFFlower.h"
-#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Data/PFPaintResourceData.h"
-// #include "Helpers/FlowerSpawner/PFFlowerSpawnerTypes.h"
+#include "Helpers/FlowerSpawner/PFFlowerSpawnerTypes.h"
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFFlowerSpawnerResource.generated.h"
 
+struct FPFEnvironmentFlowers;
+enum class EPFFlowerEnvironment : uint8;
 enum class EPFFlowerColor : uint8;
 class UPFPhysicResource;
 class UPFFlowerSpawnerResourceData;
 class UHierarchicalInstancedStaticMeshComponent;
 class UPFProximityResource;
 class APFPainter;
+class APFFlower;
+
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFlowerColorChange, EPFFlowerColor, FlowerColor);
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnActorsByHismSwitch, const TSubclassOf<AActor>&, const FLinearColor, const TArray<FTransform>&);
@@ -42,9 +45,6 @@ public :
 protected:
 	static constexpr int MaxActorsAmountPlaced = 20;
 		
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
-	float DelayToSpawnTimer_ = -1.0f;
-	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
 	TObjectPtr<APFPlayerCharacter> OwnerPtr_;
 
@@ -53,36 +53,37 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
 	TObjectPtr<UPFFlowerSpawnerResourceData> DataPtr_;
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
-	TSubclassOf<APFFlower> CurrentFlowerClassToSpawn;
-		
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Painter|References")
-	TObjectPtr<APFPainter> PainterPtr_;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Painter|References")
 	TObjectPtr<UPFPaintResourceData> PainterDataPtr_;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Painter|References")
-	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> FlowerHISMPtr_;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
+		
+	UPROPERTY()
 	TObjectPtr<UPFPhysicResource> PhysicResourcePtr_;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
-	EPFFlowerColor CurrentFlowerColor_;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
-	FLinearColor CurrentColorValue;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
-	TObjectPtr<UMaterialParameterCollection> FlowerColorCollectionPtr_;
-
+	
 	UPROPERTY()
 	TObjectPtr<UWorld> OwnerWorldPtr_;	
 
 	UPROPERTY()
 	TObjectPtr<UPoolSubsystem> PoolSubsystemPtr_;
+	
+	UPROPERTY()
+	TObjectPtr<APFPainter> PainterPtr_;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
+	float DelayToSpawnTimer_ = -1.0f;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner")
+	EPFFlowerColor CurrentFlowerColor_;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner")
+	FLinearColor CurrentColorValue;
+	
+	// TODO : Vérifier que toujours nécessaire
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner")
+	TSubclassOf<APFFlower> CurrentFlowerClassToSpawn;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FlowerSpawner")
+	TMap<EPFFlowerEnvironment, FPFEnvironmentFlowers> FlowersByEnvironments;
 	
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	FVector GetRandomFlowerSize();
@@ -99,6 +100,7 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	void SpawnFlower();
 
+	// A plutôt mettre dans MathHelper
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	FVector FindRandomPointInBrushRadius(float BrushRadius);
 

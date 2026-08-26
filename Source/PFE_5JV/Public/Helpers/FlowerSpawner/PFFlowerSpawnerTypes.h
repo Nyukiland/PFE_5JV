@@ -1,12 +1,13 @@
 #pragma once
 
+#include "Actors/PFFlower.h"
 #include "CoreMinimal.h"
 #include "PFFlowerSpawnerTypes.generated.h"
 
 class UHierarchicalInstancedStaticMeshComponent;
 
 UENUM(BlueprintType)
-enum class EPFFlowerSupportType : uint8
+enum class EPFFlowerEnvironment : uint8
 {
 	EPFFS_Landscape UMETA(DisplayName = "Landscape"),
 	EPFFS_Water UMETA(DisplayName = "Water"),
@@ -35,13 +36,13 @@ struct FPFStaticMeshModelData
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM Data")
-	EPFFlowerSupportType SupportType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EPFFlowerEnvironment EnvironmentType = EPFFlowerEnvironment::EPFFS_Landscape;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM Data")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UHierarchicalInstancedStaticMeshComponent* ActiveModelHismPtr_ = nullptr;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM Data")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int ActiveModelIndex = -1;
 };
 
@@ -93,6 +94,25 @@ struct FPFPoolArrays
 	int PlacedObjectsNum() const
 	{
 		return PlacedObjects.Num();
+	}
+};
+
+USTRUCT(Blueprintable, BlueprintType)
+struct FPFEnvironmentFlowers
+{
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	TArray<TSubclassOf<APFFlower>> FlowerClasses;
+	
+	bool IsEmpty() const
+	{
+		return FlowerClasses.IsEmpty();
+	}
+	
+	void AddUnique(const TSubclassOf<APFFlower> FlowerClass)
+	{
+		FlowerClasses.AddUnique(FlowerClass);
 	}
 };
 

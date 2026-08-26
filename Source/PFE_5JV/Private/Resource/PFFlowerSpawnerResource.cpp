@@ -22,20 +22,31 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 
 	OwnerPtr_ = ownerObj;
 	OwnerWorldPtr_ = Owner->GetWorld();
-	
 	ProximityResourcePtr_ = OwnerPtr_->GetStateComponent<UPFProximityResource>();
 	PhysicResourcePtr_ = ownerObj->GetStateComponent<UPFPhysicResource>();
 	PainterPtr_ = APFPainter::GetPainter(OwnerPtr_->GetWorld());
 		
 	// Initialize Actors to Spawn
 	PoolSubsystemPtr_ = GetWorld()->GetSubsystem<UPoolSubsystem>();
-	// Flower :
-	PoolSubsystemPtr_->InitializePool(CurrentFlowerClassToSpawn, PoolSubsystemPtr_->InitialPoolSize);
 	
+	if (!CheckValidity()) return;
+	
+	// Flowers :
+	TMap<UClass*, FPFStaticMeshModelData> StaticMeshModelsToSpawn = PainterPtr_->GetStaticMeshModelsToSpawn();
+	for (const auto& Pair : StaticMeshModelsToSpawn)
+	{
+		UClass* FlowerClass = Pair.Key;
+		FPFStaticMeshModelData StaticMeshModelData = Pair.Value;
+		
+		EPFFlowerEnvironment FlowerEnvironment = StaticMeshModelData.EnvironmentType;
+		FPFEnvironmentFlowers& FlowersByEnvironment = FlowersByEnvironments.FindOrAdd(FlowerEnvironment);
+		FlowersByEnvironment.AddUnique(FlowerClass);
+		PoolSubsystemPtr_->InitializePool(FlowerClass, PoolSubsystemPtr_->InitialPoolSize);
+	}
+		
 	CurrentFlowerColor_ = EPFFlowerColor::EPFFC_None;
 	OnFlowerSpawnDelegate.AddUObject(this, &UPFFlowerSpawnerResource::SpawnFlower);
 	OnActorsByHismSwitchDelegate.AddUObject(PainterPtr_, &APFPainter::ReplaceActorsByHismByClass);
-	if (!CheckValidity()) return;
 }
 
 void UPFFlowerSpawnerResource::ComponentTick_Implementation(float deltaTime)
@@ -106,7 +117,7 @@ bool UPFFlowerSpawnerResource::CheckSpawnConditions(const FHitResult& Hit)
 {
 	if (!Hit.bBlockingHit) return false;
 	if (!Hit.GetActor()) return false;
-UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource] %s"), *Hit.GetActor()->GetName());
+// UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource] %s"), *Hit.GetActor()->GetName());
 	// Si la pente de la surface où on veut spawn est trop raide (ex : falaise), on ne spawn pas :
 	// Calcule l'angle de la pente :
 	FVector UpVector = FVector(0,0,1);
@@ -238,10 +249,22 @@ bool UPFFlowerSpawnerResource::CheckValidity() const
 		UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] The ObjectPtr is NULL"));
 		return false;
 	}
+	
+	if (!OwnerWorldPtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] The OwnerWorldPtr_ is NULL"));
+		return false;
+	}
 
 	if (!ProximityResourcePtr_)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] The ProximityResourcePtr_ referenced in FlowerSpawnerResource blueprint is NULL"))
+		return false;
+	}
+	
+	if (!PhysicResourcePtr_)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] The PhysicResourcePtr is NULL"));
 		return false;
 	}
 	
@@ -263,15 +286,9 @@ bool UPFFlowerSpawnerResource::CheckValidity() const
 		return false;
 	}
 	
-	if (!PhysicResourcePtr_)
+	if (!PoolSubsystemPtr_)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] The PhysicResourcePtr is NULL"));
-		return false;
-	}
-
-	if (!FlowerColorCollectionPtr_)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] The FlowerColorCollectionPtr is NULL"));
+		UE_LOG(LogTemp, Error, TEXT("[UPFFlowerSpawnerResource] The PoolSubsystemPtr_ is NULL"))
 		return false;
 	}
 	
