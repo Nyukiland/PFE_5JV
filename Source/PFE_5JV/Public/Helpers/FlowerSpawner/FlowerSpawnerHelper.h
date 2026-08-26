@@ -17,8 +17,5 @@ public:
 	static bool TryGetFlowerColorFromEnum(const EPFFlowerColor FlowerColor, FLinearColor& ColorValue);
 	
 	UFUNCTION(BlueprintPure, Category = "FlowerSpawner")
-	static float GetCustomDataAlphaFromEnum(const EPFCustomDataVersion Version);
-	
-	UFUNCTION(BlueprintPure, Category = "FlowerSpawner")
 	static FString GetFlowerEnvironmentNameFromEnum(const EPFFlowerEnvironment Environment);
 };

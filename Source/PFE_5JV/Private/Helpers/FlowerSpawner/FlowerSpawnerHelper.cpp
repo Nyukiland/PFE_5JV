@@ -42,11 +42,6 @@ bool UFlowerSpawnerHelper::TryGetFlowerColorFromEnum(const EPFFlowerColor Flower
 	return bParameterFound;
 }
 
-float UFlowerSpawnerHelper::GetCustomDataAlphaFromEnum(const EPFCustomDataVersion Version)
-{
-	 return (Version == EPFCustomDataVersion::EPFFC_Hism)? 1.0f : 0.0f;
-}
-
 FString UFlowerSpawnerHelper::GetFlowerEnvironmentNameFromEnum(const EPFFlowerEnvironment Environment)
 {
 	FString EnvironmentName;

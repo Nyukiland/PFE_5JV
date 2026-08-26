@@ -141,8 +141,6 @@ void APFPainter::ReplaceActorsByHismByClass(const TSubclassOf<AActor>& ActorClas
 		CurrentHismPtr_->SetCustomDataValue(InstanceIndex, 0, ColorValue.R, false);
 		CurrentHismPtr_->SetCustomDataValue(InstanceIndex, 1, ColorValue.G, false);
 		CurrentHismPtr_->SetCustomDataValue(InstanceIndex, 2, ColorValue.B, false);
-		// Active la couleur via HISM
-		CurrentHismPtr_->SetCustomPrimitiveDataFloat(7, UFlowerSpawnerHelper::GetCustomDataAlphaFromEnum(EPFCustomDataVersion::EPFFC_Hism));
 	}
 	CurrentHismPtr_->MarkRenderStateDirty();
 }

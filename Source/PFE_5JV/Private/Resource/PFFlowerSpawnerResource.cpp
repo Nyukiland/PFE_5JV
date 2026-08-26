@@ -228,7 +228,7 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(1, CurrentColorValue.G);
 	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(2, CurrentColorValue.B);
 	// color activation via Custom primitive data :
-	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(7, UFlowerSpawnerHelper::GetCustomDataAlphaFromEnum(EPFCustomDataVersion::EPFFC_Actor));
+	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(7, 1);
 }
 
 FVector UPFFlowerSpawnerResource::FindRandomPointInBrushRadius(float BrushRadius)
