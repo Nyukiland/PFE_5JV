@@ -42,9 +42,9 @@ bool UFlowerSpawnerHelper::TryGetFlowerColorFromEnum(const EPFFlowerColor Flower
 	return bParameterFound;
 }
 
-FString UFlowerSpawnerHelper::GetFlowerEnvironmentNameFromEnum(const EPFFlowerEnvironment Environment)
+FName UFlowerSpawnerHelper::GetFlowerEnvironmentNameFromEnum(const EPFFlowerEnvironment Environment)
 {
-	FString EnvironmentName;
+	FName EnvironmentName;
 	switch (Environment)
 	{
 		case EPFFlowerEnvironment::EPFFS_Cliff :

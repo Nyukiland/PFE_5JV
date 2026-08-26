@@ -9,6 +9,7 @@ class UHierarchicalInstancedStaticMeshComponent;
 UENUM(BlueprintType)
 enum class EPFFlowerEnvironment : uint8
 {
+	EPFFS_None UMETA(DisplayName = "None"),
 	EPFFS_Landscape UMETA(DisplayName = "Landscape"),
 	EPFFS_Water UMETA(DisplayName = "Water"),
 	EPFFS_Cliff UMETA(DisplayName = "Cliff"),
@@ -37,7 +38,7 @@ struct FPFStaticMeshModelData
 	GENERATED_BODY()
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EPFFlowerEnvironment EnvironmentType = EPFFlowerEnvironment::EPFFS_Landscape;
+	EPFFlowerEnvironment EnvironmentType = EPFFlowerEnvironment::EPFFS_None;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UHierarchicalInstancedStaticMeshComponent* ActiveModelHismPtr_ = nullptr;
