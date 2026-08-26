@@ -18,4 +18,7 @@ public:
 	
 	UFUNCTION(BlueprintPure, Category = "FlowerSpawner")
 	static float GetCustomDataAlphaFromEnum(const EPFCustomDataVersion Version);
+	
+	UFUNCTION(BlueprintPure, Category = "FlowerSpawner")
+	static FString GetFlowerEnvironmentNameFromEnum(const EPFFlowerEnvironment Environment);
 };

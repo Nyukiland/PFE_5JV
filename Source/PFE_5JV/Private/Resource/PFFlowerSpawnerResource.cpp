@@ -3,6 +3,7 @@
 
 #include "Resource/PFFlowerSpawnerResource.h"
 
+#include "AssetDefinitionAssetInfo.h"
 #include "Actors/PoolSubsystem.h"
 #include "Helpers/PFMathHelper.h"
 #include "Helpers/PFPainter.h"
@@ -42,6 +43,19 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 		FPFEnvironmentFlowers& FlowersByEnvironment = FlowersByEnvironments.FindOrAdd(FlowerEnvironment);
 		FlowersByEnvironment.AddUnique(FlowerClass);
 		PoolSubsystemPtr_->InitializePool(FlowerClass, PoolSubsystemPtr_->InitialPoolSize);
+	}
+	
+	for (const auto& Pair : FlowersByEnvironments)
+	{
+		EPFFlowerEnvironment FlowerEnvironment = Pair.Key;
+		FPFEnvironmentFlowers FlowersList = Pair.Value;
+		
+		for (const auto& FlowerClass : FlowersList.FlowerClasses)
+		{
+			FString EnvironmentName = UFlowerSpawnerHelper::GetFlowerEnvironmentNameFromEnum(FlowerEnvironment);
+			FString FlowerClassName = FlowerClass->GetName();
+			UE_LOG(LogTemp, Warning, TEXT("[FlowerSpawner] Environment : %s - FlowerClass : %s"), *EnvironmentName, *FlowerClassName);
+		}
 	}
 		
 	CurrentFlowerColor_ = EPFFlowerColor::EPFFC_None;

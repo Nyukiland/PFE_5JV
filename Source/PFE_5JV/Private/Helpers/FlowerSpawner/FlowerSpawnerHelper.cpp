@@ -46,3 +46,23 @@ float UFlowerSpawnerHelper::GetCustomDataAlphaFromEnum(const EPFCustomDataVersio
 {
 	 return (Version == EPFCustomDataVersion::EPFFC_Hism)? 1.0f : 0.0f;
 }
+
+FString UFlowerSpawnerHelper::GetFlowerEnvironmentNameFromEnum(const EPFFlowerEnvironment Environment)
+{
+	FString EnvironmentName;
+	switch (Environment)
+	{
+		case EPFFlowerEnvironment::EPFFS_Cliff :
+			EnvironmentName = TEXT("Cliff");
+			break;
+		case EPFFlowerEnvironment::EPFFS_Water :
+			EnvironmentName = TEXT("Water");
+			break;
+		case EPFFlowerEnvironment::EPFFS_Landscape :
+		default:
+			EnvironmentName = TEXT("Landscape");
+			break;
+	}
+	
+	return EnvironmentName;
+}
