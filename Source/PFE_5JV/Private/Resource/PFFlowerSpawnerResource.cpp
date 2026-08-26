@@ -6,9 +6,9 @@
 #include "Actors/PoolSubsystem.h"
 #include "Helpers/PFMathHelper.h"
 #include "Helpers/PFPainter.h"
+#include "Helpers/FlowerSpawner/FlowerSpawnerHelper.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Materials/MaterialParameterCollection.h"
 #include "StateMachine/PFPlayerCharacter.h"
 #include "Resource/PFProximityResource.h"
 #include "Resource/PFPhysicResource.h"
@@ -82,43 +82,43 @@ void UPFFlowerSpawnerResource::SetCurrentFlowerColor(EPFFlowerColor FlowerColor)
 	
 	// Implement new color :
 	CurrentFlowerColor_ = FlowerColor;
-	TryGetFlowerColorFromEnum(CurrentFlowerColor_, CurrentColorValue);
+	UFlowerSpawnerHelper::TryGetFlowerColorFromEnum(CurrentFlowerColor_, CurrentColorValue);
 	OnFlowerColorChangeDelegate.Broadcast(CurrentFlowerColor_);
 }
 
-bool UPFFlowerSpawnerResource::TryGetFlowerColorFromEnum(EPFFlowerColor FlowerColor, FLinearColor& ColorValue)
-{
-	bool bParameterFound = false;
-	switch (FlowerColor)
-	{
-	case EPFFlowerColor::EPFFC_Blue:
-		ColorValue = FlowerColorCollectionPtr_->GetVectorParameterDefaultValue("S_Blue", bParameterFound);
-		return bParameterFound;
-		
-		case EPFFlowerColor::EPFFC_Red:
-			ColorValue = FlowerColorCollectionPtr_->GetVectorParameterDefaultValue("S_Red", bParameterFound);
-			return bParameterFound;
+// bool UPFFlowerSpawnerResource::TryGetFlowerColorFromEnum(EPFFlowerColor FlowerColor, FLinearColor& ColorValue)
+// {
+// 	bool bParameterFound = false;
+// 	switch (FlowerColor)
+// 	{
+// 	case EPFFlowerColor::EPFFC_Blue:
+// 		ColorValue = FlowerColorCollectionPtr_->GetVectorParameterDefaultValue("S_Blue", bParameterFound);
+// 		return bParameterFound;
+// 		
+// 		case EPFFlowerColor::EPFFC_Red:
+// 			ColorValue = FlowerColorCollectionPtr_->GetVectorParameterDefaultValue("S_Red", bParameterFound);
+// 			return bParameterFound;
+//
+// 		case EPFFlowerColor::EPFFC_Yellow:
+// 			ColorValue = FlowerColorCollectionPtr_->GetVectorParameterDefaultValue("S_Yellow", bParameterFound);
+// 			return bParameterFound;
+//
+// 		case EPFFlowerColor::EPFFC_Purple:
+// 			ColorValue = FlowerColorCollectionPtr_->GetVectorParameterDefaultValue("S_Purple", bParameterFound);
+// 			return bParameterFound;
+//
+// 		case EPFFlowerColor::EPFFC_None:
+// 		default:
+// 			return bParameterFound;
+//
+// 	}
+// }
 
-		case EPFFlowerColor::EPFFC_Yellow:
-			ColorValue = FlowerColorCollectionPtr_->GetVectorParameterDefaultValue("S_Yellow", bParameterFound);
-			return bParameterFound;
-
-		case EPFFlowerColor::EPFFC_Purple:
-			ColorValue = FlowerColorCollectionPtr_->GetVectorParameterDefaultValue("S_Purple", bParameterFound);
-			return bParameterFound;
-
-		case EPFFlowerColor::EPFFC_None:
-		default:
-			return bParameterFound;
-
-	}
-}
-
-float UPFFlowerSpawnerResource::GetCustomDataAlphaFromEnum(EPFCustomDataVersion Version)
-{
-	float alpha = (Version == EPFCustomDataVersion::EPFFC_Hism)? 1.0f : 0.0f;
-	return alpha;
-}
+// float UPFFlowerSpawnerResource::GetCustomDataAlphaFromEnum(EPFCustomDataVersion Version)
+// {
+// 	float alpha = (Version == EPFCustomDataVersion::EPFFC_Hism)? 1.0f : 0.0f;
+// 	return alpha;
+// }
 
 FVector UPFFlowerSpawnerResource::GetRandomFlowerSize()
 {
@@ -153,7 +153,6 @@ UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource] %s"), *Hit.GetActor()->GetNam
 	if(Hit.GetActor()->ActorHasTag("Landscape") == false) return false;
 	// Hit.GetActor()->ActorHasTag("Water")
 	
-
 	// Dans les autres cas, on spawn la fleur :
 	return true;
 }
@@ -238,7 +237,7 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(1, CurrentColorValue.G);
 	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(2, CurrentColorValue.B);
 	// color activation via Custom primitive data :
-	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(7, GetCustomDataAlphaFromEnum(EPFCustomDataVersion::EPFFC_Actor));
+	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(7, UFlowerSpawnerHelper::GetCustomDataAlphaFromEnum(EPFCustomDataVersion::EPFFC_Actor));
 }
 
 FVector UPFFlowerSpawnerResource::FindRandomPointInBrushRadius(float BrushRadius)

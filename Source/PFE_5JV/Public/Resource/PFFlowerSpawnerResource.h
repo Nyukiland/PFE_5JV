@@ -9,6 +9,7 @@
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFFlowerSpawnerResource.generated.h"
 
+enum class EPFFlowerColor : uint8;
 class UPFPhysicResource;
 class UPFFlowerSpawnerResourceData;
 class UHierarchicalInstancedStaticMeshComponent;
@@ -34,14 +35,14 @@ public :
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	void SetCurrentFlowerColor(EPFFlowerColor FlowerColor);
 
-	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
-	inline EPFFlowerColor GetCurrentFlowerColor() const {return CurrentFlowerColor_;}
+	// UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
+	// inline EPFFlowerColor GetCurrentFlowerColor() const {return CurrentFlowerColor_;}
 		
-	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
-	bool TryGetFlowerColorFromEnum(EPFFlowerColor FlowerColor, FLinearColor& ColorValue);
+	// UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
+	// bool TryGetFlowerColorFromEnum(EPFFlowerColor FlowerColor, FLinearColor& ColorValue);
 
-	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner | Helper")
-	static float GetCustomDataAlphaFromEnum(EPFCustomDataVersion Version);
+	// UFUNCTION(BlueprintCallable, Category = "FlowerSpawner | Helper")
+	// static float GetCustomDataAlphaFromEnum(EPFCustomDataVersion Version);
 	
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 	virtual void ComponentTick_Implementation(float deltaTime) override;

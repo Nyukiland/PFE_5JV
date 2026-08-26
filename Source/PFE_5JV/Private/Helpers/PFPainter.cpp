@@ -2,7 +2,7 @@
 
 #include "EngineUtils.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
-#include "Resource/PFFlowerSpawnerResource.h"
+#include "Helpers/FlowerSpawner/FlowerSpawnerHelper.h"
 #include "Helpers/FlowerSpawner/PFFlowerSpawnerTypes.h"
 
 APFPainter* APFPainter::Instance = nullptr;
@@ -141,7 +141,7 @@ void APFPainter::ReplaceActorsByHismByClass(const TSubclassOf<AActor>& ActorClas
 		CurrentHismPtr_->SetCustomDataValue(InstanceIndex, 1, ColorValue.G, false);
 		CurrentHismPtr_->SetCustomDataValue(InstanceIndex, 2, ColorValue.B, false);
 		// Active la couleur via HISM
-		CurrentHismPtr_->SetCustomPrimitiveDataFloat(7, UPFFlowerSpawnerResource::GetCustomDataAlphaFromEnum(EPFCustomDataVersion::EPFFC_Hism));
+		CurrentHismPtr_->SetCustomPrimitiveDataFloat(7, UFlowerSpawnerHelper::GetCustomDataAlphaFromEnum(EPFCustomDataVersion::EPFFC_Hism));
 	}
 	CurrentHismPtr_->MarkRenderStateDirty();
 }
