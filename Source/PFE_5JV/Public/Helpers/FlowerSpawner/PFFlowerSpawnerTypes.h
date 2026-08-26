@@ -6,11 +6,11 @@
 class UHierarchicalInstancedStaticMeshComponent;
 
 UENUM(BlueprintType)
-enum class EPFVegetationSupportType : uint8
+enum class EPFFlowerSupportType : uint8
 {
-	EPFVS_Landscape UMETA(DisplayName = "Landscape"),
-	EPFVS_Water UMETA(DisplayName = "Water"),
-	EPFVS_Cliff UMETA(DisplayName = "Cliff"),
+	EPFFS_Landscape UMETA(DisplayName = "Landscape"),
+	EPFFS_Water UMETA(DisplayName = "Water"),
+	EPFFS_Cliff UMETA(DisplayName = "Cliff"),
 };
 
 UENUM(BlueprintType)
@@ -31,15 +31,18 @@ enum class EPFCustomDataVersion : uint8
 };
 
 USTRUCT(Blueprintable, BlueprintType)
-struct FPFHismData
+struct FPFStaticMeshModelData
 {
 	GENERATED_BODY()
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM Data")
+	EPFFlowerSupportType SupportType;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM Data")
-	UHierarchicalInstancedStaticMeshComponent* HismPtr_ = nullptr;
+	UHierarchicalInstancedStaticMeshComponent* ActiveModelHismPtr_ = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM Data")
-	int Index = -1;
+	int ActiveModelIndex = -1;
 };
 
 USTRUCT(Blueprintable, BlueprintType)

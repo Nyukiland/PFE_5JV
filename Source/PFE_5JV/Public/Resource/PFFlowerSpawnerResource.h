@@ -6,6 +6,7 @@
 #include "Actors/PFFlower.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Data/PFPaintResourceData.h"
+// #include "Helpers/FlowerSpawner/PFFlowerSpawnerTypes.h"
 #include "StateMachine/StateComponent/PFResource.h"
 #include "PFFlowerSpawnerResource.generated.h"
 
@@ -34,15 +35,6 @@ public :
 
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	void SetCurrentFlowerColor(EPFFlowerColor FlowerColor);
-
-	// UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
-	// inline EPFFlowerColor GetCurrentFlowerColor() const {return CurrentFlowerColor_;}
-		
-	// UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
-	// bool TryGetFlowerColorFromEnum(EPFFlowerColor FlowerColor, FLinearColor& ColorValue);
-
-	// UFUNCTION(BlueprintCallable, Category = "FlowerSpawner | Helper")
-	// static float GetCustomDataAlphaFromEnum(EPFCustomDataVersion Version);
 	
 	virtual void ComponentInit_Implementation(APFPlayerCharacter* ownerObj) override;
 	virtual void ComponentTick_Implementation(float deltaTime) override;
@@ -63,7 +55,7 @@ protected:
 	TObjectPtr<UPFFlowerSpawnerResourceData> DataPtr_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner|References")
-	TSubclassOf<class APFFlower> FlowerClass;
+	TSubclassOf<APFFlower> CurrentFlowerClassToSpawn;
 		
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Painter|References")
 	TObjectPtr<APFPainter> PainterPtr_;

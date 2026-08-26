@@ -15,9 +15,12 @@ APFPainter::APFPainter()
 void APFPainter::BeginPlay()
 {
 	Super::BeginPlay();
-	for(UClass* Class : HismToGenerate)
+	for(const auto Pair : StaticMeshModelsToSpawn)
 	{
-		CreateNewHismModel(Class);
+		UClass* FlowerClass = Pair.Key;
+		FPFStaticMeshModelData StaticMeshModelData = Pair.Value;
+		
+		CreateNewHismModel(FlowerClass);
 	}
 
 	OnMaxHismAmountInstancedDelegate.AddUObject(this, &APFPainter::CreateNewHismModel);
@@ -27,11 +30,11 @@ void APFPainter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	for(const auto& Pair : ActiveHisms)
+	for(const auto& Pair : StaticMeshModelsToSpawn)
 	{
 		UClass* ActorClass = Pair.Key;
-		FPFHismData CurrentHismData = Pair.Value;
-		if(CurrentHismData.HismPtr_->GetInstanceCount() >= MaxHismIntances) OnMaxHismAmountInstancedDelegate.Broadcast(ActorClass);
+		FPFStaticMeshModelData CurrentHismData = Pair.Value;
+		if(CurrentHismData.ActiveModelHismPtr_->GetInstanceCount() >= MaxHismIntances) OnMaxHismAmountInstancedDelegate.Broadcast(ActorClass);
 	}
 }
 
@@ -69,13 +72,13 @@ APFPainter* APFPainter::GetPainter(UObject* WorldContext)
 void APFPainter::CreateNewHismModel(const TSubclassOf<AActor>& ActorClass)
 {
 	if(ActorClass == nullptr) return;
-	FPFHismData& Hism = ActiveHisms.FindOrAdd(ActorClass);
-	Hism.Index++;
+	FPFStaticMeshModelData& Hism = StaticMeshModelsToSpawn.FindOrAdd(ActorClass);
+	Hism.ActiveModelIndex++;
 
 	// Create the new HISM :
 	FString ClassName = ActorClass->GetName();
 	ClassName = ClassName.Replace(TEXT("BP_"), TEXT("HISM_"));
-	ClassName += FString::Printf(TEXT("_%d"), Hism.Index);
+	ClassName += FString::Printf(TEXT("_%d"), Hism.ActiveModelIndex);
 	UE_LOG(LogTemp, Warning, TEXT("[Painter] Création d'un nouveau modèle d'HISM : %s"), *ClassName);
 	UHierarchicalInstancedStaticMeshComponent* NewHism = NewObject<UHierarchicalInstancedStaticMeshComponent>(this, FName(*ClassName));
 	if(NewHism == nullptr)
@@ -90,10 +93,10 @@ void APFPainter::CreateNewHismModel(const TSubclassOf<AActor>& ActorClass)
 	NewHism->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 	this->AddInstanceComponent(NewHism);
 		
-	Hism.HismPtr_ = NewHism;
+	Hism.ActiveModelHismPtr_ = NewHism;
 
 	// Initialize the new HISM :
-	InitializeHism(ActorClass, Hism.HismPtr_);
+	InitializeHism(ActorClass, Hism.ActiveModelHismPtr_);
 }
 
 void APFPainter::InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarchicalInstancedStaticMeshComponent* HismPtr_)
@@ -126,13 +129,13 @@ void APFPainter::InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarch
 void APFPainter::ReplaceActorsByHismByClass(const TSubclassOf<AActor>& ActorClass, const FLinearColor ColorValue, const TArray<FTransform>& PlacedObjectTransforms)
 {
 	UE_LOG(LogTemp, Warning,TEXT( "[Painter] ReplaceActorsByHismByClass"));
-	FPFHismData* CurrentHismData = ActiveHisms.Find(ActorClass);
+	FPFStaticMeshModelData* CurrentHismData = StaticMeshModelsToSpawn.Find(ActorClass);
 	if(CurrentHismData == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[Painter] There is no HISM model for %s class. Add it in HismToGenerate array"), *ActorClass->GetName());
 		return;
 	}
-	UHierarchicalInstancedStaticMeshComponent* CurrentHismPtr_ = CurrentHismData->HismPtr_;
+	UHierarchicalInstancedStaticMeshComponent* CurrentHismPtr_ = CurrentHismData->ActiveModelHismPtr_;
 	TArray<int32> Indices = CurrentHismPtr_->AddInstances(PlacedObjectTransforms, true, true, false);
 
 	for(int32 InstanceIndex : Indices)

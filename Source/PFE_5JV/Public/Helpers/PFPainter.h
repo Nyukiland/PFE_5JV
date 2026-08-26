@@ -5,7 +5,7 @@
 #include "Helpers/FlowerSpawner/PFFlowerSpawnerTypes.h"
 #include "PFPainter.generated.h"
 
-struct FPFHismData;
+struct FPFStaticMeshModelData;
 class UHierarchicalInstancedStaticMeshComponent;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMaxHismAmountInstanced, const TSubclassOf<AActor>& ActorClass);
@@ -31,11 +31,11 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Painter")
-	TArray<UClass*> HismToGenerate;
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Painter")
+	// TArray<UClass*> HismToGenerate;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Painter")
-	TMap<UClass*, FPFHismData> ActiveHisms;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Painter")
+	TMap<UClass*, FPFStaticMeshModelData> StaticMeshModelsToSpawn;
 
 	UFUNCTION(BlueprintCallable, Category = "Utility")
 	static APFPainter* GetPainter(UObject* WorldContext);

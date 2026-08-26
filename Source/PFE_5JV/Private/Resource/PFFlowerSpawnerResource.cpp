@@ -30,7 +30,7 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 	// Initialize Actors to Spawn
 	PoolSubsystemPtr_ = GetWorld()->GetSubsystem<UPoolSubsystem>();
 	// Flower :
-	PoolSubsystemPtr_->InitializePool(FlowerClass, PoolSubsystemPtr_->InitialPoolSize);
+	PoolSubsystemPtr_->InitializePool(CurrentFlowerClassToSpawn, PoolSubsystemPtr_->InitialPoolSize);
 	
 	CurrentFlowerColor_ = EPFFlowerColor::EPFFC_None;
 	OnFlowerSpawnDelegate.AddUObject(this, &UPFFlowerSpawnerResource::SpawnFlower);
@@ -85,40 +85,6 @@ void UPFFlowerSpawnerResource::SetCurrentFlowerColor(EPFFlowerColor FlowerColor)
 	UFlowerSpawnerHelper::TryGetFlowerColorFromEnum(CurrentFlowerColor_, CurrentColorValue);
 	OnFlowerColorChangeDelegate.Broadcast(CurrentFlowerColor_);
 }
-
-// bool UPFFlowerSpawnerResource::TryGetFlowerColorFromEnum(EPFFlowerColor FlowerColor, FLinearColor& ColorValue)
-// {
-// 	bool bParameterFound = false;
-// 	switch (FlowerColor)
-// 	{
-// 	case EPFFlowerColor::EPFFC_Blue:
-// 		ColorValue = FlowerColorCollectionPtr_->GetVectorParameterDefaultValue("S_Blue", bParameterFound);
-// 		return bParameterFound;
-// 		
-// 		case EPFFlowerColor::EPFFC_Red:
-// 			ColorValue = FlowerColorCollectionPtr_->GetVectorParameterDefaultValue("S_Red", bParameterFound);
-// 			return bParameterFound;
-//
-// 		case EPFFlowerColor::EPFFC_Yellow:
-// 			ColorValue = FlowerColorCollectionPtr_->GetVectorParameterDefaultValue("S_Yellow", bParameterFound);
-// 			return bParameterFound;
-//
-// 		case EPFFlowerColor::EPFFC_Purple:
-// 			ColorValue = FlowerColorCollectionPtr_->GetVectorParameterDefaultValue("S_Purple", bParameterFound);
-// 			return bParameterFound;
-//
-// 		case EPFFlowerColor::EPFFC_None:
-// 		default:
-// 			return bParameterFound;
-//
-// 	}
-// }
-
-// float UPFFlowerSpawnerResource::GetCustomDataAlphaFromEnum(EPFCustomDataVersion Version)
-// {
-// 	float alpha = (Version == EPFCustomDataVersion::EPFFC_Hism)? 1.0f : 0.0f;
-// 	return alpha;
-// }
 
 FVector UPFFlowerSpawnerResource::GetRandomFlowerSize()
 {
@@ -226,7 +192,7 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	FRotator FinalRotation = FinalQuat.Rotator();
 
 	// Spawn avec PoolSystem : 
-	APFFlower* Flower = Cast<APFFlower>(PoolSubsystemPtr_->SpawnFromPool<AActor>(FlowerClass, SpawnLocation, FinalRotation));
+	APFFlower* Flower = Cast<APFFlower>(PoolSubsystemPtr_->SpawnFromPool<AActor>(CurrentFlowerClassToSpawn, SpawnLocation, FinalRotation));
 
 	// Change Size :
 	FVector FlowerSize = GetRandomFlowerSize();
