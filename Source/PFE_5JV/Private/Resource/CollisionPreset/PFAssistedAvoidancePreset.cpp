@@ -79,10 +79,14 @@ bool UPFAssistedAvoidancePreset::CheckAbsoluteShield(float deltaTime, const FVec
 	
 	if (bHit && criticalHit.Distance < DataPtr_->CriticalBrakeDistance)
 	{
-		FVector velocityProjected = FVector::VectorPlaneProject(currentVelocity, criticalHit.ImpactNormal);
-		CollisionResourcePtr_->PhysicRoot->SetPhysicsLinearVelocity(velocityProjected);
-		PhysicResourcePtr_->CurrentForwardVelocity_ = PhysicResourcePtr_->CurrentForwardVelocity_.GetSafeNormal() * velocityProjected.Length();
-		CurrentRepulsion_ = criticalHit.ImpactNormal;
+		FVector velocityMirror = currentVelocity.MirrorByVector(criticalHit.ImpactNormal);
+		CollisionResourcePtr_->PhysicRoot->SetPhysicsLinearVelocity(velocityMirror);
+		PhysicResourcePtr_->CurrentForwardVelocity_ = PhysicResourcePtr_->CurrentForwardVelocity_.GetSafeNormal() * velocityMirror.Length();
+
+		FVector flatVelocity = PhysicResourcePtr_->CurrentForwardVelocity_;
+		flatVelocity = flatVelocity.GetSafeNormal2D();
+		FRotator newDir = flatVelocity.Rotation();
+		OwnerPtr_->SetActorRotation(newDir, ETeleportType::TeleportPhysics);
 		return true;
 	}
 	return false;

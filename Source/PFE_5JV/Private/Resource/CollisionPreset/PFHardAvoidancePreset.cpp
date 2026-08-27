@@ -77,21 +77,14 @@ bool UPFHardAvoidancePreset::CheckAbsoluteShield(float deltaTime, const FVector&
 
     if (bCriticalCrash && criticalHit.Distance < DataPtr_->CriticalBrakeDistance)
     {
-        FVector velocityProjected = FVector::VectorPlaneProject(currentVelocity, criticalHit.ImpactNormal);
-        CollisionResourcePtr_->PhysicRoot->SetPhysicsLinearVelocity(velocityProjected);
+        FVector velocityMirror = currentVelocity.MirrorByVector(criticalHit.ImpactNormal);
+        CollisionResourcePtr_->PhysicRoot->SetPhysicsLinearVelocity(velocityMirror);
+        PhysicResourcePtr_->CurrentForwardVelocity_ = PhysicResourcePtr_->CurrentForwardVelocity_.GetSafeNormal() * velocityMirror.Length();
 
-        PhysicResourcePtr_->CurrentForwardVelocity_ = PhysicResourcePtr_->CurrentForwardVelocity_.GetSafeNormal() * velocityProjected.Length();
-
-        if (!velocityProjected.IsNearlyZero())
-        {
-            FRotator slideRotation = velocityProjected.GetSafeNormal().Rotation();
-
-            CollisionResourcePtr_->PhysicRoot->SetWorldRotation(FRotator(0.f, slideRotation.Yaw, 0.f));
-            CollisionResourcePtr_->ForwardRootPtr->SetRelativeRotation(FRotator(slideRotation.Pitch, 0.f, 0.f));
-            PhysicResourcePtr_->HardSetPitchRotationVisual(slideRotation.Pitch);
-        }
-
-        CurrentRepulsion_ = criticalHit.ImpactNormal;
+        FVector flatVelocity = PhysicResourcePtr_->CurrentForwardVelocity_;
+        flatVelocity = flatVelocity.GetSafeNormal2D();
+        FRotator newDir = flatVelocity.Rotation();
+        OwnerPtr_->SetActorRotation(newDir, ETeleportType::TeleportPhysics);
         return true;
     }
 
