@@ -128,7 +128,7 @@ FVector UPFFlowerSpawnerResource::GetRandomFlowerSize()
 
 float UPFFlowerSpawnerResource::GetRandomFlowerHeight(float GroundHeight)
 {
-	float RandomFlowerHeight = FMath::RandRange(DataPtr_->MinimalHeightAboveGround, DataPtr_->MaximalHeightAboveGround);	
+	float RandomFlowerHeight = FMath::RandRange(DataPtr_->MinimalHeightAboveGroundForFlower, DataPtr_->MaximalHeightAboveGroundForFlower);	
 	RandomFlowerHeight += GroundHeight;
 	
 	return RandomFlowerHeight;
@@ -136,67 +136,27 @@ float UPFFlowerSpawnerResource::GetRandomFlowerHeight(float GroundHeight)
 
 TSubclassOf<APFFlower> UPFFlowerSpawnerResource::GetRandomClassToSpawnAccordingToEnvironment(EPFFlowerEnvironment Environment)
 {
-	if (Environment ==  EPFFlowerEnvironment::EPFFS_Water) FString EnvironmentString = UFlowerSpawnerHelper::GetFlowerEnvironmentNameFromEnum(Environment).ToString();
-	
 	FPFEnvironmentFlowers* EnvironmentFlowers = FlowersByEnvironments.Find(Environment);
-	
-	// if (Environment ==  EPFFlowerEnvironment::EPFFS_Water)
-	// {
-	// 	if (EnvironmentFlowers) UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource] struct EnvironmentFlowers pour Eau trouvé"));
-	// 	if (!EnvironmentFlowers) UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource] struct EnvironmentFlowers  pour Eau NON trouvé"));
-	// }
-
 	TArray<TSubclassOf<APFFlower>> FlowerClasses = EnvironmentFlowers->FlowerClasses;
 	
-	// if (Environment ==  EPFFlowerEnvironment::EPFFS_Water)
-	// {
-	// 	UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource] %d Classes pour l'environnement Eau Trouvé"), FlowerClasses.Num());
-	// }
-	
 	int MaxRange = FlowerClasses.Num() - 1;
-	
-	// if (Environment ==  EPFFlowerEnvironment::EPFFS_Water)
-	// {
-	// 	UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource] MaxRange pour l'environnement Eau = %d"), MaxRange);
-	// }
 	int RandomFlowerClassIndex = FMath::RandRange(0, MaxRange);
-	// if (Environment ==  EPFFlowerEnvironment::EPFFS_Water)
-	// {
-	// 	UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource] RandomFlowerClassIndex pour l'environnement Eau = %d"), RandomFlowerClassIndex);
-	// 	TSubclassOf<APFFlower> Class = FlowerClasses[RandomFlowerClassIndex];
-	// 	FString ClassString = Class->GetName();
-	// 	UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource] Class pour l'eau : %s"), *ClassString);
-	// }
-	
+	TSubclassOf<APFFlower> Class = FlowerClasses[RandomFlowerClassIndex];
+	FString ClassString = Class->GetName();
 	
 	return FlowerClasses[RandomFlowerClassIndex];
 }
 
 bool UPFFlowerSpawnerResource::CheckSpawnConditions(const FHitResult& Hit)
 {
-	if (CurrentFlowerClassToSpawn != nullptr and CurrentFlowerClassToSpawn->GetName() == "BP_WaterLily_C")
-	{
-		UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource] CheckSpawnConditions : Début"));
-	} 
 	if (!Hit.bBlockingHit) return false;
-	if (CurrentFlowerClassToSpawn != nullptr and CurrentFlowerClassToSpawn->GetName() == "BP_WaterLily_C")
-	{
-		UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource] CheckSpawnConditions : bBlockingHit FALSE"));
-	}
-	
 	if (!Hit.GetActor()) return false;
-	if (CurrentFlowerClassToSpawn != nullptr and CurrentFlowerClassToSpawn->GetName() == "BP_WaterLily_C")
-	{
-		UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource] CheckSpawnConditions : On a un acteur"));
-	} 
-	
+
 	return true;
 }
 
 void UPFFlowerSpawnerResource::SetCurrentClassToSpawn(const FHitResult& Hit)
 {
-	// Détermine le type de class qu'on va spawn  : 
-	// UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource] %s"), *Hit.GetActor()->GetName());
 	EPFFlowerEnvironment Environment;
 	
 	if (
@@ -228,7 +188,6 @@ void UPFFlowerSpawnerResource::SetCurrentClassToSpawn(const FHitResult& Hit)
 	{
 		Environment = EPFFlowerEnvironment::EPFFS_Water;
 		CurrentFlowerClassToSpawn = GetRandomClassToSpawnAccordingToEnvironment(Environment);
-		UE_LOG(LogTemp, Warning, TEXT("[FlowerSpaner] Spawn On Water : Class = %s"), *LexToString(CurrentFlowerClassToSpawn->GetName()));
 	} 
 	else
 	{
@@ -244,20 +203,16 @@ float UPFFlowerSpawnerResource::DetermineSpawnDelay()
 	float PlayerVelocityPercentage = PhysicResourcePtr_->GetForwardVelocityPercentage();
 	// float PlayerVelocityPercentage = 0.f;
 
-	float SpawnDelay = FMath::Lerp(DataPtr_->DelayBetweenTwoSpawnsAtMinimalVelocity, DataPtr_->DelayBetweenTwoSpawnsAtMaximalVelocity, PlayerVelocityPercentage);
+	float SpawnDelay = FMath::Lerp(DataPtr_->DelayBetweenTwoFlowerSpawnsAtMinimalVelocity, DataPtr_->DelayBetweenTwoFlowerSpawnsAtMaximalVelocity, PlayerVelocityPercentage);
 
 	return SpawnDelay;
 }
 
 void UPFFlowerSpawnerResource::SpawnFlower()
 {
-	if (CurrentFlowerClassToSpawn != nullptr and CurrentFlowerClassToSpawn->GetName() == "BP_WaterLily_C")
-	{
-		UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource]  nénuphars 1"));
-	} 
 	TArray<FHitResult> ValidHitResults = ProximityResourcePtr_->ValidHitResults;
 	if(ValidHitResults.IsEmpty()) return;
-
+	
 	FHitResult InitialHitResult;
 	
 	for(const FHitResult& ValidHitResult: ValidHitResults)
@@ -267,12 +222,7 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 		InitialHitResult = ValidHitResult;
 		break;
 	}
-
-	if (CurrentFlowerClassToSpawn != nullptr and CurrentFlowerClassToSpawn->GetName() == "BP_WaterLily_C")
-	{
-		UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource]  nénuphars 2"));
-	} 
-	
+		
 	// Rotate the plan XY with random result to be perpendicular to the impact normal :
 	FVector PlayerPosition = OwnerPtr_->GetActorLocation(); 
 	FVector BirdToInitialHitVector = PlayerPosition - InitialHitResult.ImpactPoint;
@@ -309,6 +259,7 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	TArray<FHitResult> NewHitResults;
 	OwnerWorldPtr_->SweepMultiByObjectType(NewHitResults, PlayerPosition, PlayerPosition + LengthenVector,
 										FQuat::Identity, CachedObjectQueryParams, sphere, CachedQueryParams);
+	
 	FHitResult FinalHitResult;
 	for(const FHitResult& NewHitResult: NewHitResults)
 	{
@@ -317,41 +268,23 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 		FinalHitResult = NewHitResult;
 		break;
 	}
+	// if(!CheckSpawnConditions(FinalHitResult)) return;
 	
-	if (CurrentFlowerClassToSpawn != nullptr and CurrentFlowerClassToSpawn->GetName() == "BP_WaterLily_C")
-	{
-		UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource]  nénuphars 3"));
-	} 
-	// if(!CheckSpawnConditions(CurrentHitResult)) return;
+	if (FinalHitResult.GetActor() == nullptr) return;
 	SetCurrentClassToSpawn(FinalHitResult);
 	if (CurrentFlowerClassToSpawn == nullptr) return;
-	if (CurrentFlowerClassToSpawn != nullptr and CurrentFlowerClassToSpawn->GetName() == "BP_WaterLily_C")
-	{
-		UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource]  nénuphars 4"));
-	} 
-	float FlowerHeight = GetRandomFlowerHeight(CurrentHitResult.ImpactPoint.Z);
-	FVector SpawnLocation = FVector(CurrentHitResult.ImpactPoint.X, CurrentHitResult.ImpactPoint.Y, FlowerHeight);
+	
+	float FlowerHeight = GetRandomFlowerHeight(FinalHitResult.ImpactPoint.Z);
+	FVector SpawnLocation = FVector(FinalHitResult.ImpactPoint.X, FinalHitResult.ImpactPoint.Y, FlowerHeight);
 
 	// Rotation de la fleur :
-	FQuat AlignmentQuat = FRotationMatrix::MakeFromZX(CurrentHitResult.ImpactNormal, FVector::ForwardVector).ToQuat();
+	FQuat AlignmentQuat = FRotationMatrix::MakeFromZX(FinalHitResult.ImpactNormal, FVector::ForwardVector).ToQuat();
 	float RandomRotation = FMath::RandRange(0, 360);
 	FQuat FinalQuat = AlignmentQuat * FQuat(FVector::UpVector, FMath::DegreesToRadians(RandomRotation));
 	FRotator FinalRotation = FinalQuat.Rotator();
 
-	// Spawn avec PoolSystem : 
-	if (CurrentFlowerClassToSpawn != nullptr and CurrentFlowerClassToSpawn->GetName() == "BP_WaterLily_C")
-	{
-		UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource] On spawn des nénuphars !!!!"));
-	} else if (CurrentFlowerClassToSpawn != nullptr and CurrentFlowerClassToSpawn->GetName() == "BP_Ivy_C")
-	{
-		UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource] On spawn du lierre ..."));
-	}
-	
+	// Spawn avec PoolSystem : 	
 	APFFlower* Flower = Cast<APFFlower>(PoolSubsystemPtr_->SpawnFromPool<AActor>(CurrentFlowerClassToSpawn, SpawnLocation, FinalRotation));
-	if (CurrentFlowerClassToSpawn->GetName() == "BP_WaterLily_C")
-	{
-		UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource]  nénuphars 5"));
-	} 
 	// Change Size :
 	FVector FlowerSize = GetRandomFlowerSize();
 	Flower->SetActorScale3D(FlowerSize);

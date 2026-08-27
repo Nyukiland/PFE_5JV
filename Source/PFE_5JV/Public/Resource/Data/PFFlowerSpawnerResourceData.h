@@ -13,35 +13,78 @@ class PFE_5JV_API UPFFlowerSpawnerResourceData : public UDataAsset
 
 public:
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "General",
 	meta=(ToolTip="Distance maximal de spawn par rapport à l'oiseau"))
-	float DelayBetweenTwoSpawnsAtMinimalVelocity;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
-	meta=(ToolTip="Nombre de secondes entre 2 spawns au minimum"))
 	float MaximalSpawnDistanceFromBird;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
-	meta=(ToolTip="Nombre de secondes entre 2 spawns au maximum"))
-	float DelayBetweenTwoSpawnsAtMaximalVelocity;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
-    meta=(ToolTip="La taille minimum possible pour une fleur"))
-    float MinimumFlowerScale;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
-	meta=(ToolTip="La taille maximum possible pour une fleur"))
-	float MaximumFlowerScale;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "General",
 	meta=(ToolTip="La pente maximale (en degrés) sur laquelle on spawn les fleurs"))
 	float MaximalSlopInDegreesToSpawn;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
-	meta=(ToolTip="La hauteur minimale au dessus du sol où spawn la fleur."))
-	float MinimalHeightAboveGround;
+	// VITESSE DE SPAWN DES PLANTES :
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Speed|Flower",
+	meta=(ToolTip="Nombre de secondes entre 2 spawns de fleurs, au minimum"))
+	float DelayBetweenTwoFlowerSpawnsAtMinimalVelocity;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Speed|Flower",
+	meta=(ToolTip="Nombre de secondes entre 2 spawns de fleurs, au maximum"))
+	float DelayBetweenTwoFlowerSpawnsAtMaximalVelocity;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Speed|Waterlily",
+	meta=(ToolTip="Nombre de secondes entre 2 spawns de nénuphars, au maximum"))
+	float DelayBetweenTwoWaterLilySpawnsAtMaximalVelocity;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Speed|Ivy",
+	meta=(ToolTip="Nombre de secondes entre 2 spawns de lierre, au maximum"))
+	float DelayBetweenTwoIvySpawnsAtMaximalVelocity;
+	
+	// TAILLLE DES PLANTES :
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant Size|Flower",
+    meta=(ToolTip="La taille minimum possible pour une fleur"))
+    float MinimumFlowerScale;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner",
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant Size|Flower",
+	meta=(ToolTip="La taille maximum possible pour une fleur"))
+	float MaximumFlowerScale;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant Size|Waterlily",
+	meta=(ToolTip="La taille minimum possible pour un nénuphar"))
+	float MinimumWaterLilyScale;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant Size|Waterlily",
+	meta=(ToolTip="La taille maximum possible pour un nénuphar"))
+	float MaximumWaterLilyScale;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant Size|Ivy",
+	meta=(ToolTip="La taille minimum possible pour le lierre"))
+	float MinimumIvyScale;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant Size|Ivy",
+	meta=(ToolTip="La taille maximum possible pour le lierre"))
+	float MaximumIvyScale;
+	
+	// HAUTEUR DE SPAWN DES PLANTES
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant Height Above Ground|Flower",
+	meta=(ToolTip="La hauteur minimale au dessus du sol où spawn la fleur."))
+	float MinimalHeightAboveGroundForFlower;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant Height Above Ground|Flower",
 	meta=(ToolTip="La hauteur maximale au dessus du sol où spawn la fleur."))
-	float MaximalHeightAboveGround;
+	float MaximalHeightAboveGroundForFlower;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant Height Above Ground|Waterlily",
+	meta=(ToolTip="La hauteur minimale au dessus du sol où spawn le nénuphar."))
+	float MinimalHeightAboveGroundForWaterLily;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant Height Above Ground|Waterlily",
+	meta=(ToolTip="La hauteur maximale au dessus du sol où spawn le nénuphar."))
+	float MaximalHeightAboveGroundForWaterLily;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant Height Above Ground|Ivy",
+	meta=(ToolTip="La hauteur minimale au dessus du sol où spawn le lierre."))
+	float MinimalHeightAboveGroundForIvy;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant Height Above Ground|Ivy",
+	meta=(ToolTip="La hauteur maximale au dessus du sol où spawn le lierre."))
+	float MaximalHeightAboveGroundForIvy;
 };
