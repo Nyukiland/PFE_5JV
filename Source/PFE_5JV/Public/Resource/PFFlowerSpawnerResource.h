@@ -107,7 +107,10 @@ protected:
 	// A plutôt mettre dans MathHelper
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	FVector FindRandomPointInBrushRadius(float BrushRadius);
-
+	
+	FCollisionQueryParams CachedQueryParams;
+	FCollisionObjectQueryParams CachedObjectQueryParams;
+	
 private:
 	bool CheckValidity() const;
 };

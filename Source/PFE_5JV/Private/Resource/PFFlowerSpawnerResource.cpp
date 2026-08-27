@@ -57,6 +57,13 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 			UE_LOG(LogTemp, Warning, TEXT("[FlowerSpawner] Environment : %s - FlowerClass : %s"), *EnvironmentString, *FlowerClassString);
 		}
 	}
+	
+	CachedQueryParams.AddIgnoredActor(Owner);
+	CachedQueryParams.bTraceComplex = true;
+	CachedQueryParams.bReturnFaceIndex = true;
+
+	CachedObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	CachedObjectQueryParams.AddObjectTypesToQuery(ECC_GameTraceChannel4);
 		
 	CurrentFlowerColor_ = EPFFlowerColor::EPFFC_None;
 	OnFlowerSpawnDelegate.AddUObject(this, &UPFFlowerSpawnerResource::SpawnFlower);
@@ -296,14 +303,27 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	queryParams.bTraceComplex = true; 
 	FHitResult CurrentHitResult;
 	const FCollisionShape sphere = FCollisionShape::MakeSphere(1.f);
-	OwnerWorldPtr_->SweepSingleByChannel(CurrentHitResult, PlayerPosition, PlayerPosition + LengthenVector,
-									FQuat::Identity, ECC_Visibility, sphere, queryParams);
+	// OwnerWorldPtr_->SweepSingleByChannel(CurrentHitResult, PlayerPosition, PlayerPosition + LengthenVector,
+	// 								FQuat::Identity, ECC_Visibility, sphere, queryParams);
+	
+	TArray<FHitResult> NewHitResults;
+	OwnerWorldPtr_->SweepMultiByObjectType(NewHitResults, PlayerPosition, PlayerPosition + LengthenVector,
+										FQuat::Identity, CachedObjectQueryParams, sphere, CachedQueryParams);
+	FHitResult FinalHitResult;
+	for(const FHitResult& NewHitResult: NewHitResults)
+	{
+		if(!CheckSpawnConditions(NewHitResult)) continue;
+		
+		FinalHitResult = NewHitResult;
+		break;
+	}
+	
 	if (CurrentFlowerClassToSpawn != nullptr and CurrentFlowerClassToSpawn->GetName() == "BP_WaterLily_C")
 	{
 		UE_LOG(LogTemp, Log, TEXT("[FlowerSpawnerResource]  nénuphars 3"));
 	} 
 	// if(!CheckSpawnConditions(CurrentHitResult)) return;
-	SetCurrentClassToSpawn(CurrentHitResult);
+	SetCurrentClassToSpawn(FinalHitResult);
 	if (CurrentFlowerClassToSpawn == nullptr) return;
 	if (CurrentFlowerClassToSpawn != nullptr and CurrentFlowerClassToSpawn->GetName() == "BP_WaterLily_C")
 	{
