@@ -31,8 +31,16 @@ public:
 	float DelayBetweenTwoFlowerSpawnsAtMaximalVelocity;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Speed|Waterlily",
+	meta=(ToolTip="Nombre de secondes entre 2 spawns de nénuphars, au minimum"))
+	float DelayBetweenTwoWaterLilySpawnsAtMinimalVelocity;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Speed|Waterlily",
 	meta=(ToolTip="Nombre de secondes entre 2 spawns de nénuphars, au maximum"))
 	float DelayBetweenTwoWaterLilySpawnsAtMaximalVelocity;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Speed|Ivy",
+	meta=(ToolTip="Nombre de secondes entre 2 spawns de lierre, au minimum"))
+	float DelayBetweenTwoIvySpawnsAtMinimalVelocity;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Speed|Ivy",
 	meta=(ToolTip="Nombre de secondes entre 2 spawns de lierre, au maximum"))

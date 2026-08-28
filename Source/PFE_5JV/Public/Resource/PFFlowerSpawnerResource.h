@@ -76,11 +76,14 @@ protected:
 	EPFFlowerColor CurrentFlowerColor_;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner")
-	FLinearColor CurrentColorValue;
+	FLinearColor CurrentColorValue_;
 	
 	// TODO : Vérifier que toujours nécessaire
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner")
-	TSubclassOf<APFFlower> CurrentFlowerClassToSpawn;
+	TSubclassOf<APFFlower> CurrentFlowerClassToSpawn_;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FlowerSpawner")
+	EPFFlowerEnvironment CurrentEnvironment_;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FlowerSpawner")
 	TMap<EPFFlowerEnvironment, FPFEnvironmentFlowers> FlowersByEnvironments;

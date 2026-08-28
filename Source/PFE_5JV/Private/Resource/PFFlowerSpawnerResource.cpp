@@ -89,7 +89,7 @@ void UPFFlowerSpawnerResource::ComponentTick_Implementation(float deltaTime)
 		FPFPoolArrays ObjectPool = Pair.Value;
 		
 		if(ObjectPool.PlacedObjectsNum() >= MaxActorsAmountPlaced) {
-			OnActorsByHismSwitchDelegate.Broadcast(PoolClass, CurrentColorValue, ObjectPool.PlacedObjectTransforms);
+			OnActorsByHismSwitchDelegate.Broadcast(PoolClass, CurrentColorValue_, ObjectPool.PlacedObjectTransforms);
 			PoolSubsystemPtr_->ReturnToPool(PoolClass);
 		}
 	}
@@ -108,19 +108,43 @@ void UPFFlowerSpawnerResource::SetCurrentFlowerColor(EPFFlowerColor FlowerColor)
 
 		if(ObjectPool.PlacedObjectsIsEmpty() == false)
 		{
-			OnActorsByHismSwitchDelegate.Broadcast(PoolClass, CurrentColorValue, ObjectPool.PlacedObjectTransforms);
+			OnActorsByHismSwitchDelegate.Broadcast(PoolClass, CurrentColorValue_, ObjectPool.PlacedObjectTransforms);
 		}
 	}
 	
 	// Implement new color :
 	CurrentFlowerColor_ = FlowerColor;
-	UFlowerSpawnerHelper::TryGetFlowerColorFromEnum(CurrentFlowerColor_, CurrentColorValue);
+	UFlowerSpawnerHelper::TryGetFlowerColorFromEnum(CurrentFlowerColor_, CurrentColorValue_);
 	OnFlowerColorChangeDelegate.Broadcast(CurrentFlowerColor_);
 }
 
 FVector UPFFlowerSpawnerResource::GetRandomFlowerSize()
 {
-	const float RandomFlowerSize = FMath::RandRange(DataPtr_->MinimumFlowerScale, DataPtr_->MaximumFlowerScale);	
+	float MinimalScale;
+	float MaximalScale;
+	
+	switch (CurrentEnvironment_)
+	{
+	case EPFFlowerEnvironment::EPFFS_Landscape:
+		MinimalScale = DataPtr_->MinimumFlowerScale;
+		MaximalScale = DataPtr_->MaximumFlowerScale;
+		break;
+	case EPFFlowerEnvironment::EPFFS_Water:
+		MinimalScale = DataPtr_->MinimumWaterLilyScale;
+		MaximalScale = DataPtr_->MaximumWaterLilyScale;
+		break;
+	case EPFFlowerEnvironment::EPFFS_Cliff:
+		MinimalScale = DataPtr_->MinimumIvyScale;
+		MaximalScale = DataPtr_->MaximumIvyScale;
+		break;
+	case EPFFlowerEnvironment::EPFFS_None:
+	default:
+		MinimalScale = 1.f;
+		MaximalScale = 1.f;
+		break;
+	}
+	
+	const float RandomFlowerSize = FMath::RandRange(MinimalScale, MaximalScale);	
 	const FVector RandomFlowerScale = FVector(RandomFlowerSize);
 	
 	return RandomFlowerScale;
@@ -128,7 +152,31 @@ FVector UPFFlowerSpawnerResource::GetRandomFlowerSize()
 
 float UPFFlowerSpawnerResource::GetRandomFlowerHeight(float GroundHeight)
 {
-	float RandomFlowerHeight = FMath::RandRange(DataPtr_->MinimalHeightAboveGroundForFlower, DataPtr_->MaximalHeightAboveGroundForFlower);	
+	float MinimalHeight;
+	float MaximalHeight;
+	
+	switch (CurrentEnvironment_)
+	{
+	case EPFFlowerEnvironment::EPFFS_Landscape:
+		MinimalHeight = DataPtr_->MinimalHeightAboveGroundForFlower;
+		MaximalHeight = DataPtr_->MaximalHeightAboveGroundForFlower;
+		break;
+	case EPFFlowerEnvironment::EPFFS_Water:
+		MinimalHeight = DataPtr_->MinimalHeightAboveGroundForWaterLily;
+		MaximalHeight = DataPtr_->MaximalHeightAboveGroundForWaterLily;
+		break;
+	case EPFFlowerEnvironment::EPFFS_Cliff:
+		MinimalHeight = DataPtr_->MinimalHeightAboveGroundForIvy;
+		MaximalHeight = DataPtr_->MaximalHeightAboveGroundForIvy;
+		break;
+	case EPFFlowerEnvironment::EPFFS_None:
+	default:
+		MinimalHeight = 1.f;
+		MaximalHeight = 1.f;
+		break;
+	}
+	
+	float RandomFlowerHeight = FMath::RandRange(MinimalHeight, MaximalHeight);	
 	RandomFlowerHeight += GroundHeight;
 	
 	return RandomFlowerHeight;
@@ -157,8 +205,6 @@ bool UPFFlowerSpawnerResource::CheckSpawnConditions(const FHitResult& Hit)
 
 void UPFFlowerSpawnerResource::SetCurrentClassToSpawn(const FHitResult& Hit)
 {
-	EPFFlowerEnvironment Environment;
-	
 	if (
 		Hit.GetActor() and
 		Hit.GetActor()->ActorHasTag(UFlowerSpawnerHelper::GetFlowerEnvironmentNameFromEnum(EPFFlowerEnvironment::EPFFS_Landscape)) == true)
@@ -171,11 +217,11 @@ void UPFFlowerSpawnerResource::SetCurrentClassToSpawn(const FHitResult& Hit)
 		
 		if(SlopAngle >= DataPtr_->MaximalSlopInDegreesToSpawn)
 		{
-			Environment = EPFFlowerEnvironment::EPFFS_Cliff;
+			CurrentEnvironment_ = EPFFlowerEnvironment::EPFFS_Cliff;
 		} 
 		else
 		{
-			Environment = EPFFlowerEnvironment::EPFFS_Landscape;
+			CurrentEnvironment_ = EPFFlowerEnvironment::EPFFS_Landscape;
 		}
 	} 
 	// else if (Hit.GetActor()->ActorHasTag(UFlowerSpawnerHelper::GetFlowerEnvironmentNameFromEnum(EPFFlowerEnvironment::EPFFS_Water)) == true)
@@ -186,24 +232,47 @@ void UPFFlowerSpawnerResource::SetCurrentClassToSpawn(const FHitResult& Hit)
 		Hit.GetActor()->ActorHasTag(UFlowerSpawnerHelper::GetFlowerEnvironmentNameFromEnum(EPFFlowerEnvironment::EPFFS_Water)) == true)
 	)
 	{
-		Environment = EPFFlowerEnvironment::EPFFS_Water;
-		CurrentFlowerClassToSpawn = GetRandomClassToSpawnAccordingToEnvironment(Environment);
+		CurrentEnvironment_ = EPFFlowerEnvironment::EPFFS_Water;
 	} 
 	else
 	{
-		CurrentFlowerClassToSpawn = nullptr;
+		CurrentEnvironment_ = EPFFlowerEnvironment::EPFFS_None;
+		CurrentFlowerClassToSpawn_ = nullptr;
 		return;
 	}
 	
-	CurrentFlowerClassToSpawn = GetRandomClassToSpawnAccordingToEnvironment(Environment);
+	CurrentFlowerClassToSpawn_ = GetRandomClassToSpawnAccordingToEnvironment(CurrentEnvironment_);
 }
 
 float UPFFlowerSpawnerResource::DetermineSpawnDelay()
 {
+	float DelayAtMinimalVelocity;
+	float DelayAtMaximalVelocity;
+	
+	switch (CurrentEnvironment_)
+	{
+		case EPFFlowerEnvironment::EPFFS_Landscape:
+			DelayAtMinimalVelocity = DataPtr_->DelayBetweenTwoFlowerSpawnsAtMinimalVelocity;
+			DelayAtMaximalVelocity = DataPtr_->DelayBetweenTwoFlowerSpawnsAtMaximalVelocity;
+			break;
+		case EPFFlowerEnvironment::EPFFS_Water:
+			DelayAtMinimalVelocity = DataPtr_->DelayBetweenTwoWaterLilySpawnsAtMinimalVelocity;
+			DelayAtMaximalVelocity = DataPtr_->DelayBetweenTwoWaterLilySpawnsAtMaximalVelocity;
+			break;
+		case EPFFlowerEnvironment::EPFFS_Cliff:
+			DelayAtMinimalVelocity = DataPtr_->DelayBetweenTwoIvySpawnsAtMinimalVelocity;
+			DelayAtMaximalVelocity = DataPtr_->DelayBetweenTwoIvySpawnsAtMaximalVelocity;
+			break;
+		case EPFFlowerEnvironment::EPFFS_None:
+		default:
+			DelayAtMinimalVelocity = 1.f;
+			DelayAtMaximalVelocity = 1.f;
+			break;
+	}
 	float PlayerVelocityPercentage = PhysicResourcePtr_->GetForwardVelocityPercentage();
 	// float PlayerVelocityPercentage = 0.f;
 
-	float SpawnDelay = FMath::Lerp(DataPtr_->DelayBetweenTwoFlowerSpawnsAtMinimalVelocity, DataPtr_->DelayBetweenTwoFlowerSpawnsAtMaximalVelocity, PlayerVelocityPercentage);
+	float SpawnDelay = FMath::Lerp(DelayAtMinimalVelocity, DelayAtMaximalVelocity, PlayerVelocityPercentage);
 
 	return SpawnDelay;
 }
@@ -272,7 +341,7 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	
 	if (FinalHitResult.GetActor() == nullptr) return;
 	SetCurrentClassToSpawn(FinalHitResult);
-	if (CurrentFlowerClassToSpawn == nullptr) return;
+	if (CurrentFlowerClassToSpawn_ == nullptr) return;
 	
 	float FlowerHeight = GetRandomFlowerHeight(FinalHitResult.ImpactPoint.Z);
 	FVector SpawnLocation = FVector(FinalHitResult.ImpactPoint.X, FinalHitResult.ImpactPoint.Y, FlowerHeight);
@@ -284,17 +353,26 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	FRotator FinalRotation = FinalQuat.Rotator();
 
 	// Spawn avec PoolSystem : 	
-	APFFlower* Flower = Cast<APFFlower>(PoolSubsystemPtr_->SpawnFromPool<AActor>(CurrentFlowerClassToSpawn, SpawnLocation, FinalRotation));
+	APFFlower* Flower = Cast<APFFlower>(PoolSubsystemPtr_->SpawnFromPool<AActor>(CurrentFlowerClassToSpawn_, SpawnLocation, FinalRotation));
 	// Change Size :
 	FVector FlowerSize = GetRandomFlowerSize();
 	Flower->SetActorScale3D(FlowerSize);
 
 	// Change Actor Color
-	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(0, CurrentColorValue.R);
-	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(1, CurrentColorValue.G);
-	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(2, CurrentColorValue.B);
+	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(0, CurrentColorValue_.R);
+	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(1, CurrentColorValue_.G);
+	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(2, CurrentColorValue_.B);
 	// color activation via Custom primitive data :
 	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(7, 1);
+	int isFlower;
+	if (CurrentEnvironment_ == EPFFlowerEnvironment::EPFFS_Water)
+	{
+		isFlower = 0;
+	} else
+	{
+		isFlower = 1;
+	}
+	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(8, isFlower);
 }
 
 FVector UPFFlowerSpawnerResource::FindRandomPointInBrushRadius(float BrushRadius)
