@@ -353,10 +353,7 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	FRotator FinalRotation = FinalQuat.Rotator();
 
 	// Spawn avec PoolSystem : 	
-	APFFlower* Flower = Cast<APFFlower>(PoolSubsystemPtr_->SpawnFromPool<AActor>(CurrentFlowerClassToSpawn_, SpawnLocation, FinalRotation));
-	// Change Size :
-	FVector FlowerSize = GetRandomFlowerSize();
-	Flower->SetActorScale3D(FlowerSize);
+	APFFlower* Flower = Cast<APFFlower>(PoolSubsystemPtr_->SpawnFromPool<AActor>(CurrentFlowerClassToSpawn_, SpawnLocation, FinalRotation, GetRandomFlowerSize()));
 
 	// Change Actor Color
 	Flower->GetFlowerMesh()->SetCustomPrimitiveDataFloat(0, CurrentColorValue_.R);

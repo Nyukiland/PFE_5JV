@@ -26,13 +26,13 @@ public:
 	
 	// fonction templatisée qu'on utilisera en C++
 	template<typename T>
-	T* SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation);
+	T* SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation, FVector Scale);
 
 	// La version de la fonction utilisable en blueprint : 
 	UFUNCTION(BlueprintCallable, Category = "Pool Subsystem", meta=(DeterminesOutputType="PoolClass", DynamicOutputType="SpawnedActor"))
 	// comme la fonction C++ est templatisée, les meta servent à déterminer quelle classe d'acteur on a donné en paramètre (PoolClass)
 	// pour récupérer le bon type d'acteur à la sortie (SpawnedActor)
-	void SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation, AActor*& SpawnedActor);
+	void SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation, FVector Scale, AActor*& SpawnedActor);
 	
 	UFUNCTION(BlueprintCallable, Category = "Pool Subsystem")
 	void ReturnToPool(TSubclassOf<AActor> PoolClass);
@@ -40,7 +40,7 @@ public:
 };
 
 template <typename T>
-T* UPoolSubsystem::SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation)
+T* UPoolSubsystem::SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation, FVector Scale)
 {
 	T* PooledActor = nullptr;
 
@@ -52,12 +52,14 @@ T* UPoolSubsystem::SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location
 			FActorSpawnParameters SpawnParameters;
 			SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 			PooledActor = GetWorld()->SpawnActor<T>(PoolClass, Location, Rotation, SpawnParameters);
+			PooledActor->SetActorScale3D(Scale);
 			ObjectPool.AddToPlacedObject(PooledActor, PooledActor->GetTransform());
 		}
 		else
 		{
 			PooledActor = CastChecked<T>(ObjectPool.Pop());
 			PooledActor->SetActorLocationAndRotation(Location, Rotation);
+			PooledActor->SetActorScale3D(Scale);
 			if(const UStaticMeshComponent* MeshComp = PooledActor->template FindComponentByClass<UStaticMeshComponent>())
 			{
 				FTransform Transform = MeshComp->GetComponentTransform();

@@ -23,10 +23,10 @@ void UPoolSubsystem::InitializePool(TSubclassOf<AActor> PoolClass, int Amount)
 }
 
 // Version blueprint de la fonction templatée
-void UPoolSubsystem::SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation,
+void UPoolSubsystem::SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation, FVector Scale,
 	AActor*& SpawnedActor)
 {
-	SpawnedActor = SpawnFromPool<AActor>(PoolClass, Location, Rotation);
+	SpawnedActor = SpawnFromPool<AActor>(PoolClass, Location, Rotation, Scale);
 }
 
 void UPoolSubsystem::ReturnToPool(TSubclassOf<AActor> PoolClass)
