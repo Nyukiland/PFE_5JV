@@ -244,6 +244,11 @@ void APFPlayerCharacter::ChangeState(TSubclassOf<UPFState> newState)
 		return;
 	}
 
+	if (CurrentStatePtr_ && CurrentStatePtr_->GetClass() == newState)
+	{
+		return;
+	}
+
 	if (CurrentStatePtr_)
 	{
 		CurrentStatePtr_->OnExit();
