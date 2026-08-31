@@ -2,21 +2,14 @@
 
 
 #include "Helpers/FlowerSpawner/FlowerSpawnerHelper.h"
+
+#include "Helpers/PFPainter.h"
 #include "Helpers/FlowerSpawner/PFFlowerSpawnerTypes.h"
 #include "Materials/MaterialParameterCollection.h"
 
 bool UFlowerSpawnerHelper::TryGetFlowerColorFromEnum(const EPFFlowerColor FlowerColor, FLinearColor& ColorValue)
 {
 	bool bParameterFound = false;
-	
-	static UMaterialParameterCollection* CachedMPCPtr_ = Cast<UMaterialParameterCollection>(
-		StaticLoadObject(UMaterialParameterCollection::StaticClass(), nullptr, TEXT("/Game/Materials/MPC/MPC_flowers.MPC_flowers"))
-		);
-	if(!CachedMPCPtr_)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[UFlowerSpawnerHelper] TryGetFlowerColorFromEnum : Material parameter collection not found "));
-		return bParameterFound;
-	}
 	
 	FName ColorName;
 	switch (FlowerColor)
@@ -38,7 +31,8 @@ bool UFlowerSpawnerHelper::TryGetFlowerColorFromEnum(const EPFFlowerColor Flower
 		return bParameterFound;
 	}
 	
-	ColorValue = CachedMPCPtr_->GetVectorParameterDefaultValue(ColorName, bParameterFound);
+	UMaterialParameterCollection* mpc = APFPainter::Instance->MaterialParameterCollectionPtr;
+	ColorValue = mpc->GetVectorParameterDefaultValue(ColorName, bParameterFound);
 	return bParameterFound;
 }
 

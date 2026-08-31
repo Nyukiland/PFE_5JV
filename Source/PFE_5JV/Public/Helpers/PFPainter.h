@@ -23,13 +23,18 @@ public:
 	FOnMaxHismAmountInstanced OnMaxHismAmountInstancedDelegate;
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner Model")
+	TMap<UClass*, FPFStaticMeshModelData> StaticMeshModelsToSpawn;
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner")
+	TObjectPtr<UMaterialParameterCollection> MaterialParameterCollectionPtr;
+	
+protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	void CreateNewHismModel(const TSubclassOf<AActor>& ActorClass);
 	static void InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarchicalInstancedStaticMeshComponent* HismPtr_);
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner Model")
-	TMap<UClass*, FPFStaticMeshModelData> StaticMeshModelsToSpawn;
 	
 public:	
 	TMap<UClass*, FPFStaticMeshModelData> GetStaticMeshModelsToSpawn() {return StaticMeshModelsToSpawn;};
