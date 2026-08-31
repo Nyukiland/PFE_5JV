@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="AudioFile" id="{9a503441-67a8-45cd-92eb-50a29484b85c}">
+		<property name="assetPath">
+			<value>Celeste_2.wav</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>44.0999985</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>7.2000000000000002</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{459824c1-523a-4a4c-a75b-428cde5361bb}</destination>
+		</relationship>
+	</object>
+</objects>
