@@ -87,14 +87,15 @@ void APFPainter::CreateNewHismModel(const TSubclassOf<AActor>& ActorClass)
 
 	// Make the new HISM visible the component in the detail pannel of the outliner :
 	NewHism->CreationMethod = EComponentCreationMethod::Instance;
-	NewHism->RegisterComponent();
-	NewHism->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
-	this->AddInstanceComponent(NewHism);
-		
 	Hism.ActiveModelHismPtr_ = NewHism;
 
+	NewHism->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+	this->AddInstanceComponent(NewHism);
+	
 	// Initialize the new HISM :
 	InitializeHism(ActorClass, Hism.ActiveModelHismPtr_);
+		
+	NewHism->RegisterComponent();
 }
 
 void APFPainter::InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarchicalInstancedStaticMeshComponent* HismPtr_)
@@ -102,6 +103,7 @@ void APFPainter::InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarch
 	if(HismPtr_ == nullptr) return;
 	HismPtr_->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HismPtr_->SetNumCustomDataFloats(3);
+	HismPtr_->SetVisibleInRayTracing(false);
 	if(ActorClass == nullptr) return;
 	if(AActor* DefaultActor = ActorClass->GetDefaultObject<AActor>())
 	{
@@ -122,6 +124,7 @@ void APFPainter::InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarch
 	// Spawn a first HISM instance to avoid spike later
 	FTransform Transform = FTransform(FRotator::ZeroRotator, FVector(0.f, 0.f, -2000.f), FVector::ZeroVector);
 	HismPtr_->AddInstance(Transform, true);
+	HismPtr_->MarkRenderStateDirty();
 }
 
 void APFPainter::ReplaceActorsByHismByClass(const TSubclassOf<AActor>& ActorClass, const FLinearColor ColorValue, const TArray<FTransform>& PlacedObjectTransforms)
@@ -142,6 +145,8 @@ void APFPainter::ReplaceActorsByHismByClass(const TSubclassOf<AActor>& ActorClas
 		CurrentHismPtr_->SetCustomDataValue(InstanceIndex, 1, ColorValue.G, false);
 		CurrentHismPtr_->SetCustomDataValue(InstanceIndex, 2, ColorValue.B, false);
 	}
+
+	CurrentHismPtr_->BuildTreeIfOutdated(false, true);
 	CurrentHismPtr_->MarkRenderStateDirty();
 }
 
