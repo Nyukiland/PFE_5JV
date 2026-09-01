@@ -42,6 +42,4 @@ void UPFGameAdditionalShutdownSystem::OnApplicationEnd()
 			}
 		}
 	}
-
-	FGenericPlatformMisc::RequestExit(true);
 }
