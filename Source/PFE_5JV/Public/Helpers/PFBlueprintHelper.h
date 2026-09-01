@@ -67,4 +67,10 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Playtest|Data")
 	static bool LoadPlaytestData(const FString FilePath, TArray<FStoredPlaytestInfo>& OutData);
+
+	UFUNCTION(BlueprintCallable, Category= "PSO")
+	static int32 GetRemainingPSOPrecompiles();
+
+	UFUNCTION(BlueprintCallable, Category= "PSO")
+	static bool IsPSOPrecompilationDone();
 };

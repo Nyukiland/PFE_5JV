@@ -30,6 +30,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner")
 	TObjectPtr<UMaterialParameterCollection> MaterialParameterCollectionPtr;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Options")
+	TObjectPtr<APostProcessVolume> GlobalPostProcessPtr;
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;

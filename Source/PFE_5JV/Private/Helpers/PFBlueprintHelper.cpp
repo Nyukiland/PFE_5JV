@@ -4,6 +4,7 @@
 #include <Windows.h>
 
 #include "JsonObjectConverter.h"
+#include "ShaderPipelineCache.h"
 
 void UPFBlueprintHelper::CheckCurrentLayout(EKeyboardOutputPin& outputPins)
 {
@@ -166,4 +167,14 @@ bool UPFBlueprintHelper::LoadPlaytestData(const FString FilePath, TArray<FStored
 
 	UE_LOG(LogTemp, Error, TEXT("[PlaytestData] Failed to parse JSON to Struct."));
 	return false;
+}
+
+int32 UPFBlueprintHelper::GetRemainingPSOPrecompiles()
+{
+	return FShaderPipelineCache::NumPrecompilesRemaining();
+}
+
+bool UPFBlueprintHelper::IsPSOPrecompilationDone()
+{
+	return GetRemainingPSOPrecompiles() <= 0;
 }
