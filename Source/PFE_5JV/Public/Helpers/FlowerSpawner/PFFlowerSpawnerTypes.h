@@ -47,6 +47,21 @@ struct FPFStaticMeshModelData
 	int ActiveModelIndex = -1;
 };
 
+USTRUCT()
+struct FPFGrowingObjectData
+{
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	AActor* ActorPtr;
+	
+	UPROPERTY()
+	FTransform TargetTransform;
+	
+	UPROPERTY()
+	float GrowthAlpha;
+};
+
 USTRUCT(Blueprintable, BlueprintType)
 struct FPFPoolArrays
 {
@@ -56,21 +71,14 @@ struct FPFPoolArrays
 	TArray<AActor*> ObjectPool;
 
 	UPROPERTY()
-	TArray<AActor*> GrowingObjects;
+	TArray<FPFGrowingObjectData> GrowingObjectDatas;
 	
 	UPROPERTY()
 	TArray<AActor*> ReadyToBeReplaced;
-	
-	UPROPERTY()
-	TArray<FTransform> GrowingObjectTransforms;
-	
+		
 	UPROPERTY()
 	TArray<FTransform> ReadyToBeReplacedTransforms;
 	
-	UPROPERTY()
-	TArray<float> GrowthAlphas;
-	
-
 	bool PoolIsEmpty() const {
 		return ObjectPool.IsEmpty();
 	}
@@ -86,9 +94,11 @@ struct FPFPoolArrays
 
 	void AddToGrowingObjects(AActor* ActorToAdd, const FTransform& Transform)
 	{
-		GrowingObjects.Add(ActorToAdd);
-		GrowingObjectTransforms.Add(Transform);
-		GrowthAlphas.Add(0.f);
+		FPFGrowingObjectData GrowingObjectData;
+		GrowingObjectData.ActorPtr = ActorToAdd;
+		GrowingObjectData.TargetTransform = Transform;
+		GrowingObjectData.GrowthAlpha = 0.f;
+		GrowingObjectDatas.Add(GrowingObjectData);
 	}
 
 	void ReturnToPool()
@@ -100,20 +110,13 @@ struct FPFPoolArrays
 	
 	void TransferFromGrowingToReadyToBeReplaced(int Index)
 	{
-		if (
-			GrowingObjects.IsValidIndex(Index) && 
-			GrowingObjectTransforms.IsValidIndex(Index) &&
-			GrowthAlphas.IsValidIndex(Index) 
-		){
-			AActor* Actor = GrowingObjects[Index];
-			FTransform& Transform = GrowingObjectTransforms[Index];
+		if (GrowingObjectDatas.IsValidIndex(Index))
+		{
+			FPFGrowingObjectData GrowingObjectData = GrowingObjectDatas[Index];
+			GrowingObjectDatas.RemoveAtSwap(Index);
 			
-			GrowingObjects.RemoveAtSwap(Index);
-			GrowingObjectTransforms.RemoveAtSwap(Index);
-			GrowthAlphas.RemoveAtSwap(Index);
-			
-			ReadyToBeReplaced.Add(Actor);
-			ReadyToBeReplacedTransforms.Add(Transform);
+			ReadyToBeReplaced.Add(GrowingObjectData.ActorPtr);
+			ReadyToBeReplacedTransforms.Add(GrowingObjectData.TargetTransform);
 		}
 	}
 
@@ -129,7 +132,7 @@ struct FPFPoolArrays
 	
 	int GrowingObjectsNum() const
 	{
-		return GrowingObjects.Num();
+		return GrowingObjectDatas.Num();
 	}
 	
 };

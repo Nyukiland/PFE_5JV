@@ -87,28 +87,28 @@ void UPFFlowerSpawnerResource::ComponentTick_Implementation(float deltaTime)
 	{
 		UClass* PoolClass = Pair.Key;
 		FPFPoolArrays& ObjectPool = Pair.Value;
-		
-		
+
 		if(ObjectPool.GrowingObjectsNum() > 0)
 		{
 			for (int i = ObjectPool.GrowingObjectsNum() -1 ; i >= 0; i--)
 			{
-				ObjectPool.GrowthAlphas[i] += deltaTime * 1; // * multiplicateur de vitesse ? 
-				ObjectPool.GrowthAlphas[i] = FMath::Clamp(ObjectPool.GrowthAlphas[i], 0.f, 1.f);
-				FVector NewScale = FMath::Lerp(FVector::ZeroVector, ObjectPool.GrowingObjectTransforms[i].GetScale3D(), ObjectPool.GrowthAlphas[i]);
-				ObjectPool.GrowingObjects[i]->SetActorScale3D(NewScale);
+				FPFGrowingObjectData& GrowingObjectData = ObjectPool.GrowingObjectDatas[i];
+				GrowingObjectData.GrowthAlpha += deltaTime * 1; // * multiplicateur de vitesse ? 
+				GrowingObjectData.GrowthAlpha = FMath::Clamp(GrowingObjectData.GrowthAlpha, 0.f, 1.f);
+				FVector NewScale = FMath::Lerp(FVector::ZeroVector, GrowingObjectData.TargetTransform.GetScale3D(), GrowingObjectData.GrowthAlpha);
+				GrowingObjectData.ActorPtr->SetActorScale3D(NewScale);
 				
-				if (ObjectPool.GrowthAlphas[i] >= 1.f)
+				if (GrowingObjectData.GrowthAlpha >= 1.f)
 				{
 					ObjectPool.TransferFromGrowingToReadyToBeReplaced(i);
 				}
 			}
-		}
-		
-		// Pour chaque type d'acteurs qui a un pool, si on a atteint la limite d'acteurs placés, on remplace par la version HISM :
-		if(ObjectPool.ReadyToBeReplacedNum() >= MaxActorsAmountPlaced) {
-			OnActorsByHismSwitchDelegate.Broadcast(PoolClass, CurrentColorValue_, ObjectPool.ReadyToBeReplacedTransforms);
-			PoolSubsystemPtr_->ReturnToPool(PoolClass);
+			
+			// Pour chaque type d'acteurs qui a un pool, si on a atteint la limite d'acteurs placés, on remplace par la version HISM :
+			if(ObjectPool.ReadyToBeReplacedNum() >= MaxActorsAmountPlaced) {
+				OnActorsByHismSwitchDelegate.Broadcast(PoolClass, CurrentColorValue_, ObjectPool.ReadyToBeReplacedTransforms);
+				PoolSubsystemPtr_->ReturnToPool(PoolClass);
+			}
 		}
 	}
 }
