@@ -47,9 +47,20 @@ FScreenPassTexture PFKuwaharaViewExtension::PostProcessPass_RenderThread(FRDGBui
     
     // 1. Calculate Target Resolution (Locking height to 720p for performance)
     FIntPoint FullResSize = SceneColor.ViewRect.Size();
+
+    if (FullResSize.X <= 0 || FullResSize.Y <= 0)
+    {
+        return FScreenPassTexture(Inputs.Textures[(uint32)EPostProcessMaterialInput::SceneColor]);
+    }
+    
     float AspectRatio = (float)FullResSize.X / (float)FullResSize.Y;
     FIntPoint LowRes(FMath::RoundToInt(720.0f * AspectRatio), 720);
 
+    if (!ensureMsgf(LowRes.X > 0 && LowRes.X < 16384, TEXT("Kuwahara pass calculated invalid width: %d. FullRes: %dx%d"), LowRes.X, FullResSize.X, FullResSize.Y))
+    {
+        return FScreenPassTexture(Inputs.Textures[(uint32)EPostProcessMaterialInput::SceneColor]);
+    }
+    
     // 2. Allocate Downscaled Buffers
     FRDGTextureDesc LowResDesc = FRDGTextureDesc::Create2D(
         LowRes, 
