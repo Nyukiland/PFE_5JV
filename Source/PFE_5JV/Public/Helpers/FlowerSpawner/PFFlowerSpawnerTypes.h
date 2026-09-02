@@ -56,17 +56,27 @@ struct FPFPoolArrays
 	TArray<AActor*> ObjectPool;
 
 	UPROPERTY()
-	TArray<AActor*> PlacedObjects;
-
+	TArray<AActor*> GrowingObjects;
+	
 	UPROPERTY()
-	TArray<FTransform> PlacedObjectTransforms;
+	TArray<AActor*> ReadyToBeReplaced;
+	
+	UPROPERTY()
+	TArray<FTransform> GrowingObjectTransforms;
+	
+	UPROPERTY()
+	TArray<FTransform> ReadyToBeReplacedTransforms;
+	
+	UPROPERTY()
+	TArray<float> GrowthAlphas;
+	
 
 	bool PoolIsEmpty() const {
 		return ObjectPool.IsEmpty();
 	}
 
-	bool PlacedObjectsIsEmpty() const {
-		return PlacedObjects.IsEmpty();
+	bool ReadyToBeReplacedIsEmpty() const {
+		return ReadyToBeReplaced.IsEmpty();
 	}
 
 	void AddToPool(AActor* ActorToAdd)
@@ -74,17 +84,37 @@ struct FPFPoolArrays
 		ObjectPool.Add(ActorToAdd);
 	}
 
-	void AddToPlacedObject(AActor* ActorToAdd, const FTransform& Transform)
+	void AddToGrowingObjects(AActor* ActorToAdd, const FTransform& Transform)
 	{
-		PlacedObjects.Add(ActorToAdd);
-		PlacedObjectTransforms.Add(Transform);
+		GrowingObjects.Add(ActorToAdd);
+		GrowingObjectTransforms.Add(Transform);
+		GrowthAlphas.Add(0.f);
 	}
 
 	void ReturnToPool()
 	{
-		ObjectPool.Append(PlacedObjects);
-		PlacedObjects.Empty();
-		PlacedObjectTransforms.Empty();
+		ObjectPool.Append(ReadyToBeReplaced);
+		ReadyToBeReplaced.Empty();
+		ReadyToBeReplacedTransforms.Empty();
+	}
+	
+	void TransferFromGrowingToReadyToBeReplaced(int Index)
+	{
+		if (
+			GrowingObjects.IsValidIndex(Index) && 
+			GrowingObjectTransforms.IsValidIndex(Index) &&
+			GrowthAlphas.IsValidIndex(Index) 
+		){
+			AActor* Actor = GrowingObjects[Index];
+			FTransform& Transform = GrowingObjectTransforms[Index];
+			
+			GrowingObjects.RemoveAtSwap(Index);
+			GrowingObjectTransforms.RemoveAtSwap(Index);
+			GrowthAlphas.RemoveAtSwap(Index);
+			
+			ReadyToBeReplaced.Add(Actor);
+			ReadyToBeReplacedTransforms.Add(Transform);
+		}
 	}
 
 	AActor* Pop()
@@ -92,10 +122,16 @@ struct FPFPoolArrays
 		return ObjectPool.Pop();
 	}
 
-	int PlacedObjectsNum() const
+	int ReadyToBeReplacedNum() const
 	{
-		return PlacedObjects.Num();
+		return ReadyToBeReplaced.Num();
 	}
+	
+	int GrowingObjectsNum() const
+	{
+		return GrowingObjects.Num();
+	}
+	
 };
 
 USTRUCT(Blueprintable, BlueprintType)

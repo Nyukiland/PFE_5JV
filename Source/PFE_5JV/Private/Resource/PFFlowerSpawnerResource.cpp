@@ -3,6 +3,7 @@
 
 #include "Resource/PFFlowerSpawnerResource.h"
 
+#include "FrameTypes.h"
 #include "Actors/PoolSubsystem.h"
 #include "Helpers/PFMathHelper.h"
 #include "Helpers/PFPainter.h"
@@ -82,14 +83,31 @@ void UPFFlowerSpawnerResource::ComponentTick_Implementation(float deltaTime)
 	}
 	if(DelayToSpawnTimer_ >= 0.f) DelayToSpawnTimer_ -= deltaTime;
 
-	// Pour chaque type d'acteurs qui a un pool, si on a atteint la limite d'acteurs placés, on remplace par la version HISM :
-	for (const auto& Pair : PoolSubsystemPtr_->ObjectPools)
+	for (auto& Pair : PoolSubsystemPtr_->ObjectPools)
 	{
 		UClass* PoolClass = Pair.Key;
-		FPFPoolArrays ObjectPool = Pair.Value;
+		FPFPoolArrays& ObjectPool = Pair.Value;
 		
-		if(ObjectPool.PlacedObjectsNum() >= MaxActorsAmountPlaced) {
-			OnActorsByHismSwitchDelegate.Broadcast(PoolClass, CurrentColorValue_, ObjectPool.PlacedObjectTransforms);
+		
+		if(ObjectPool.GrowingObjectsNum() > 0)
+		{
+			for (int i = ObjectPool.GrowingObjectsNum() -1 ; i >= 0; i--)
+			{
+				ObjectPool.GrowthAlphas[i] += deltaTime * 1; // * multiplicateur de vitesse ? 
+				ObjectPool.GrowthAlphas[i] = FMath::Clamp(ObjectPool.GrowthAlphas[i], 0.f, 1.f);
+				FVector NewScale = FMath::Lerp(FVector::ZeroVector, ObjectPool.GrowingObjectTransforms[i].GetScale3D(), ObjectPool.GrowthAlphas[i]);
+				ObjectPool.GrowingObjects[i]->SetActorScale3D(NewScale);
+				
+				if (ObjectPool.GrowthAlphas[i] >= 1.f)
+				{
+					ObjectPool.TransferFromGrowingToReadyToBeReplaced(i);
+				}
+			}
+		}
+		
+		// Pour chaque type d'acteurs qui a un pool, si on a atteint la limite d'acteurs placés, on remplace par la version HISM :
+		if(ObjectPool.ReadyToBeReplacedNum() >= MaxActorsAmountPlaced) {
+			OnActorsByHismSwitchDelegate.Broadcast(PoolClass, CurrentColorValue_, ObjectPool.ReadyToBeReplacedTransforms);
 			PoolSubsystemPtr_->ReturnToPool(PoolClass);
 		}
 	}
@@ -106,9 +124,9 @@ void UPFFlowerSpawnerResource::SetCurrentFlowerColor(EPFFlowerColor FlowerColor)
 		UClass* PoolClass = Pair.Key;
 		FPFPoolArrays ObjectPool = Pair.Value;
 
-		if(ObjectPool.PlacedObjectsIsEmpty() == false)
+		if(ObjectPool.ReadyToBeReplacedIsEmpty() == false)
 		{
-			OnActorsByHismSwitchDelegate.Broadcast(PoolClass, CurrentColorValue_, ObjectPool.PlacedObjectTransforms);
+			OnActorsByHismSwitchDelegate.Broadcast(PoolClass, CurrentColorValue_, ObjectPool.ReadyToBeReplacedTransforms);
 		}
 	}
 	
@@ -322,8 +340,6 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	queryParams.bTraceComplex = true; 
 	FHitResult CurrentHitResult;
 	const FCollisionShape sphere = FCollisionShape::MakeSphere(1.f);
-	// OwnerWorldPtr_->SweepSingleByChannel(CurrentHitResult, PlayerPosition, PlayerPosition + LengthenVector,
-	// 								FQuat::Identity, ECC_Visibility, sphere, queryParams);
 	
 	TArray<FHitResult> NewHitResults;
 	OwnerWorldPtr_->SweepMultiByObjectType(NewHitResults, PlayerPosition, PlayerPosition + LengthenVector,
@@ -337,7 +353,6 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 		FinalHitResult = NewHitResult;
 		break;
 	}
-	// if(!CheckSpawnConditions(FinalHitResult)) return;
 	
 	if (FinalHitResult.GetActor() == nullptr) return;
 	SetCurrentClassToSpawn(FinalHitResult);
@@ -347,11 +362,13 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	FVector SpawnLocation = FVector(FinalHitResult.ImpactPoint.X, FinalHitResult.ImpactPoint.Y, FlowerHeight);
 
 	// Rotation de la fleur :
-	FQuat AlignmentQuat = FRotationMatrix::MakeFromZX(FinalHitResult.ImpactNormal, FVector::ForwardVector).ToQuat();
+	FVector SafeNormal = FinalHitResult.ImpactNormal.GetSafeNormal();
+	if (SafeNormal.IsNearlyZero()) SafeNormal = FVector::UpVector;
+	FQuat AlignmentQuat = FRotationMatrix::MakeFromZX(SafeNormal, FVector::ForwardVector).ToQuat();
 	float RandomRotation = FMath::RandRange(0, 360);
 	FQuat FinalQuat = AlignmentQuat * FQuat(FVector::UpVector, FMath::DegreesToRadians(RandomRotation));
 	FRotator FinalRotation = FinalQuat.Rotator();
-
+	
 	// Spawn avec PoolSystem : 	
 	APFFlower* Flower = Cast<APFFlower>(PoolSubsystemPtr_->SpawnFromPool<AActor>(CurrentFlowerClassToSpawn_, SpawnLocation, FinalRotation, GetRandomFlowerSize()));
 

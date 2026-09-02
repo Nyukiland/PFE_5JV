@@ -93,8 +93,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	float GetRandomFlowerHeight(float GroundHeight);
+	
 	TSubclassOf<APFFlower> GetRandomClassToSpawnAccordingToEnvironment(EPFFlowerEnvironment Environment);
-
+	
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	bool CheckSpawnConditions(UPARAM(ref) const FHitResult& Hit);
 

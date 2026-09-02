@@ -35,11 +35,11 @@ void UPoolSubsystem::ReturnToPool(TSubclassOf<AActor> PoolClass)
 
 	FPFPoolArrays* ObjectPool = ObjectPools.Find(PoolClass);
 	if(ObjectPool == nullptr) return;
-	if(ObjectPool->PlacedObjectsIsEmpty() == true) return;
+	if(ObjectPool->ReadyToBeReplacedIsEmpty() == true) return;
 	
-	for(AActor* PlacedObject : ObjectPool->PlacedObjects)
+	for(AActor* ReadyToBeReplaced : ObjectPool->ReadyToBeReplaced)
 	{
-		IPFPoolable::Execute_OnReturnToPool(PlacedObject);
+		IPFPoolable::Execute_OnReturnToPool(ReadyToBeReplaced);
 	}
 	ObjectPool->ReturnToPool();
 }

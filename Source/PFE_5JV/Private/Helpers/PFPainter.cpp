@@ -127,7 +127,7 @@ void APFPainter::InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarch
 	HismPtr_->MarkRenderStateDirty();
 }
 
-void APFPainter::ReplaceActorsByHismByClass(const TSubclassOf<AActor>& ActorClass, const FLinearColor ColorValue, const TArray<FTransform>& PlacedObjectTransforms)
+void APFPainter::ReplaceActorsByHismByClass(const TSubclassOf<AActor>& ActorClass, const FLinearColor ColorValue, const TArray<FTransform>& ReadyToBeReplacedTransforms)
 {
 	UE_LOG(LogTemp, Warning,TEXT( "[Painter] ReplaceActorsByHismByClass"));
 	FPFStaticMeshModelData* CurrentHismData = StaticMeshModelsToSpawn.Find(ActorClass);
@@ -137,7 +137,17 @@ void APFPainter::ReplaceActorsByHismByClass(const TSubclassOf<AActor>& ActorClas
 		return;
 	}
 	UHierarchicalInstancedStaticMeshComponent* CurrentHismPtr_ = CurrentHismData->ActiveModelHismPtr_;
-	TArray<int32> Indices = CurrentHismPtr_->AddInstances(PlacedObjectTransforms, true, true, false);
+
+	// Clean up corrupted datas to avoid crash with HISM (doesn't like approximative data or near zero) 
+	TArray<FTransform> CleanTransforms = ReadyToBeReplacedTransforms;
+	for(FTransform& CleanTransform: CleanTransforms)
+	{
+		CleanTransform.NormalizeRotation();
+		if (CleanTransform.ContainsNaN()) CleanTransform.SetRotation(FQuat::Identity);
+		if (CleanTransform.GetScale3D().IsNearlyZero()) CleanTransform.SetScale3D(FVector(0.01f));
+	}
+
+	TArray<int32> Indices = CurrentHismPtr_->AddInstances(CleanTransforms, true, true, false);
 
 	for(int32 InstanceIndex : Indices)
 	{

@@ -4,8 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "PFPoolable.h"
+#include "DSP/MidiNoteQuantizer.h"
+#include "DynamicMesh/MeshTransforms.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Helpers/FlowerSpawner/PFFlowerSpawnerTypes.h"
+#include "SceneQueries/SceneSnappingManager.h"
 #include "PoolSubsystem.generated.h"
 
 struct FPFPoolArrays;
@@ -40,33 +43,32 @@ public:
 };
 
 template <typename T>
-T* UPoolSubsystem::SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation, FVector Scale)
+T* UPoolSubsystem::SpawnFromPool(TSubclassOf<AActor> PoolClass, FVector Location, FRotator Rotation, FVector FinalScale)
 {
 	T* PooledActor = nullptr;
 
 	if(PoolClass.Get()->ImplementsInterface(UPFPoolable::StaticClass()))
 	{
+		FVector InitialScale = FVector::ZeroVector;
+		
 		FPFPoolArrays& ObjectPool = ObjectPools.FindOrAdd(PoolClass);
 		if(ObjectPool.PoolIsEmpty())
 		{
 			FActorSpawnParameters SpawnParameters;
 			SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 			PooledActor = GetWorld()->SpawnActor<T>(PoolClass, Location, Rotation, SpawnParameters);
-			PooledActor->SetActorScale3D(Scale);
-			ObjectPool.AddToPlacedObject(PooledActor, PooledActor->GetTransform());
 		}
 		else
 		{
 			PooledActor = CastChecked<T>(ObjectPool.Pop());
 			PooledActor->SetActorLocationAndRotation(Location, Rotation);
-			PooledActor->SetActorScale3D(Scale);
-			if(const UStaticMeshComponent* MeshComp = PooledActor->template FindComponentByClass<UStaticMeshComponent>())
-			{
-				FTransform Transform = MeshComp->GetComponentTransform();
-				ObjectPool.AddToPlacedObject(PooledActor, Transform);
-			}
 		}
-
+		
+		// Set scale to 0 for then, make it grow 
+		PooledActor->SetActorScale3D(InitialScale);
+		FTransform FinalTransform = FTransform(Rotation, Location, FinalScale); 
+		ObjectPool.AddToGrowingObjects(PooledActor, FinalTransform);
+		
 		IPFPoolable::Execute_OnSpawnFromPool(PooledActor);
 	}
 
