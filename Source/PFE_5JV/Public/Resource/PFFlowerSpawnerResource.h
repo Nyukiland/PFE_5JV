@@ -86,7 +86,7 @@ protected:
 	EPFFlowerEnvironment CurrentEnvironment_;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FlowerSpawner")
-	TMap<EPFFlowerEnvironment, FPFEnvironmentFlowers> FlowersByEnvironments;
+	TArray<FPFEnvironmentFlowers> FlowersByEnvironments;
 	
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	FVector GetRandomFlowerSize();
@@ -94,7 +94,11 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	float GetRandomFlowerHeight(float GroundHeight);
 	
-	TSubclassOf<APFFlower> GetRandomClassToSpawnAccordingToEnvironment(EPFFlowerEnvironment Environment);
+	TSubclassOf<APFFlower> GetRandomClassToSpawnAccordingToEnvironment(EPFFlowerEnvironment FlowerEnvironment);
+	
+	float GetSpeedGrowthAccordingToEnvironment(EPFFlowerEnvironment FlowerEnvironment) const;
+		
+	EPFFlowerEnvironment GetEnvironmentAccordingToClass(TSubclassOf<APFFlower> FlowerClass) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")
 	bool CheckSpawnConditions(UPARAM(ref) const FHitResult& Hit);

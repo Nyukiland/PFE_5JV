@@ -40,22 +40,26 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 		FPFStaticMeshModelData StaticMeshModelData = Pair.Value;
 		
 		EPFFlowerEnvironment FlowerEnvironment = StaticMeshModelData.EnvironmentType;
-		FPFEnvironmentFlowers& FlowersByEnvironment = FlowersByEnvironments.FindOrAdd(FlowerEnvironment);
-		FlowersByEnvironment.AddUnique(FlowerClass);
-		PoolSubsystemPtr_->InitializePool(FlowerClass, PoolSubsystemPtr_->InitialPoolSize);
-	}
-	
-	for (const auto& Pair : FlowersByEnvironments)
-	{
-		EPFFlowerEnvironment FlowerEnvironment = Pair.Key;
-		FPFEnvironmentFlowers FlowersList = Pair.Value;
-		
-		for (const auto& FlowerClass : FlowersList.FlowerClasses)
+		bool bEnvironmentFound = false;
+		for (auto& FlowersByEnvironment : FlowersByEnvironments)
 		{
+			if (FlowerEnvironment != FlowersByEnvironment.EnvironmentType) continue;
+			bEnvironmentFound = true;
+			FlowersByEnvironment.AddUnique(FlowerClass);
+			PoolSubsystemPtr_->InitializePool(FlowerClass, PoolSubsystemPtr_->InitialPoolSize);
+			
 			FName EnvironmentName = UFlowerSpawnerHelper::GetFlowerEnvironmentNameFromEnum(FlowerEnvironment);
 			FString EnvironmentString = EnvironmentName.ToString();
 			FString FlowerClassString = FlowerClass->GetName();
 			UE_LOG(LogTemp, Warning, TEXT("[FlowerSpawner] Environment : %s - FlowerClass : %s"), *EnvironmentString, *FlowerClassString);
+		}
+		
+		if (bEnvironmentFound == false)
+		{
+			FPFEnvironmentFlowers FlowersByEnvironment;
+			FlowersByEnvironment.EnvironmentType = FlowerEnvironment;
+			FlowersByEnvironment.AddUnique(FlowerClass);
+			FlowersByEnvironments.Add(FlowersByEnvironment);
 		}
 	}
 	
@@ -90,10 +94,13 @@ void UPFFlowerSpawnerResource::ComponentTick_Implementation(float deltaTime)
 
 		if(ObjectPool.GrowingObjectsNum() > 0)
 		{
+			EPFFlowerEnvironment FlowerEnvironment = GetEnvironmentAccordingToClass(PoolClass);
+			float GrowthSpeed = GetSpeedGrowthAccordingToEnvironment(FlowerEnvironment);
+			if (GrowthSpeed <= 0.f) GrowthSpeed = 0.1f; // Arbitrary value just to make sure that it will grow nonetheless
 			for (int i = ObjectPool.GrowingObjectsNum() -1 ; i >= 0; i--)
 			{
 				FPFGrowingObjectData& GrowingObjectData = ObjectPool.GrowingObjectDatas[i];
-				GrowingObjectData.GrowthAlpha += deltaTime * 1; // * multiplicateur de vitesse ? 
+				GrowingObjectData.GrowthAlpha += deltaTime * GrowthSpeed; // * multiplicateur de vitesse ? 
 				GrowingObjectData.GrowthAlpha = FMath::Clamp(GrowingObjectData.GrowthAlpha, 0.f, 1.f);
 				FVector NewScale = FMath::Lerp(FVector::ZeroVector, GrowingObjectData.TargetTransform.GetScale3D(), GrowingObjectData.GrowthAlpha);
 				GrowingObjectData.ActorPtr->SetActorScale3D(NewScale);
@@ -200,18 +207,56 @@ float UPFFlowerSpawnerResource::GetRandomFlowerHeight(float GroundHeight)
 	return RandomFlowerHeight;
 }
 
-TSubclassOf<APFFlower> UPFFlowerSpawnerResource::GetRandomClassToSpawnAccordingToEnvironment(EPFFlowerEnvironment Environment)
+TSubclassOf<APFFlower> UPFFlowerSpawnerResource::GetRandomClassToSpawnAccordingToEnvironment(EPFFlowerEnvironment FlowerEnvironment)
 {
-	FPFEnvironmentFlowers* EnvironmentFlowers = FlowersByEnvironments.Find(Environment);
-	TArray<TSubclassOf<APFFlower>> FlowerClasses = EnvironmentFlowers->FlowerClasses;
+	TArray<TSubclassOf<APFFlower>> FlowerClasses;
+	for (auto& FlowersByEnvironment : FlowersByEnvironments)
+	{
+		if (FlowerEnvironment != FlowersByEnvironment.EnvironmentType) continue;
+		FlowerClasses = FlowersByEnvironment.FlowerClasses;
+		break;
+	}
 	
+	if (FlowerClasses.Num() == 0)
+	{
+		FString EnvironmentName = UFlowerSpawnerHelper::GetFlowerEnvironmentNameFromEnum(FlowerEnvironment).ToString();
+		UE_LOG(LogTemp, Error, TEXT("[FlowerSpawner] There is no FlowerClasses found for %s"), *EnvironmentName);
+	}
+		
 	int MaxRange = FlowerClasses.Num() - 1;
 	int RandomFlowerClassIndex = FMath::RandRange(0, MaxRange);
+	
 	TSubclassOf<APFFlower> Class = FlowerClasses[RandomFlowerClassIndex];
 	FString ClassString = Class->GetName();
 	
 	return FlowerClasses[RandomFlowerClassIndex];
 }
+
+float UPFFlowerSpawnerResource::GetSpeedGrowthAccordingToEnvironment(EPFFlowerEnvironment FlowerEnvironment) const
+{
+	switch (FlowerEnvironment)
+	{
+		case EPFFlowerEnvironment::EPFFS_Landscape:
+			return DataPtr_->GrowthSpeedForFlower;
+		case EPFFlowerEnvironment::EPFFS_Water:
+			return DataPtr_->GrowthSpeedForWaterLily;
+		case EPFFlowerEnvironment::EPFFS_Cliff:
+			return DataPtr_->GrowthSpeedForIvy;
+		case EPFFlowerEnvironment::EPFFS_None:
+		default:
+			return 0.f;
+	}
+}
+
+EPFFlowerEnvironment UPFFlowerSpawnerResource::GetEnvironmentAccordingToClass(TSubclassOf<APFFlower> FlowerClass) const
+{
+	for (auto& FlowersByEnvironment : FlowersByEnvironments)
+	{
+		if (FlowersByEnvironment.FlowerClasses.Find(FlowerClass) != INDEX_NONE) return FlowersByEnvironment.EnvironmentType;
+	}
+	return EPFFlowerEnvironment::EPFFS_None;
+}
+
 
 bool UPFFlowerSpawnerResource::CheckSpawnConditions(const FHitResult& Hit)
 {

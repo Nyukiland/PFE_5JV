@@ -95,4 +95,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant Height Above Ground|Ivy",
 	meta=(ToolTip="La hauteur maximale au dessus du sol où spawn le lierre."))
 	float MaximalHeightAboveGroundForIvy;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Growth Speed|Flower",
+	meta=(ToolTip="Vitesse de croissance des fleurs. Ne peut pas être inférieur à 0.1f"))
+	float GrowthSpeedForFlower;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Growth Speed|Waterlily",
+	meta=(ToolTip="Vitesse de croissance des nénuphars. Ne peut pas être inférieur à 0.1f"))
+	float GrowthSpeedForWaterLily;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Growth Speed|Ivy",
+	meta=(ToolTip="Vitesse de croissance du lierre. Ne peut pas être inférieur à 0.1f"))
+	float GrowthSpeedForIvy;
+	
+	
 };

@@ -143,6 +143,9 @@ struct FPFEnvironmentFlowers
 	GENERATED_BODY()
 	
 	UPROPERTY()
+	EPFFlowerEnvironment EnvironmentType = EPFFlowerEnvironment::EPFFS_None;
+	
+	UPROPERTY()
 	TArray<TSubclassOf<APFFlower>> FlowerClasses;
 	
 	bool IsEmpty() const
