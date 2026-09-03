@@ -96,7 +96,9 @@ void UPFFlowerSpawnerResource::ComponentTick_Implementation(float deltaTime)
 		{
 			EPFFlowerEnvironment FlowerEnvironment = GetEnvironmentAccordingToClass(PoolClass);
 			float GrowthSpeed = GetSpeedGrowthAccordingToEnvironment(FlowerEnvironment);
-			if (GrowthSpeed <= 0.f) GrowthSpeed = 0.1f; // Arbitrary value just to make sure that it will grow nonetheless
+			// just to make sure that flowers will grow nonetheless (for performance reason) : 
+			if (GrowthSpeed <= 0.f) GrowthSpeed = MinimalSpeedGrowthOverride; 
+			
 			for (int i = ObjectPool.GrowingObjectsNum() -1 ; i >= 0; i--)
 			{
 				FPFGrowingObjectData& GrowingObjectData = ObjectPool.GrowingObjectDatas[i];
@@ -232,7 +234,7 @@ TSubclassOf<APFFlower> UPFFlowerSpawnerResource::GetRandomClassToSpawnAccordingT
 	return FlowerClasses[RandomFlowerClassIndex];
 }
 
-float UPFFlowerSpawnerResource::GetSpeedGrowthAccordingToEnvironment(EPFFlowerEnvironment FlowerEnvironment) const
+float UPFFlowerSpawnerResource::GetSpeedGrowthAccordingToEnvironment(const EPFFlowerEnvironment FlowerEnvironment) const
 {
 	switch (FlowerEnvironment)
 	{
@@ -245,6 +247,23 @@ float UPFFlowerSpawnerResource::GetSpeedGrowthAccordingToEnvironment(EPFFlowerEn
 		case EPFFlowerEnvironment::EPFFS_None:
 		default:
 			return 0.f;
+	}
+}
+
+float UPFFlowerSpawnerResource::GetSpawnDistanceAheadPlayerAccordingToEnvironment(
+	const EPFFlowerEnvironment FlowerEnvironment) const
+{
+	switch (FlowerEnvironment)
+	{
+	case EPFFlowerEnvironment::EPFFS_Landscape:
+		return DataPtr_->SpawnDistanceAheadPlayerForFlower;
+	case EPFFlowerEnvironment::EPFFS_Water:
+		return DataPtr_->SpawnDistanceAheadPlayerForWaterLily;
+	case EPFFlowerEnvironment::EPFFS_Cliff:
+		return DataPtr_->SpawnDistanceAheadPlayerForIvy;
+	case EPFFlowerEnvironment::EPFFS_None:
+	default:
+		return 0.f;
 	}
 }
 
@@ -354,41 +373,44 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 		InitialHitResult = ValidHitResult;
 		break;
 	}
-		
-	// Rotate the plan XY with random result to be perpendicular to the impact normal :
-	FVector PlayerPosition = OwnerPtr_->GetActorLocation(); 
-	FVector BirdToInitialHitVector = PlayerPosition - InitialHitResult.ImpactPoint;
-	float Distance = BirdToInitialHitVector.Size();
 	
-	float BrushRadius = UPFMathHelper::RemapClamped(Distance, PainterDataPtr_->BrushMaxDistance, 0.0f, PainterDataPtr_->BrushSize.X, PainterDataPtr_->BrushSize.Y);
-	BrushRadius *= 18.0f;
-
-	FVector RandomPointInBrushRadius = FindRandomPointInBrushRadius(BrushRadius);
+    // Determine random position around hit result
+    FVector PlayerLoc = OwnerPtr_->GetActorLocation();
+    float Distance = FVector::Dist(PlayerLoc, InitialHitResult.ImpactPoint);
+    float BrushRadius = UPFMathHelper::RemapClamped(Distance, PainterDataPtr_->BrushMaxDistance, 0.0f, PainterDataPtr_->BrushSize.X, PainterDataPtr_->BrushSize.Y);
+    BrushRadius *= 18.0f;
+	FVector LocalRandomOffset = FindRandomPointInBrushRadius(BrushRadius);
 	
-	FVector UpVector =  FVector(0.0f, 0.0f, 1.0f);
-	FRotator UpToNormalRotation = UKismetMathLibrary::MakeRotFromX(InitialHitResult.ImpactNormal - UpVector);
-	FVector InBrushPointPerpendicularToNormal = UpToNormalRotation.RotateVector(RandomPointInBrushRadius); 
-
-	// Place the plan with random result at the impact location :
-	FVector BrushPlanAtImpactLocation = InitialHitResult.ImpactPoint + InBrushPointPerpendicularToNormal;
-
-	// Get the normalized direction between the bird and the random direction :
-	FVector BirdToRandomLocationInBrushVector = BrushPlanAtImpactLocation - PlayerPosition;
-	FVector NormalizedBirdToRandomLocationInBrushVector = BirdToRandomLocationInBrushVector.GetSafeNormal();
-
-	// Adjust the length :
-	FVector LengthenVector = NormalizedBirdToRandomLocationInBrushVector * DataPtr_->MaximalSpawnDistanceFromBird; 
-
-	// Get normal and impact datas for this point :
-	FCollisionQueryParams queryParams;
-	queryParams.AddIgnoredActor(Owner);
-	queryParams.bTraceComplex = true; 
-	FHitResult CurrentHitResult;
+    // Project player forward vector to adapt to the surface orientation
+	FVector SurfaceNormal = InitialHitResult.ImpactNormal.GetSafeNormal();
+	FVector PlayerForward = OwnerPtr_->GetActorForwardVector();
+	FVector ProjectedForward = FVector::VectorPlaneProject(PlayerForward, SurfaceNormal).GetSafeNormal();
+    
+    // Determine offset position ahead of player :
+	float AheadDist = GetSpawnDistanceAheadPlayerAccordingToEnvironment(CurrentEnvironment_);
+    FVector OffsetAheadPlayer = InitialHitResult.ImpactPoint + (ProjectedForward * AheadDist);
+ 
+    // Determine random offset on the surface : 
+    // - align Z on surface normal
+    FQuat SurfaceQuat = FRotationMatrix::MakeFromZ(SurfaceNormal).ToQuat();
+	
+    // - switch local offset (XY) to be parallel to the surface (Z = Normal)
+    FVector WorldRandomOffset = SurfaceQuat.RotateVector(LocalRandomOffset);
+    FVector TargetPoint = OffsetAheadPlayer + WorldRandomOffset;
+ 
+    // Sweep in the surface normal axis to find precise location information 
+    // (avoid to miss surface if we start from the player position)
+    FVector SweepStart = TargetPoint + (SurfaceNormal * 1500.0f);
+    FVector SweepEnd = TargetPoint - (SurfaceNormal * 1500.0f);
+	// DrawDebugSphere(GetWorld(), SweepStart, 100.f, 16, FColor::Red, true);
+	// DrawDebugSphere(GetWorld(), SweepEnd, 100.f, 16, FColor::Purple, true);
+	
 	const FCollisionShape sphere = FCollisionShape::MakeSphere(1.f);
-	
 	TArray<FHitResult> NewHitResults;
-	OwnerWorldPtr_->SweepMultiByObjectType(NewHitResults, PlayerPosition, PlayerPosition + LengthenVector,
-										FQuat::Identity, CachedObjectQueryParams, sphere, CachedQueryParams);
+
+	// New trace to have new spot informations : 
+	OwnerWorldPtr_->SweepMultiByObjectType(NewHitResults, SweepStart, SweepEnd,
+									FQuat::Identity, CachedObjectQueryParams, sphere, CachedQueryParams);
 	
 	FHitResult FinalHitResult;
 	for(const FHitResult& NewHitResult: NewHitResults)
@@ -405,6 +427,7 @@ void UPFFlowerSpawnerResource::SpawnFlower()
 	
 	float FlowerHeight = GetRandomFlowerHeight(FinalHitResult.ImpactPoint.Z);
 	FVector SpawnLocation = FVector(FinalHitResult.ImpactPoint.X, FinalHitResult.ImpactPoint.Y, FlowerHeight);
+
 
 	// Rotation de la fleur :
 	FVector SafeNormal = FinalHitResult.ImpactNormal.GetSafeNormal();

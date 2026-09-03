@@ -44,6 +44,7 @@ public :
 	
 protected:
 	static constexpr int MaxActorsAmountPlaced = 20;
+	static constexpr float MinimalSpeedGrowthOverride = 0.1f;
 		
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FlowerSpawner|References")
 	TObjectPtr<APFPlayerCharacter> OwnerPtr_;
@@ -98,6 +99,9 @@ protected:
 	
 	float GetSpeedGrowthAccordingToEnvironment(EPFFlowerEnvironment FlowerEnvironment) const;
 		
+	float GetSpawnDistanceAheadPlayerAccordingToEnvironment(EPFFlowerEnvironment FlowerEnvironment) const;
+		
+	
 	EPFFlowerEnvironment GetEnvironmentAccordingToClass(TSubclassOf<APFFlower> FlowerClass) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "FlowerSpawner")

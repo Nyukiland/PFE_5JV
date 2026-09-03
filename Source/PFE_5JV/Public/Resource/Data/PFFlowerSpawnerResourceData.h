@@ -97,16 +97,27 @@ public:
 	float MaximalHeightAboveGroundForIvy;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Growth Speed|Flower",
-	meta=(ToolTip="Vitesse de croissance des fleurs. Ne peut pas être inférieur à 0.1f"))
+	meta=(ToolTip="Vitesse de croissance des fleurs. Ne peut pas être inférieure à 0.1f"))
 	float GrowthSpeedForFlower;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Growth Speed|Waterlily",
-	meta=(ToolTip="Vitesse de croissance des nénuphars. Ne peut pas être inférieur à 0.1f"))
+	meta=(ToolTip="Vitesse de croissance des nénuphars. Ne peut pas être inférieure à 0.1f"))
 	float GrowthSpeedForWaterLily;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Growth Speed|Ivy",
-	meta=(ToolTip="Vitesse de croissance du lierre. Ne peut pas être inférieur à 0.1f"))
+	meta=(ToolTip="Vitesse de croissance du lierre. Ne peut pas être inférieure à 0.1f"))
 	float GrowthSpeedForIvy;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Distance Ahead Player|Flower",
+	meta=(ToolTip="Distance de spawn devant le joueur pour les fleurs."))
+	float SpawnDistanceAheadPlayerForFlower;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Distance Ahead Player|Waterlily",
+	meta=(ToolTip="Distance de spawn devant le joueur pour les nénuphars."))
+	float SpawnDistanceAheadPlayerForWaterLily;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Distance Ahead Player|Ivy",
+	meta=(ToolTip="Distance de spawn devant le joueur pour le lierre."))
+	float SpawnDistanceAheadPlayerForIvy;
 	
 };
