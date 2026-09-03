@@ -4,11 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "PFPoolable.h"
-#include "DSP/MidiNoteQuantizer.h"
-#include "DynamicMesh/MeshTransforms.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Helpers/FlowerSpawner/PFFlowerSpawnerTypes.h"
-#include "SceneQueries/SceneSnappingManager.h"
 #include "PoolSubsystem.generated.h"
 
 struct FPFPoolArrays;
