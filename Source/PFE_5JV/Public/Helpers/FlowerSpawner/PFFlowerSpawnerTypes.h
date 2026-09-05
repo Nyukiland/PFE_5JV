@@ -38,7 +38,13 @@ struct FPFStaticMeshModelData
 	GENERATED_BODY()
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UClass* FlowerClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EPFFlowerEnvironment EnvironmentType = EPFFlowerEnvironment::EPFFS_None;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UMaterialInstance* FlowerMaterial;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UHierarchicalInstancedStaticMeshComponent* ActiveModelHismPtr_ = nullptr;

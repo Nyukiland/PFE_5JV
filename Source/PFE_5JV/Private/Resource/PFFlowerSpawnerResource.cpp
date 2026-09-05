@@ -33,11 +33,10 @@ void UPFFlowerSpawnerResource::ComponentInit_Implementation(APFPlayerCharacter* 
 	if (!CheckValidity()) return;
 	
 	// Flowers :
-	TMap<UClass*, FPFStaticMeshModelData> StaticMeshModelsToSpawn = PainterPtr_->GetStaticMeshModelsToSpawn();
-	for (const auto& Pair : StaticMeshModelsToSpawn)
+	TArray<FPFStaticMeshModelData> StaticMeshModelsToSpawn = PainterPtr_->GetStaticMeshModelsToSpawn();
+	for (const auto& StaticMeshModelData : StaticMeshModelsToSpawn)
 	{
-		UClass* FlowerClass = Pair.Key;
-		FPFStaticMeshModelData StaticMeshModelData = Pair.Value;
+		UClass* FlowerClass = StaticMeshModelData.FlowerClass;
 		
 		EPFFlowerEnvironment FlowerEnvironment = StaticMeshModelData.EnvironmentType;
 		bool bEnvironmentFound = false;

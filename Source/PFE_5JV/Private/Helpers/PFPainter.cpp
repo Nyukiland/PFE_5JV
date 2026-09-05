@@ -15,9 +15,9 @@ APFPainter::APFPainter()
 void APFPainter::BeginPlay()
 {
 	Super::BeginPlay();
-	for(const auto Pair : StaticMeshModelsToSpawn)
+	for(const auto& StaticMeshModelToSpawn : StaticMeshModelsToSpawn)
 	{
-		UClass* FlowerClass = Pair.Key;
+		UClass* FlowerClass = StaticMeshModelToSpawn.FlowerClass;
 		CreateNewHismModel(FlowerClass);
 	}
 
@@ -28,11 +28,10 @@ void APFPainter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	for(const auto& Pair : StaticMeshModelsToSpawn)
+	for(const auto& StaticMeshModelToSpawn : StaticMeshModelsToSpawn)
 	{
-		UClass* ActorClass = Pair.Key;
-		FPFStaticMeshModelData CurrentHismData = Pair.Value;
-		if(CurrentHismData.ActiveModelHismPtr_->GetInstanceCount() >= MaxHismIntances) OnMaxHismAmountInstancedDelegate.Broadcast(ActorClass);
+		UClass* FlowerClass = StaticMeshModelToSpawn.FlowerClass;
+		if(StaticMeshModelToSpawn.ActiveModelHismPtr_->GetInstanceCount() >= MaxHismIntances) OnMaxHismAmountInstancedDelegate.Broadcast(FlowerClass);
 	}
 }
 
@@ -70,13 +69,26 @@ APFPainter* APFPainter::GetPainter(UObject* WorldContext)
 void APFPainter::CreateNewHismModel(const TSubclassOf<AActor>& ActorClass)
 {
 	if(ActorClass == nullptr) return;
-	FPFStaticMeshModelData& Hism = StaticMeshModelsToSpawn.FindOrAdd(ActorClass);
-	Hism.ActiveModelIndex++;
+	FPFStaticMeshModelData* HismData = StaticMeshModelsToSpawn.FindByPredicate([&](const FPFStaticMeshModelData& Item)
+	{
+		return Item.FlowerClass == ActorClass;
+	});
+	if (!HismData) return;
+	
+	// for (auto& StaticMeshModelToSpawn : StaticMeshModelsToSpawn)
+	// {
+	// 	if (StaticMeshModelToSpawn.FlowerClass != ActorClass) continue;
+	// 	HismData = StaticMeshModelToSpawn;
+	// 	break;
+	// }
+	// if (HismData == null) return;
+	
+	HismData->ActiveModelIndex++;
 
 	// Create the new HISM :
 	FString ClassName = ActorClass->GetName();
 	ClassName = ClassName.Replace(TEXT("BP_"), TEXT("HISM_"));
-	ClassName += FString::Printf(TEXT("_%d"), Hism.ActiveModelIndex);
+	ClassName += FString::Printf(TEXT("_%d"), HismData->ActiveModelIndex);
 	UE_LOG(LogTemp, Warning, TEXT("[Painter] Création d'un nouveau modèle d'HISM : %s"), *ClassName);
 	UHierarchicalInstancedStaticMeshComponent* NewHism = NewObject<UHierarchicalInstancedStaticMeshComponent>(this, FName(*ClassName));
 	if(NewHism == nullptr)
@@ -85,27 +97,28 @@ void APFPainter::CreateNewHismModel(const TSubclassOf<AActor>& ActorClass)
 		return;
 	}
 
-	// Make the new HISM visible the component in the detail pannel of the outliner :
+	// Make the new HISM component visible in the detail panel of the outliner :
 	NewHism->CreationMethod = EComponentCreationMethod::Instance;
-	Hism.ActiveModelHismPtr_ = NewHism;
+	HismData->ActiveModelHismPtr_ = NewHism;
 
 	NewHism->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 	this->AddInstanceComponent(NewHism);
 	
 	// Initialize the new HISM :
-	InitializeHism(ActorClass, Hism.ActiveModelHismPtr_);
+	InitializeHism(HismData);
 		
 	NewHism->RegisterComponent();
 }
 
-void APFPainter::InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarchicalInstancedStaticMeshComponent* HismPtr_)
+void APFPainter::InitializeHism(FPFStaticMeshModelData* HismData)
 {
+	UHierarchicalInstancedStaticMeshComponent* HismPtr_ = HismData->ActiveModelHismPtr_;
 	if(HismPtr_ == nullptr) return;
 	HismPtr_->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HismPtr_->SetNumCustomDataFloats(3);
 	HismPtr_->SetVisibleInRayTracing(false);
-	if(ActorClass == nullptr) return;
-	if(AActor* DefaultActor = ActorClass->GetDefaultObject<AActor>())
+	if(HismData->FlowerClass == nullptr) return;
+	if(AActor* DefaultActor = HismData->FlowerClass->GetDefaultObject<AActor>())
 	{
 		if(UStaticMeshComponent* MeshComponent = DefaultActor->FindComponentByClass<UStaticMeshComponent>())
 		{
@@ -114,10 +127,11 @@ void APFPainter::InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarch
 				HismPtr_->SetStaticMesh(Mesh);
 			}
 			
-			if(UMaterialInterface* Material = MeshComponent->GetMaterial(0))
-			{
-				HismPtr_->SetMaterial(0, Material);
-			}
+			// if(UMaterialInterface* Material = MeshComponent->GetMaterial(0))
+			// {
+			// 	HismPtr_->SetMaterial(0, Material);
+			// }
+			HismPtr_->SetMaterial(0, HismData->FlowerMaterial);
 		}
 	}
 	
@@ -130,7 +144,10 @@ void APFPainter::InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarch
 void APFPainter::ReplaceActorsByHismByClass(const TSubclassOf<AActor>& ActorClass, const FLinearColor ColorValue, const TArray<FTransform>& ReadyToBeReplacedTransforms)
 {
 	UE_LOG(LogTemp, Warning,TEXT( "[Painter] ReplaceActorsByHismByClass"));
-	FPFStaticMeshModelData* CurrentHismData = StaticMeshModelsToSpawn.Find(ActorClass);
+	FPFStaticMeshModelData* CurrentHismData = StaticMeshModelsToSpawn.FindByPredicate([&](const FPFStaticMeshModelData& Item)
+	{
+		return Item.FlowerClass == ActorClass;
+	});
 	if(CurrentHismData == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("[Painter] There is no HISM model for %s class. Add it in HismToGenerate array"), *ActorClass->GetName());

@@ -24,7 +24,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner Model")
-	TMap<UClass*, FPFStaticMeshModelData> StaticMeshModelsToSpawn;
+	TArray<FPFStaticMeshModelData> StaticMeshModelsToSpawn;
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FlowerSpawner")
@@ -37,10 +37,10 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	void CreateNewHismModel(const TSubclassOf<AActor>& ActorClass);
-	static void InitializeHism(const TSubclassOf<AActor>& ActorClass, UHierarchicalInstancedStaticMeshComponent* HismPtr_);
+	static void InitializeHism(FPFStaticMeshModelData* HismData);
 	
 public:	
-	TMap<UClass*, FPFStaticMeshModelData> GetStaticMeshModelsToSpawn() {return StaticMeshModelsToSpawn;};
+	TArray<FPFStaticMeshModelData> GetStaticMeshModelsToSpawn() {return StaticMeshModelsToSpawn;};
 	
 	virtual void Tick(float DeltaTime) override;
 	
