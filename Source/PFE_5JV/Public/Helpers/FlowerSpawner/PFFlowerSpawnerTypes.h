@@ -158,4 +158,3 @@ struct FPFEnvironmentFlowers
 		FlowerClasses.AddUnique(FlowerClass);
 	}
 };
-
