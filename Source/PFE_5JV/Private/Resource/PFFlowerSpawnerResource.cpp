@@ -136,6 +136,7 @@ void UPFFlowerSpawnerResource::SetCurrentFlowerColor(EPFFlowerColor FlowerColor)
 		if(ObjectPool.ReadyToBeReplacedIsEmpty() == false)
 		{
 			OnActorsByHismSwitchDelegate.Broadcast(PoolClass, CurrentColorValue_, ObjectPool.ReadyToBeReplacedTransforms);
+			PoolSubsystemPtr_->ReturnToPool(PoolClass);
 		}
 	}
 	
