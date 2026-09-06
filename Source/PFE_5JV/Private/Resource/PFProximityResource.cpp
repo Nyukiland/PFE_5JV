@@ -61,6 +61,15 @@ void UPFProximityResource::CheckCollisionInFront()
 	OwnerWorldPtr_->SweepMultiByObjectType(ValidHitResults, startPosition, startPosition + FVector(0.f, 0.f, 0.1f),
 										FQuat::Identity, CachedObjectQueryParams, sphere, CachedQueryParams);
 
+	for (int i = ValidHitResults.Num() - 1; i >= 0; --i)
+	{
+		if (ValidHitResults[i].Component.IsValid()
+			&& ValidHitResults[i].Component->ComponentHasTag("Ignore"))
+		{
+			ValidHitResults.RemoveAt(i);
+		}
+	}
+
 #if !UE_BUILD_SHIPPING
 
 	if (!DataPtr_->bisDrawDebugForward)
@@ -114,6 +123,11 @@ void UPFProximityResource::CheckClosestHit()
             for (const FHitResult& hit : currentHits)
             {
             	bool bIsOurTrigger = hit.Component.IsValid() && (hit.Component->GetCollisionObjectType() == ECC_GameTraceChannel4);
+
+				if (hit.Component.IsValid() && hit.Component->ComponentHasTag("Ignore"))
+				{
+					continue;
+				}
             	
                 if (hit.bBlockingHit || hit.bStartPenetrating || bIsOurTrigger)
                 {
