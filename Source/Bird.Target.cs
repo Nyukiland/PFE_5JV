@@ -3,9 +3,9 @@
 using UnrealBuildTool;
 using System.Collections.Generic;
 
-public class PFE_5JVTarget : TargetRules
+public class BirdTarget : TargetRules
 {
-	public PFE_5JVTarget(TargetInfo Target) : base(Target)
+	public BirdTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V5;
