@@ -173,4 +173,3 @@ void APFPainter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		Instance = nullptr;
 	}
 }
-

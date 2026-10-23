@@ -53,5 +53,4 @@ public:
 
 	UFUNCTION()
 	void ReplaceActorsByHismByClass(const TSubclassOf<AActor>& ActorClass, const FLinearColor ColorValue, const TArray<FTransform>& PlacedObjectTransforms);
-	
 };

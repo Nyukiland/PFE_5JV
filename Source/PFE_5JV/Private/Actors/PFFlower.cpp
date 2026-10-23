@@ -45,6 +45,3 @@ void APFFlower::OnSpawnFromPool_Implementation()
 {
 	this->SetActorHiddenInGame(false);
 }
-
-
-
