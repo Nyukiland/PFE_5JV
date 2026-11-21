@@ -1,38 +1,48 @@
 #include "PFKuwaharaViewExtension.h"
 #include "PFKuwaharaPS.h"
 #include "SystemTextures.h"
-#include "RenderTargetPool.h"
 #include "RendererInterface.h"
 #include "TextureResource.h"
 #include "GlobalShader.h"
 #include "PFKuwaharaSettings.h"
+#include "Engine/Texture2D.h"
 #include "PostProcess/PostProcessMaterialInputs.h"
 #include "ScreenPass.h"
 
-PFKuwaharaViewExtension::PFKuwaharaViewExtension(const FAutoRegister& AutoRegister, FTextureRHIRef InJitterTexture) 
-	: FSceneViewExtensionBase(AutoRegister), JitterTextureRHI(InJitterTexture)
+PFKuwaharaViewExtension::PFKuwaharaViewExtension(const FAutoRegister& AutoRegister, UTexture2D* InJitterTexture)
+	: FSceneViewExtensionBase(AutoRegister)
+	, JitterTextureAsset(InJitterTexture)
 {
+}
+
+void PFKuwaharaViewExtension::PreRenderViewFamily_RenderThread(FRDGBuilder& GraphBuilder, FSceneViewFamily& InViewFamily)
+{
+	if (UTexture2D* Tex = JitterTextureAsset.Get())
+	{
+		if (FTextureResource* Resource = Tex->GetResource())
+		{
+			JitterTextureRHI = Resource->GetTexture2DRHI();
+		}
+	}
 }
 
 void PFKuwaharaViewExtension::SubscribeToPostProcessingPass(EPostProcessingPass PassId, const FSceneView& InView, FAfterPassCallbackDelegateArray& InOutPassCallbacks, bool bIsPassEnabled)
 {
-    const UPFKuwaharaSettings* Settings = GetDefault<UPFKuwaharaSettings>();
-    
-    if (!InView.bIsGameView && !Settings->bEnableKuwahara)
-    {
-        return;
-    }
-    
-    bool bShouldRender = InView.bIsGameView || (InView.UnscaledViewRect.Width() > 512);
-    if (!bShouldRender)
-    {
-        return;
-    }
-    
-    CachedMaxRadius = Settings->MaxRadius;
-    CachedEdgeSensitivity = Settings->EdgeSensitivity;
-    
-	// Inject before tonemap
+	const UPFKuwaharaSettings* Settings = GetDefault<UPFKuwaharaSettings>();
+	if (!Settings || !Settings->bEnableKuwahara)
+	{
+		return;
+	}
+
+	const bool bShouldRender = InView.bIsGameView || (InView.UnscaledViewRect.Width() > 512);
+	if (!bShouldRender)
+	{
+		return;
+	}
+
+	CachedMaxRadius = Settings->MaxRadius;
+	CachedEdgeSensitivity = Settings->EdgeSensitivity;
+
 	if (PassId == EPostProcessingPass::Tonemap)
 	{
 		InOutPassCallbacks.Add(FAfterPassCallbackDelegate::CreateRaw(this, &PFKuwaharaViewExtension::PostProcessPass_RenderThread));
@@ -41,88 +51,47 @@ void PFKuwaharaViewExtension::SubscribeToPostProcessingPass(EPostProcessingPass 
 
 FScreenPassTexture PFKuwaharaViewExtension::PostProcessPass_RenderThread(FRDGBuilder& GraphBuilder, const FSceneView& View, const FPostProcessMaterialInputs& Inputs)
 {
-    check(Inputs.Textures[(uint32)EPostProcessMaterialInput::SceneColor].IsValid());
-    
-    FScreenPassTexture SceneColor(Inputs.Textures[(uint32)EPostProcessMaterialInput::SceneColor]);
-    
-    // 1. Calculate Target Resolution (Locking height to 720p for performance)
-    FIntPoint FullResSize = SceneColor.ViewRect.Size();
+	FScreenPassTexture SceneColor(Inputs.Textures[(uint32)EPostProcessMaterialInput::SceneColor]);
+	check(SceneColor.IsValid());
 
-    if (FullResSize.X <= 0 || FullResSize.Y <= 0)
-    {
-        return FScreenPassTexture(Inputs.Textures[(uint32)EPostProcessMaterialInput::SceneColor]);
-    }
-    
-    float AspectRatio = (float)FullResSize.X / (float)FullResSize.Y;
-    FIntPoint LowRes(FMath::RoundToInt(720.0f * AspectRatio), 720);
+	const FIntPoint ViewSize = SceneColor.ViewRect.Size();
+	if (ViewSize.X <= 0 || ViewSize.Y <= 0)
+	{
+		return SceneColor;
+	}
 
-    if (!ensureMsgf(LowRes.X > 0 && LowRes.X < 16384, TEXT("Kuwahara pass calculated invalid width: %d. FullRes: %dx%d"), LowRes.X, FullResSize.X, FullResSize.Y))
-    {
-        return FScreenPassTexture(Inputs.Textures[(uint32)EPostProcessMaterialInput::SceneColor]);
-    }
-    
-    // 2. Allocate Downscaled Buffers
-    FRDGTextureDesc LowResDesc = FRDGTextureDesc::Create2D(
-        LowRes, 
-        SceneColor.Texture->Desc.Format, 
-        FClearValueBinding::Black, 
-        TexCreate_RenderTargetable | TexCreate_ShaderResource
-    );
-    
-    FRDGTextureRef LowResInputTex = GraphBuilder.CreateTexture(LowResDesc, TEXT("Kuwahara_LowResInput"));
-    FRDGTextureRef LowResOutputTex = GraphBuilder.CreateTexture(LowResDesc, TEXT("Kuwahara_LowResOutput"));
+	FRDGTextureDesc OutputDesc = FRDGTextureDesc::Create2D(
+		ViewSize,
+		SceneColor.Texture->Desc.Format,
+		FClearValueBinding::Black,
+		TexCreate_RenderTargetable | TexCreate_ShaderResource
+	);
 
-    // Ensure our ViewRects start exactly at 0,0 within the pooled textures
-    FScreenPassTexture LowResInput(LowResInputTex, FIntRect(FIntPoint::ZeroValue, LowRes));
-    FScreenPassTexture LowResOutput(LowResOutputTex, FIntRect(FIntPoint::ZeroValue, LowRes));
+	FRDGTextureRef OutputTex = GraphBuilder.CreateTexture(OutputDesc, TEXT("Kuwahara_Output"));
+	FScreenPassTexture Output(OutputTex, FIntRect(FIntPoint::ZeroValue, ViewSize));
 
-    // Downscale SceneColor to LowResInput automatically handling viewrects
-    AddDrawTexturePass(GraphBuilder, View, SceneColor, LowResInput);
+	PFKuwaharaPS::FParameters* PassParameters = GraphBuilder.AllocParameters<PFKuwaharaPS::FParameters>();
+	PassParameters->InputTexture = SceneColor.Texture;
+	PassParameters->InputSampler = TStaticSamplerState<SF_Bilinear, AM_Clamp, AM_Clamp, AM_Clamp>::GetRHI();
+	PassParameters->JitterTexture = JitterTextureRHI.IsValid() ? JitterTextureRHI : GBlackTexture->TextureRHI;
+	PassParameters->JitterSampler = TStaticSamplerState<SF_Point, AM_Wrap, AM_Wrap, AM_Wrap>::GetRHI();
 
-    // 3. Setup Shader Parameters
-    PFKuwaharaPS::FParameters* PassParameters = GraphBuilder.AllocParameters<PFKuwaharaPS::FParameters>();
-    
-    PassParameters->InputTexture = LowResInput.Texture;
-    PassParameters->InputSampler = TStaticSamplerState<SF_Bilinear, AM_Clamp, AM_Clamp, AM_Clamp>::GetRHI();
-    
-    PassParameters->JitterTexture = JitterTextureRHI.IsValid() ? JitterTextureRHI : GBlackTexture->TextureRHI;
-    PassParameters->JitterSampler = TStaticSamplerState<SF_Point, AM_Wrap, AM_Wrap, AM_Wrap>::GetRHI();
-    
-    // --- THE FIX: Calculate physical pooled texture transforms ---
-    FIntPoint PhysicalExtent = LowResInput.Texture->Desc.Extent;
-    
-    PassParameters->InvSize = FVector2f(1.0f / PhysicalExtent.X, 1.0f / PhysicalExtent.Y);
+	const FIntPoint PhysicalExtent = SceneColor.Texture->Desc.Extent;
+	PassParameters->InvSize = FVector2f(1.0f / PhysicalExtent.X, 1.0f / PhysicalExtent.Y);
+	PassParameters->MaxRadius = CachedMaxRadius;
+	PassParameters->EdgeSensitivity = CachedEdgeSensitivity;
+	PassParameters->RenderTargets[0] = FRenderTargetBinding(Output.Texture, ERenderTargetLoadAction::ENoAction);
 
-    PassParameters->MaxRadius = CachedMaxRadius;
-    PassParameters->EdgeSensitivity = CachedEdgeSensitivity;
-    
-    // FIX 1: Manually bind the underlying texture rather than calling a non-existent method
-    PassParameters->RenderTargets[0] = FRenderTargetBinding(LowResOutput.Texture, ERenderTargetLoadAction::ENoAction);
+	TShaderMapRef<PFKuwaharaPS> PixelShader(GetGlobalShaderMap(View.GetFeatureLevel()));
+	AddDrawScreenPass(
+		GraphBuilder,
+		RDG_EVENT_NAME("Kuwahara_Process"),
+		View,
+		FScreenPassTextureViewport(Output),
+		FScreenPassTextureViewport(SceneColor),
+		PixelShader,
+		PassParameters
+	);
 
-    // 4. Dispatch Kuwahara
-    TShaderMapRef<PFKuwaharaPS> PixelShader(GetGlobalShaderMap(View.GetFeatureLevel()));
-    
-    // FIX 2: Convert the FScreenPassTextures into FScreenPassTextureViewports
-    FScreenPassTextureViewport OutputViewport(LowResOutput);
-    FScreenPassTextureViewport InputViewport(LowResInput);
-    
-    AddDrawScreenPass(
-        GraphBuilder, 
-        RDG_EVENT_NAME("Kuwahara_Process"), 
-        View, 
-        OutputViewport, 
-        InputViewport, 
-        PixelShader, 
-        PassParameters
-    );
-
-    // 5. Allocate FullRes Output Buffer for Upscale
-    FRDGTextureDesc FullResDesc = SceneColor.Texture->Desc;
-    FRDGTextureRef FullResOutputTex = GraphBuilder.CreateTexture(FullResDesc, TEXT("Kuwahara_FullResOutput"));
-    FScreenPassTexture FullResOutput(FullResOutputTex, SceneColor.ViewRect);
-
-    // Upscale LowResOutput back to FullRes output
-    AddDrawTexturePass(GraphBuilder, View, LowResOutput, FullResOutput);
-
-    return FullResOutput; 
+	return Output;
 }

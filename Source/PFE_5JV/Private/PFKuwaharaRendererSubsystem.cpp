@@ -1,30 +1,25 @@
 #include "PFKuwaharaRendererSubsystem.h"
 
+#include "PFKuwaharaRendererSubsystem.h"
 #include "PFKuwaharaSettings.h"
-#include "SceneViewExtension.h"
+#include "Engine/Texture2D.h"
 
 void UPFKuwaharaRendererSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
 	const UPFKuwaharaSettings* Settings = GetDefault<UPFKuwaharaSettings>();
-	UTexture2D* LoadedNoise = Settings->BlueNoiseTexture.LoadSynchronous();
-    
-	FTextureRHIRef NoiseRHI = nullptr;
-	if (LoadedNoise && LoadedNoise->GetResource())
+	if (Settings && !Settings->BlueNoiseTexture.IsNull())
 	{
-		NoiseRHI = LoadedNoise->GetResource()->GetTexture2DRHI();
+		LoadedBlueNoise = Settings->BlueNoiseTexture.LoadSynchronous();
 	}
-    
-	KuwaharaSVE = FSceneViewExtensions::NewExtension<PFKuwaharaViewExtension>(NoiseRHI);
+
+	KuwaharaSVE = FSceneViewExtensions::NewExtension<PFKuwaharaViewExtension>(LoadedBlueNoise);
 }
 
 void UPFKuwaharaRendererSubsystem::Deinitialize()
 {
-	if (KuwaharaSVE.IsValid())
-	{
-		KuwaharaSVE.Reset();
-	}
-	
+	KuwaharaSVE.Reset();
+	LoadedBlueNoise = nullptr;
 	Super::Deinitialize();
 }

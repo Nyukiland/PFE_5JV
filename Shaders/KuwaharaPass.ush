@@ -2,17 +2,16 @@
 
 struct FKuwaharaPass
 {
-    // -----------------------------------------------------------------------------
-    // UTILITY: LUMINANCE
-    // -----------------------------------------------------------------------------
     static float GetLuminance(float3 Color)
     {
         return dot(Color, float3(0.299f, 0.587f, 0.114f));
     }
 
-    // -----------------------------------------------------------------------------
-    // ADAPTIVE KUWAHARA + DITHER (Native RDG Version)
-    // -----------------------------------------------------------------------------
+    static float GetChroma(float3 Color)
+    {
+        return max(Color.r, max(Color.g, Color.b)) - min(Color.r, min(Color.g, Color.b));
+    }
+
     static float3 KuwaharaAdaptiveAdvanced(
         float2 UV, 
         float MaxRadius, 
@@ -22,10 +21,10 @@ struct FKuwaharaPass
         Texture2D InputTexture, 
         SamplerState InputSampler)
     {
+       float3 centerColor = InputTexture.SampleLevel(InputSampler, UV, 0.0f).rgb;
        float2 BufferUV = UV + (Jitter * InvSize);
        int rMax = (int)MaxRadius;
        
-       // --- 1. MACRO VARIANCE PASS ---
        float meanLumaMacro = 0.0f;
        float sqMeanLumaMacro = 0.0f;
        float nMacro = (2.0f * (float)rMax + 1.0f) * (2.0f * (float)rMax + 1.0f);
@@ -36,8 +35,8 @@ struct FKuwaharaPass
           [loop]
           for (int x = -rMax; x <= rMax; ++x)
           {
-            float2 sampleUV = BufferUV + float2(x, y) * InvSize;
-            float3 c = InputTexture.SampleLevel(InputSampler, sampleUV, 0.0f).rgb;
+             float2 sampleUV = BufferUV + float2(x, y) * InvSize;
+             float3 c = InputTexture.SampleLevel(InputSampler, sampleUV, 0.0f).rgb;
              float l = GetLuminance(c);
              meanLumaMacro += l;
              sqMeanLumaMacro += l * l;
@@ -49,14 +48,12 @@ struct FKuwaharaPass
        
        float adaptiveRadius = max(1.0f, MaxRadius - (varianceMacro * 3.0f * EdgeSensitivity));
        
-       // --- 2. OPTIMIZED KUWAHARA PASS ---
        int r = (int)adaptiveRadius;
        
        float3 m[4] = {float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0)};
        float s[4] = {0.0f, 0.0f, 0.0f, 0.0f}; 
        float lumaSum[4] = {0.0f, 0.0f, 0.0f, 0.0f};
        
-       // Assign offsets explicitly to avoid non-constant initialization errors
        int2 offsets[4];
        offsets[0] = int2(-r, -r);
        offsets[1] = int2(0, -r);
@@ -67,14 +64,11 @@ struct FKuwaharaPass
        for (int i = 0; i < 4; ++i)
        {
           [loop]
-          // USE rMax HERE, NOT r
           for (int y = 0; y <= rMax; ++y)
           {
              [loop]
-             // USE rMax HERE, NOT r
              for (int x = 0; x <= rMax; ++x)
              {
-                // DIVERGENCE GUARD: Skip calculations if beyond the per-pixel radius
                 if (x > r || y > r) continue;
 
                 float2 offsetUV = BufferUV + float2(offsets[i].x + x, offsets[i].y + y) * InvSize;
@@ -105,6 +99,11 @@ struct FKuwaharaPass
              result = m[j];
           }
        }
-       return result;
+
+       float colorDiff = distance(centerColor, result);
+       float centerChroma = GetChroma(centerColor);
+       float dotMask = saturate((colorDiff - 0.18f) * 3.5f) * saturate(centerChroma * 2.5f);
+
+       return lerp(result, centerColor, dotMask);
     }
 };

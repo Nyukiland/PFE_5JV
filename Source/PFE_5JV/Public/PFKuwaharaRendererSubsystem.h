@@ -16,5 +16,8 @@ public:
 	virtual void Deinitialize() override;
     
 private:
+	UPROPERTY(Transient)
+	TObjectPtr<UTexture2D> LoadedBlueNoise = nullptr;
+	
 	TSharedPtr<PFKuwaharaViewExtension, ESPMode::ThreadSafe> KuwaharaSVE;
 };
