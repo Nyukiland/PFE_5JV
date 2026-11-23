@@ -5,6 +5,8 @@
 
 #include "JsonObjectConverter.h"
 #include "ShaderPipelineCache.h"
+#include "Misc/DateTime.h"
+#include "UnrealClient.h"
 
 void UPFBlueprintHelper::CheckCurrentLayout(EKeyboardOutputPin& outputPins)
 {
@@ -177,4 +179,13 @@ int32 UPFBlueprintHelper::GetRemainingPSOPrecompiles()
 bool UPFBlueprintHelper::IsPSOPrecompilationDone()
 {
 	return GetRemainingPSOPrecompiles() <= 0;
+}
+
+FString UPFBlueprintHelper::CapturePhotoModeScreenshot()
+{
+	const FString Timestamp = FDateTime::Now().ToString(TEXT("%H-%M-%S_%d-%m-%Y"));
+	const FString FileName = FString::Printf(TEXT("Photo_%s"), *Timestamp);
+	
+	FScreenshotRequest::RequestScreenshot(FileName, false, false);
+	return FScreenshotRequest::GetFilename();
 }

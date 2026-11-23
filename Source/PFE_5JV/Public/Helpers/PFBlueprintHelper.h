@@ -73,4 +73,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category= "PSO")
 	static bool IsPSOPrecompilationDone();
+	
+	UFUNCTION(BlueprintCallable)
+	static FString CapturePhotoModeScreenshot();
 };

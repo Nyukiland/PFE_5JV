@@ -60,6 +60,7 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
+	UFUNCTION(BlueprintCallable)
 	void SetStateMachineActiveState(bool bisActive);
 
 	//State Component
